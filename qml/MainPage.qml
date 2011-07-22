@@ -17,4 +17,14 @@ Page {
         text: qsTr("Click here!")
         onClicked: label.visible=true
     }
+    Button{
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: label.bottom
+        anchors.topMargin: 70
+        text: qsTr("Bus stop schedule")
+        onClicked: {
+            pageStack.push(Qt.resolvedUrl("BusStopSchedule.qml"))
+            backTool.visible=true
+        }
+    }
 }
