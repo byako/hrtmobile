@@ -3,7 +3,7 @@
 # Additional import path used to resolve QML modules in Creator's code model
 QML_IMPORT_PATH =
 
-QT+= declarative
+QT+= declarative network
 symbian:TARGET.UID3 = 0xE6AD570E
 
 # Smart Installer package's UID
