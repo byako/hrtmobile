@@ -6,24 +6,43 @@ Page {
     tools: commonTools
     Label {
         id: label
-        anchors.centerIn: parent
-        text: qsTr("Hello world!")
-        visible: false
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        anchors.topMargin: 100
+        font.pixelSize: 36
+        text: qsTr("Helsinki Regional Transport")
+        visible: true
     }
     Button{
+        id: lineInfoButton
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: label.bottom
-        anchors.topMargin: 10
-        text: qsTr("Click here!")
-        onClicked: label.visible=true
-    }
-    Button{
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: label.bottom
-        anchors.topMargin: 70
-        text: qsTr("Bus stop schedule")
+        anchors.topMargin: 50
+        text: qsTr("Line info")
         onClicked: {
-            pageStack.push(Qt.resolvedUrl("BusStopSchedule.qml"))
+            pageStack.push(Qt.resolvedUrl("lineInfo.qml"))
+            backTool.visible=true
+        }
+    }
+    Button{
+        id:stopInfoButton
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: lineInfoButton.bottom
+        anchors.topMargin: 10
+        text: qsTr("Stop info")
+        onClicked: {
+            pageStack.push(Qt.resolvedUrl("stopInfo.qml"))
+            backTool.visible=true
+        }
+    }
+    Button{
+        id:lineScheduleButton
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: stopInfoButton.bottom
+        anchors.topMargin: 10
+        text: qsTr("Line schedule")
+        onClicked: {
+            pageStack.push(Qt.resolvedUrl("lineSchedule.qml"))
             backTool.visible=true
         }
     }

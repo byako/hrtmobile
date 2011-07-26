@@ -4,11 +4,6 @@
 #include <QCoreApplication>
 #include <QDeclarativeEngine>
 #include <QDeclarativeComponent>
-#include <QDebug>
-#include <QtNetwork>
-//#include <QtNetwork/QNetworkRequest>
-//#include <QtNetwork/QNetworkReply>
-#include <stdio.h>
 
 int main(int argc, char *argv[])
 {

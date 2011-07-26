@@ -43,7 +43,8 @@ OTHER_FILES += \
     qtc_packaging/debian_fremantle/control \
     qtc_packaging/debian_fremantle/compat \
     qtc_packaging/debian_fremantle/changelog \
-    qml/BusStopSchedule.qml
+    qml/stopInfo.qml \
+    qml/lineInfo.qml
 
 RESOURCES += \
     res.qrc
