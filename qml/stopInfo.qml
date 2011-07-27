@@ -5,14 +5,14 @@ Page {
 
     id: stopInfoPage
     tools: commonTools
-
-    Label {
-        id: busStopLabel
-        anchors.centerIn: parent
-        text: qsTr("Stop Info")
-        visible: false
+    Label{
+        id: errorLabel;
+        text: qsTr("Error. Wrong stop ID ?");
+        anchors.bottomMargin: 100;
+        anchors.centerIn: parent;
+        visible : false;
+        font.pixelSize: 30
     }
-
     TextInput{
         id: stopId
         width: 140
@@ -29,7 +29,6 @@ Page {
         anchors.leftMargin: 10
         text: "Stop ID"
     }
-
     Button{
         anchors.right: parent.right
         anchors.top: parent.top
@@ -37,73 +36,94 @@ Page {
         anchors.topMargin: 20
         text: qsTr("Show info")
         onClicked: {
+            errorLabel.visible = false;
             getInfo()
-            busStopLabel.text=qsTr(stopId.text + " stop info here")
-            busStopLabel.visible=true
             focus = true
         }
     }
 
     Label {
-        id: stopName;
-        anchors.left: parent.left;
+        id: stopNameLabel
+        anchors.left: parent.left
         anchors.top: parent.top
         anchors.leftMargin: 20
         anchors.topMargin: 80
         text: qsTr("Name")
-        font.pixelSize: 25
+        font.pixelSize: 30
     }
     Label {
-        id: stopAddress;
+        id: stopName;
+        anchors.left: parent.left;
+        anchors.top: stopNameLabel.top
+        anchors.leftMargin: 20
+        anchors.topMargin: 30
+        text: qsTr("Name")
+        font.pixelSize: 25
+        visible: false
+    }
+    Label {
+        id: stopAddressLabel;
         anchors.horizontalCenter: parent.horizontalCenter;
         anchors.top: parent.top
         anchors.topMargin: 80
         text: qsTr("Address")
-        font.pixelSize: 25
+        font.pixelSize: 30
     }
     Label {
-        id: stopCity;
+        id: stopAddress;
+        anchors.horizontalCenter: parent.horizontalCenter;
+        anchors.top: stopAddressLabel.top
+        anchors.topMargin: 30
+        text: qsTr("Address")
+        font.pixelSize: 25
+        visible: false
+    }
+    Label {
+        id: stopCityLabel;
         anchors.right: parent.right;
         anchors.top: parent.top
         anchors.rightMargin: 20
         anchors.topMargin: 80
         text: qsTr("City")
-        font.pixelSize: 25
+        font.pixelSize: 30
     }
-
+    Label {
+        id: stopCity;
+        anchors.right: parent.right;
+        anchors.top: stopCityLabel.top
+        anchors.topMargin: 30
+        anchors.rightMargin: 20
+        text: qsTr("City")
+        font.pixelSize: 25
+        visible: false
+    }
     ListModel{
-        id:trafficList
-        ListElement { time: "Time"; line: "Line"; }
+        id:trafficModel
+
+        ListElement {
+            departTime: "Time"
+            departLine: "Line"
+        }
     }
 
     Component{
         id:trafficDelegate
-
-        Item{
-            width: 100; height:60;
-            Text{
-                id:departureTime;
-                anchors.left:parent.left;
-                text: time;
-            }
-            Text{
-                anchors.left:departureTime.right;
-                text: line;
-            }
+        Row{
+            spacing: 10
+            Text{ text: departTime; font.pixelSize: 25 }
+            Text{ text: departLine; font.pixelSize: 25 }
         }
     }
 
-    GridView {
+    ListView {
         id: grid
+        anchors.fill:  parent
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: parent.top
-        anchors.topMargin: 50
-        cellWidth: 100; cellHeight: 60
+        anchors.topMargin: 250
         delegate: trafficDelegate
+        model: trafficModel
         focus: true
 
-//        model: ContactModel {}
-//        highlight: Rectangle { color: "lightsteelblue"; radius: 5 }
     }
 
 /*<----------------------------------------------------------------------->*/
@@ -117,35 +137,35 @@ Page {
         var schedule = new Array;
         var lines = new Array;
         var time_ = Array
+        showRequestInfo("length = "+schedText.length);
+        showRequestInfo(schedText);
+        if (schedText.slice(0,5) == "Error") {
+            errorLabel.visible = true;
+            return;
+        }
         schedule = schedText.split("\n");
         lines = schedule[0].split("|");
         stopName.text = lines[1];
+        stopName.visible = true;
         stopAddress.text = lines[2];
+        stopAddress.visible = true;
         stopCity.text = lines[3];
+        stopCity.visible = true;
         console.log("Stop name: " + lines[1] + "; Address: " + lines[2] + "; City: " + lines[3]);
         for (var ii = 1; ii < schedule.length-1; ii++) {
             lines = schedule[ii].split("|");
             time_[0] = lines[0].slice(0,2)
             time_[1] = lines[0].slice(2,4)
-//            showRequestInfo(time_[0] + ":" + time_[1] + " -> " + lines[1]);
-            trafficList.append({"time": "" + time_[0] + ":" + time_[1], "line":""+lines[1]})
+            trafficModel.append({ "departTime" : ""+time_[0]+":"+time_[1], "departLine" : "" + lines[1] })
         }
+        grid.focus = true
     }
 
     function getInfo() {
         var doc = new XMLHttpRequest();
         doc.onreadystatechange = function() {
-/*            if (doc.readyState == XMLHttpRequest.HEADERS_RECEIVED) {
-                showRequestInfo("Headers -->");
-                showRequestInfo(doc.getAllResponseHeaders ());
-                showRequestInfo("Last modified -->");
-                showRequestInfo(doc.getResponseHeader ("Last-Modified"));
-            } else*/ if (doc.readyState == XMLHttpRequest.DONE) {
+            if (doc.readyState == XMLHttpRequest.DONE) {
                 parseResponse(doc.responseText);
-/*                showRequestInfo("Headers -->");
-                showRequestInfo(doc.getAllResponseHeaders ());
-                showRequestInfo("Last modified -->");
-                showRequestInfo(doc.getResponseHeader ("Last-Modified"));*/
             } else if (doc.readyState == XMLHttpRequest.ERROR) {
                 showRequestInfo("ERROR")
             }
