@@ -44,7 +44,8 @@ OTHER_FILES += \
     qtc_packaging/debian_fremantle/compat \
     qtc_packaging/debian_fremantle/changelog \
     qml/stopInfo.qml \
-    qml/lineInfo.qml
+    qml/lineInfo.qml \
+    qml/lineSchedule.qml
 
 RESOURCES += \
     res.qrc

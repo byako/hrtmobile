@@ -4,5 +4,6 @@
         <file>qml/MainPage.qml</file>
         <file>qml/lineInfo.qml</file>
         <file>qml/stopInfo.qml</file>
+        <file>qml/lineSchedule.qml</file>
     </qresource>
 </RCC>

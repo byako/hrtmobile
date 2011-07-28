@@ -29,7 +29,6 @@ Page {
     }
 /*<----------------------------------------------------------------------->*/
     function showRequestInfo(text) {
-//        log.text = log.text + "\n" + text
         console.log(text)
     }
 

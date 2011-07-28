@@ -5,6 +5,7 @@ Page {
 
     id: stopInfoPage
     tools: commonTools
+
     Label{
         id: errorLabel;
         text: qsTr("Error. Wrong stop ID ?");
@@ -15,16 +16,17 @@ Page {
     }
     TextInput{
         id: stopId
-        width: 140
+        width: 240
         maximumLength: 16
         color: "#000000"
         onFocusChanged: {
-            focus == true ? openSoftwareInputPanel() : closeSoftwareInputPanel()
+            focus == true ? openSoftwareInputPanel() : closeSoftwareInputPanel();
+            focus == true ? text = qsTr("") : null;
         }
         selectionColor: "green"
-        font.pixelSize: 32
+        font.pixelSize: 30
         anchors.top: parent.top
-        anchors.topMargin: 30
+        anchors.topMargin: 15
         anchors.left: parent.left
         anchors.leftMargin: 10
         text: "Stop ID"
@@ -33,9 +35,12 @@ Page {
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.leftMargin: 10
-        anchors.topMargin: 20
+        anchors.topMargin: 10
+        anchors.rightMargin: 10
         text: qsTr("Show info")
+        width: 200
         onClicked: {
+            trafficModel.clear();
             errorLabel.visible = false;
             getInfo()
             focus = true
@@ -45,58 +50,61 @@ Page {
     Label {
         id: stopNameLabel
         anchors.left: parent.left
+        anchors.leftMargin: 10
         anchors.top: parent.top
-        anchors.leftMargin: 20
-        anchors.topMargin: 80
+        anchors.topMargin: 65
         text: qsTr("Name")
         font.pixelSize: 30
     }
     Label {
         id: stopName;
-        anchors.left: parent.left;
-        anchors.top: stopNameLabel.top
-        anchors.leftMargin: 20
-        anchors.topMargin: 30
+        anchors.right: parent.right;
+        anchors.rightMargin: 15
+        anchors.top: parent.top
+        anchors.topMargin: 70
         text: qsTr("Name")
         font.pixelSize: 25
         visible: false
     }
     Label {
-        id: stopAddressLabel;
-        anchors.horizontalCenter: parent.horizontalCenter;
-        anchors.top: parent.top
-        anchors.topMargin: 80
+        id: stopAddressLabel
+        anchors.top: stopNameLabel.bottom
+        anchors.topMargin: 10
+        anchors.left: parent.left
+        anchors.leftMargin: 10
         text: qsTr("Address")
         font.pixelSize: 30
     }
     Label {
         id: stopAddress;
-        anchors.horizontalCenter: parent.horizontalCenter;
-        anchors.top: stopAddressLabel.top
-        anchors.topMargin: 30
+        anchors.top: stopName.bottom
+        anchors.topMargin: 13
+        anchors.right: parent.right
+        anchors.rightMargin: 10
         text: qsTr("Address")
         font.pixelSize: 25
         visible: false
     }
     Label {
         id: stopCityLabel;
-        anchors.right: parent.right;
-        anchors.top: parent.top
-        anchors.rightMargin: 20
-        anchors.topMargin: 80
+        anchors.top: stopAddressLabel.bottom
+        anchors.topMargin: 10
+        anchors.left: parent.left
+        anchors.leftMargin: 10
         text: qsTr("City")
         font.pixelSize: 30
     }
     Label {
         id: stopCity;
         anchors.right: parent.right;
-        anchors.top: stopCityLabel.top
-        anchors.topMargin: 30
-        anchors.rightMargin: 20
+        anchors.rightMargin: 10
+        anchors.top: stopAddress.bottom
+        anchors.topMargin: 13
         text: qsTr("City")
         font.pixelSize: 25
         visible: false
     }
+
     ListModel{
         id:trafficModel
 
@@ -108,38 +116,59 @@ Page {
 
     Component{
         id:trafficDelegate
-        Row{
-            spacing: 10
-            Text{ text: departTime; font.pixelSize: 25 }
-            Text{ text: departLine; font.pixelSize: 25 }
+        Item {
+            width: grid.cellWidth; height:  grid.cellHeight;
+            Row {
+                spacing: 10;
+                anchors.fill: parent;
+                Text{ text: departTime; font.pixelSize: 25 }
+                Text{ text: departLine; font.pixelSize: 25 }
+            }
+            MouseArea {
+                anchors.fill:  parent
+                onClicked: {
+                    focus = true;
+                    console.log("you've pressed me!")
+                }
+            }
+            onFocusChanged: highlight = focus == true ? true : false;
         }
     }
 
-    ListView {
+    Component{
+        id:highlight
+        Rectangle {
+            width: grid.cellWidth;
+            height:  grid.cellHeight
+            color: "#CCDDFF"
+            radius: 10
+        }
+    }
+
+    GridView {
         id: grid
         anchors.fill:  parent
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.topMargin: 250
+        anchors.topMargin: 190
+        anchors.leftMargin:10
         delegate: trafficDelegate
         model: trafficModel
         focus: true
-
+        cellWidth: 155
+        cellHeight: 30
+        width: 420
+        highlight: highlight
+        highlightFollowsCurrentItem: true
     }
 
 /*<----------------------------------------------------------------------->*/
-    function showRequestInfo(text) {
-        console.log(text)
-    }
-
     function parseResponse(a){
         var schedText = new String;
         schedText = a;
         var schedule = new Array;
         var lines = new Array;
         var time_ = Array
-        showRequestInfo("length = "+schedText.length);
-        showRequestInfo(schedText);
         if (schedText.slice(0,5) == "Error") {
+            trafficModel.clear();
             errorLabel.visible = true;
             return;
         }
@@ -165,20 +194,28 @@ Page {
         var doc = new XMLHttpRequest();
         doc.onreadystatechange = function() {
             if (doc.readyState == XMLHttpRequest.DONE) {
+                errorLabel.text = qsTr("Error. Wrong stop ID ?");
+                errorLabel.visible = false;
                 parseResponse(doc.responseText);
             } else if (doc.readyState == XMLHttpRequest.ERROR) {
-                showRequestInfo("ERROR")
+                trafficModel.clear();
+                errorLabel.text = qsTr("Request error. Is Network available?");
+                errorLabel.visible = True;
             }
         }
+//              API 1.0 (plaintext) : faster, more informative
+        if (stopId.text == "" || stopId.text.length > 7 || stopId.text.length < 4) {
+            errorLabel.text = qsTr("Wrong stop ID format");
+            errorLabel.visible = true;
+            return;
+        }
 
-// API 1.0 (plaintext) : faster, more informative
-    doc.open("GET", "http://api.reittiopas.fi/public-ytv/fi/api/?stop="+ stopId.text +"&user=byako&pass=gfccdjhl");
-// API 2.0 (XML) : slower
-//             http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&query="+stopId.text); // for line info request
-//             http://api.reittiopas.fi/public-ytv/fi/api/?key="+stopId.text+"&user=byako&pass=gfccdjhl");
+        doc.open("GET", "http://api.reittiopas.fi/public-ytv/fi/api/?stop="+ stopId.text +"&user=byako&pass=gfccdjhl");
+//              API 2.0 (XML) : slower
+//              http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&query="+stopId.text); // for line info request
+//              http://api.reittiopas.fi/public-ytv/fi/api/?key="+stopId.text+"&user=byako&pass=gfccdjhl");
 
-    doc.send();
-
+        doc.send();
     }
 /*<----------------------------------------------------------------------->*/
 
