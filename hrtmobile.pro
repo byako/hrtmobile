@@ -22,7 +22,8 @@ symbian:TARGET.CAPABILITY += NetworkServices
 # MOBILITY +=
 
 # The .cpp file which was generated for your project. Feel free to hack it.
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    hrtm_config.cpp
 
 
 OTHER_FILES += \
@@ -58,3 +59,6 @@ qtcAddDeployment()
 CONFIG += qdeclarative-boostable
 QMAKE_CXXFLAGS += -fPIC -fvisibility=hidden -fvisibility-inlines-hidden
 QMAKE_LFLAGS += -pie -rdynamic
+
+HEADERS += \
+    hrtm_config.h

@@ -6,25 +6,37 @@ Page {
     id: stopInfoPage
     tools: commonTools
 
+    Rectangle{
+        color: "#202020"
+        anchors.fill: parent
+        width: parent.width
+        height:  parent.height
+    }
     Label{
+        Rectangle{
+            color: "#606060"
+            radius: 10
+            anchors.fill: parent
+            width: parent.width
+            height:  parent.height
+        }
         id: errorLabel;
-        text: qsTr("Error. Wrong stop ID ?");
-        anchors.bottomMargin: 100;
-        anchors.centerIn: parent;
-        visible : false;
+        text: qsTr("Error. Wrong stop ID ?")
+        anchors.bottomMargin: 100
+        anchors.centerIn: parent
+        visible : false
         font.pixelSize: 30
     }
     TextInput{
         id: stopId
         width: 240
         maximumLength: 16
-        color: "#000000"
         onFocusChanged: {
-            focus == true ? openSoftwareInputPanel() : closeSoftwareInputPanel();
-            focus == true ? text = qsTr("") : null;
+            focus == true ? openSoftwareInputPanel() : closeSoftwareInputPanel()
+            focus == true ? text = qsTr("") : null
         }
-        selectionColor: "green"
         font.pixelSize: 30
+        color: "#ffffff"
         anchors.top: parent.top
         anchors.topMargin: 15
         anchors.left: parent.left
@@ -54,6 +66,7 @@ Page {
         anchors.top: parent.top
         anchors.topMargin: 65
         text: qsTr("Name")
+        color: "#ffffff"
         font.pixelSize: 30
     }
     Label {
@@ -63,6 +76,7 @@ Page {
         anchors.top: parent.top
         anchors.topMargin: 70
         text: qsTr("Name")
+        color: "#ffffff"
         font.pixelSize: 25
         visible: false
     }
@@ -73,6 +87,7 @@ Page {
         anchors.left: parent.left
         anchors.leftMargin: 10
         text: qsTr("Address")
+        color: "#ffffff"
         font.pixelSize: 30
     }
     Label {
@@ -82,6 +97,7 @@ Page {
         anchors.right: parent.right
         anchors.rightMargin: 10
         text: qsTr("Address")
+        color: "#ffffff"
         font.pixelSize: 25
         visible: false
     }
@@ -92,6 +108,7 @@ Page {
         anchors.left: parent.left
         anchors.leftMargin: 10
         text: qsTr("City")
+        color: "#ffffff"
         font.pixelSize: 30
     }
     Label {
@@ -101,6 +118,7 @@ Page {
         anchors.top: stopAddress.bottom
         anchors.topMargin: 13
         text: qsTr("City")
+        color: "#ffffff"
         font.pixelSize: 25
         visible: false
     }
@@ -121,13 +139,13 @@ Page {
             Row {
                 spacing: 10;
                 anchors.fill: parent;
-                Text{ text: departTime; font.pixelSize: 25 }
-                Text{ text: departLine; font.pixelSize: 25 }
+                Text{ text: departTime; font.pixelSize: 25; color: "#FFFFFF" }
+                Text{ text: departLine; font.pixelSize: 25; color: "#FFFFFF"}
             }
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
-                    focus = true;
+                    grid.focus = true;
                     console.log("you've pressed me!")
                 }
             }
@@ -140,7 +158,7 @@ Page {
         Rectangle {
             width: grid.cellWidth;
             height:  grid.cellHeight
-            color: "#CCDDFF"
+            color: "#101050"
             radius: 10
         }
     }

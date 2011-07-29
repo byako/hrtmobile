@@ -5,6 +5,12 @@ Page {
     id: lineInfoPage
     tools: commonTools
 
+    Rectangle{
+        color: "black"
+        anchors.fill: parent
+        width: parent.width
+        height:  parent.height
+    }
     Label {
         id: busStopLabel
         anchors.centerIn: parent
@@ -15,7 +21,7 @@ Page {
         id: stopId
         width: 140
         maximumLength: 16
-        color: "#000000"
+//        color: "#000000"
         onFocusChanged: {
             focus == true ? openSoftwareInputPanel() : closeSoftwareInputPanel()
         }

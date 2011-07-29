@@ -1,9 +1,19 @@
 import QtQuick 1.1
 import com.meego 1.0
+import HRTMConfig 1.0
 
 Page {
     id: mainPage
     tools: commonTools
+    hrtm_config {
+    }
+
+    Rectangle{
+        color: "black"
+        anchors.fill: parent
+        width: parent.width
+        height:  parent.height
+    }
     Label {
         id: label
         anchors.horizontalCenter: parent.horizontalCenter
@@ -11,6 +21,7 @@ Page {
         anchors.topMargin: 100
         font.pixelSize: 36
         text: qsTr("Helsinki Regional Transport")
+        color: "#BBCFFF"
         visible: true
     }
     Button{
