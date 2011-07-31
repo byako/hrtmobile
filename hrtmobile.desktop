@@ -3,7 +3,7 @@ Encoding=UTF-8
 Version=1.0
 Type=Application
 Terminal=false
-Name=hrtmobile
+Name=HRT Mobile
 Exec=invoker --single-instance --type=d /opt/hrtmobile/bin/hrtmobile
 Icon=/usr/share/icons/hicolor/scalable/apps/hrtmobile.svg
 X-Window-Icon=

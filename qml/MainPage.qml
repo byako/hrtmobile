@@ -5,11 +5,11 @@ import HRTMConfig 1.0
 Page {
     id: mainPage
     tools: commonTools
-    hrtm_config {
-    }
+
+    HrtmConfig {id: config}
 
     Rectangle{
-        color: "black"
+        color: config.bgColor;
         anchors.fill: parent
         width: parent.width
         height:  parent.height
@@ -21,7 +21,7 @@ Page {
         anchors.topMargin: 100
         font.pixelSize: 36
         text: qsTr("Helsinki Regional Transport")
-        color: "#BBCFFF"
+        color: config.textColor;
         visible: true
     }
     Button{

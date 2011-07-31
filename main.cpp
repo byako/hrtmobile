@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     QDeclarativeView view;
 
-    qmlRegisterType<HrtmConfig>("HRTMConfg", 1, 0, "hrtm_config");
+    qmlRegisterType<HrtmConfig>("HRTMConfig", 1, 0, "HrtmConfig");
 
     view.setSource(QUrl("qrc:/qml/main.qml"));
     view.showFullScreen();

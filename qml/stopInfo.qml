@@ -1,17 +1,20 @@
 import QtQuick 1.1
 import com.meego 1.0
+import HRTMConfig 1.0
 
 Page {
 
     id: stopInfoPage
     tools: commonTools
+    HrtmConfig {id: config}
 
-    Rectangle{
-        color: "#202020"
+    Rectangle{       // dark background
+        color: config.bgColor;
         anchors.fill: parent
         width: parent.width
         height:  parent.height
     }
+
     Label{
         Rectangle{
             color: "#606060"
@@ -26,102 +29,124 @@ Page {
         anchors.centerIn: parent
         visible : false
         font.pixelSize: 30
-    }
-    TextInput{
-        id: stopId
-        width: 240
-        maximumLength: 16
-        onFocusChanged: {
-            focus == true ? openSoftwareInputPanel() : closeSoftwareInputPanel()
-            focus == true ? text = qsTr("") : null
-        }
-        font.pixelSize: 30
-        color: "#ffffff"
-        anchors.top: parent.top
-        anchors.topMargin: 15
-        anchors.left: parent.left
-        anchors.leftMargin: 10
-        text: "Stop ID"
-    }
-    Button{
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.leftMargin: 10
-        anchors.topMargin: 10
-        anchors.rightMargin: 10
-        text: qsTr("Show info")
-        width: 200
-        onClicked: {
-            trafficModel.clear();
-            errorLabel.visible = false;
-            getInfo()
-            focus = true
-        }
+        color: config.textColor
     }
 
-    Label {
-        id: stopNameLabel
+    Item {          // search box
+        width: 240
+        height: 35
+        anchors.top: parent.top
+        anchors.topMargin: 5
+        anchors.left: parent.left
+        anchors.leftMargin: 5
+        anchors.right: parent.right
+        anchors.rightMargin: 5
+        Rectangle{
+            anchors.top: parent.top
+            anchors.left: parent.left
+            width: 240
+            height: parent.height
+            color: "#7090AA"
+            radius: 10
+            TextInput{
+                id: stopId
+                anchors.fill: parent
+                width: parent.width
+                height: parent.height
+                maximumLength: 16
+                onFocusChanged: {
+                    focus == true ? openSoftwareInputPanel() : closeSoftwareInputPanel()
+                    focus == true ? text = qsTr("") : null
+                }
+                font.pixelSize: 30
+                color: config.textColor
+                text: "Enter StopID"
+            }
+        }
+       Button{
+            anchors.right: parent.right
+            anchors.top: parent.top
+            text: qsTr("Show info")
+            width: 200
+            height: 40
+            onClicked: {
+                trafficModel.clear();
+                errorLabel.visible = false;
+                getInfo()
+                focus = true
+            }
+        }
+    } // searchBox end
+
+    Rectangle{      // data
+        id: dataRect
         anchors.left: parent.left
         anchors.leftMargin: 10
-        anchors.top: parent.top
+        anchors.top:  parent.top
         anchors.topMargin: 65
-        text: qsTr("Name")
-        color: "#ffffff"
-        font.pixelSize: 30
-    }
-    Label {
-        id: stopName;
-        anchors.right: parent.right;
-        anchors.rightMargin: 15
-        anchors.top: parent.top
-        anchors.topMargin: 70
-        text: qsTr("Name")
-        color: "#ffffff"
-        font.pixelSize: 25
-        visible: false
-    }
-    Label {
-        id: stopAddressLabel
-        anchors.top: stopNameLabel.bottom
-        anchors.topMargin: 10
-        anchors.left: parent.left
-        anchors.leftMargin: 10
-        text: qsTr("Address")
-        color: "#ffffff"
-        font.pixelSize: 30
-    }
-    Label {
-        id: stopAddress;
-        anchors.top: stopName.bottom
-        anchors.topMargin: 13
         anchors.right: parent.right
         anchors.rightMargin: 10
-        text: qsTr("Address")
-        color: "#ffffff"
-        font.pixelSize: 25
-        visible: false
-    }
-    Label {
-        id: stopCityLabel;
-        anchors.top: stopAddressLabel.bottom
-        anchors.topMargin: 10
-        anchors.left: parent.left
-        anchors.leftMargin: 10
-        text: qsTr("City")
-        color: "#ffffff"
-        font.pixelSize: 30
-    }
-    Label {
-        id: stopCity;
-        anchors.right: parent.right;
-        anchors.rightMargin: 10
-        anchors.top: stopAddress.bottom
-        anchors.topMargin: 13
-        text: qsTr("City")
-        color: "#ffffff"
-        font.pixelSize: 25
-        visible: false
-    }
+        height: 120
+        width: parent.width
+        color: "#303030"
+        radius: 10
+        Label {
+            id: stopNameLabel
+            anchors.left: parent.left
+            anchors.top: parent.top
+            text: qsTr("Name")
+            color: config.textColor
+            font.pixelSize: 30
+        }
+        Label {
+            id: stopName;
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.topMargin: 5
+            text: qsTr("Name")
+            color: config.textColor
+            font.pixelSize: 25
+            visible: false
+        }
+        Label {
+            id: stopAddressLabel
+            anchors.top: stopNameLabel.bottom
+            anchors.topMargin: 10
+            anchors.left: parent.left
+            text: qsTr("Address")
+            color: config.textColor
+            font.pixelSize: 30
+        }
+        Label {
+            id: stopAddress;
+            anchors.top: stopName.bottom
+            anchors.topMargin: 13
+            anchors.right: parent.right
+            text: qsTr("Address")
+            color: config.textColor
+            font.pixelSize: 25
+            visible: false
+        }
+        Label {
+            id: stopCityLabel;
+            anchors.top: stopAddressLabel.bottom
+            anchors.topMargin: 10
+            anchors.left: parent.left
+            text: qsTr("City")
+            color: config.textColor
+            font.pixelSize: 30
+        }
+        Label {
+            id: stopCity;
+            anchors.right: parent.right;
+            anchors.top: stopAddress.bottom
+            anchors.topMargin: 13
+            text: qsTr("City")
+            color: config.textColor
+            font.pixelSize: 25
+            visible: false
+        }
+    } // data end
 
     ListModel{
         id:trafficModel
@@ -138,44 +163,41 @@ Page {
             width: grid.cellWidth; height:  grid.cellHeight;
             Row {
                 spacing: 10;
-                anchors.fill: parent;
-                Text{ text: departTime; font.pixelSize: 25; color: "#FFFFFF" }
-                Text{ text: departLine; font.pixelSize: 25; color: "#FFFFFF"}
+                anchors.fill: parent;                
+                Text{ text: departTime; font.pixelSize: 25; color: config.textColor}
+                Text{ text: departLine; font.pixelSize: 25; color: config.textColor}
             }
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
                     grid.focus = true;
-                    console.log("you've pressed me!")
+                    grid.currentIndex = index;
                 }
             }
-            onFocusChanged: highlight = focus == true ? true : false;
         }
     }
 
-    Component{
-        id:highlight
-        Rectangle {
-            width: grid.cellWidth;
-            height:  grid.cellHeight
-            color: "#101050"
-            radius: 10
+    Rectangle{
+        id: infoRect
+        anchors.top: dataRect.bottom
+        anchors.topMargin: 10
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        color: "#303030"
+        GridView {
+            id: grid
+            anchors.fill:  parent
+            anchors.leftMargin:10
+            delegate: trafficDelegate
+            model: trafficModel
+            focus: true
+            cellWidth: 155
+            cellHeight: 30
+            width: 420
+            highlight: Rectangle { color:config.highlightColor; radius:  5 }
+            currentIndex: -1
         }
-    }
-
-    GridView {
-        id: grid
-        anchors.fill:  parent
-        anchors.topMargin: 190
-        anchors.leftMargin:10
-        delegate: trafficDelegate
-        model: trafficModel
-        focus: true
-        cellWidth: 155
-        cellHeight: 30
-        width: 420
-        highlight: highlight
-        highlightFollowsCurrentItem: true
     }
 
 /*<----------------------------------------------------------------------->*/

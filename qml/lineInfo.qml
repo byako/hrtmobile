@@ -1,12 +1,15 @@
 import QtQuick 1.1
 import com.meego 1.0
+import HRTMConfig 1.0
 
 Page {
     id: lineInfoPage
     tools: commonTools
 
+    HrtmConfig {id: config}
+
     Rectangle{
-        color: "black"
+        color: config.bgColor
         anchors.fill: parent
         width: parent.width
         height:  parent.height
@@ -16,22 +19,24 @@ Page {
         anchors.centerIn: parent
         text: qsTr("Line Info here")
         visible: false
+        color: config.textColor
     }
     TextInput{
         id: stopId
         width: 140
         maximumLength: 16
-//        color: "#000000"
         onFocusChanged: {
             focus == true ? openSoftwareInputPanel() : closeSoftwareInputPanel()
+            focus == true ? text = qsTr("") : null
         }
-        selectionColor: "green"
+        selectionColor: config.highlightColor
         font.pixelSize: 32
         anchors.top: parent.top
         anchors.topMargin: 30
         anchors.left: parent.left
         anchors.leftMargin: 10
         text: "Line ID"
+        color: config.textColor
     }
 /*<----------------------------------------------------------------------->*/
     function showRequestInfo(text) {
