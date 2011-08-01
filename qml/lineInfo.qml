@@ -5,8 +5,8 @@ import HRTMConfig 1.0
 Page {
     id: lineInfoPage
     tools: commonTools
-
     HrtmConfig {id: config}
+    objectName: "lineInfoPage"
 
     Rectangle{
         color: config.bgColor

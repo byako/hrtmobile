@@ -7,6 +7,7 @@ Page {
     id: stopInfoPage
     tools: commonTools
     HrtmConfig {id: config}
+    objectName: "stopInfoPage"
 
     Rectangle{       // dark background
         color: config.bgColor;
@@ -83,11 +84,9 @@ Page {
     Rectangle{      // data
         id: dataRect
         anchors.left: parent.left
-//        anchors.leftMargin: 10
         anchors.top:  parent.top
         anchors.topMargin: 65
         anchors.right: parent.right
-  //      anchors.rightMargin: 10
         height: 120
         width: parent.width
         color: "#303030"
@@ -204,6 +203,11 @@ Page {
     } // grid rect end
 
 /*<----------------------------------------------------------------------->*/
+    function checkFavorites(){
+        console.log("didn't find. Adding");
+        removeFavoriteTool.visible = true;
+    }
+
     function parseResponse(a){
         var schedText = new String;
         schedText = a;
@@ -231,6 +235,7 @@ Page {
             trafficModel.append({ "departTime" : ""+time_[0]+":"+time_[1], "departLine" : "" + lines[1] })
         }
         grid.focus = true
+        addFavoriteTool.visible = true;
     }
 
     function getInfo() {

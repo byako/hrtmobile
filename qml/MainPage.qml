@@ -5,8 +5,8 @@ import HRTMConfig 1.0
 Page {
     id: mainPage
     tools: commonTools
-
     HrtmConfig {id: config}
+    objectName: "mainPage"
 
     Rectangle{
         color: config.bgColor;
