@@ -16,7 +16,6 @@ PageStackWindow {
         visible: true
         ToolIcon {
              id: backTool
-             iconId: "toolbar-back"
              platformIconId: "toolbar-back"
              onClicked: {
                  pageStack.pop()
@@ -25,9 +24,16 @@ PageStackWindow {
              visible: false
         }
         ToolIcon {
+             id: menuTool
              platformIconId: "toolbar-view-menu";
              anchors.right: parent===undefined ? undefined : parent.right
              onClicked: (myMenu.status == DialogStatus.Closed) ? myMenu.open() : myMenu.close()
+        }
+        ToolIcon {
+            id: favoriteTool
+            platformIconId: "toolbar-favorite-mark"
+            anchors.right: menuTool.left
+            onClicked: { (favoriteMenu.status == DialogStatus.Closed) ? favoriteMenu.open() : favoriteMenu.close() }
         }
     }
 
@@ -36,6 +42,57 @@ PageStackWindow {
         visualParent: pageStack
         MenuLayout {
             MenuItem { text: "Offline mode" }
+        }
+    }
+    Menu {
+        id: stopsMenu
+        MenuLayout {
+            MenuItem { text: "Nelikko" }
+        }
+    }
+    Menu {
+        id: linesMenu
+        MenuLayout {
+            MenuItem { text: "112" }
+        }
+    }
+    Menu {
+        id: placesMenu
+        MenuLayout {
+            MenuItem { text: "Home" }
+        }
+    }
+    Menu {
+        id: routesMenu
+        MenuLayout {
+            MenuItem { text: "Home->Work" }
+        }
+    }
+
+    Menu {
+        id: favoriteMenu
+        visualParent: pageStack
+        MenuLayout {
+            MenuItem {
+                text: "Stops"
+//                platformSubItemIndicator: true
+                onClicked: stopsMenu.open()
+            }
+            MenuItem {
+                text: "Lines"
+//                platformSubItemIndicator: true
+                onClicked: linesMenu.open()
+            }
+            MenuItem {
+                text: "Places"
+//                platformSubItemIndicator: true
+                onClicked: placesMenu.open()
+            }
+            MenuItem {
+                text: "Routes"
+//                platformSubItemIndicator: true
+                onClicked: routesMenu.open()
+            }
         }
     }
 }

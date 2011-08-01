@@ -15,7 +15,7 @@ Page {
         height:  parent.height
     }
 
-    Label{
+    Label{     // error label
         Rectangle{
             color: "#606060"
             radius: 10
@@ -30,7 +30,7 @@ Page {
         visible : false
         font.pixelSize: 30
         color: config.textColor
-    }
+    } // error label end
 
     Item {          // search box
         width: 240
@@ -47,10 +47,12 @@ Page {
             width: 240
             height: parent.height
             color: "#7090AA"
-            radius: 10
+            radius: 15
             TextInput{
                 id: stopId
                 anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
                 width: parent.width
                 height: parent.height
                 maximumLength: 16
@@ -68,7 +70,7 @@ Page {
             anchors.top: parent.top
             text: qsTr("Show info")
             width: 200
-            height: 40
+            height: parent.height
             onClicked: {
                 trafficModel.clear();
                 errorLabel.visible = false;
@@ -81,11 +83,11 @@ Page {
     Rectangle{      // data
         id: dataRect
         anchors.left: parent.left
-        anchors.leftMargin: 10
+//        anchors.leftMargin: 10
         anchors.top:  parent.top
         anchors.topMargin: 65
         anchors.right: parent.right
-        anchors.rightMargin: 10
+  //      anchors.rightMargin: 10
         height: 120
         width: parent.width
         color: "#303030"
@@ -94,6 +96,7 @@ Page {
             id: stopNameLabel
             anchors.left: parent.left
             anchors.top: parent.top
+            anchors.topMargin: 5
             text: qsTr("Name")
             color: config.textColor
             font.pixelSize: 30
@@ -102,7 +105,7 @@ Page {
             id: stopName;
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.topMargin: 5
+            anchors.topMargin: 10
             text: qsTr("Name")
             color: config.textColor
             font.pixelSize: 25
@@ -177,7 +180,7 @@ Page {
         }
     }
 
-    Rectangle{
+    Rectangle{    // grid rect
         id: infoRect
         anchors.top: dataRect.bottom
         anchors.topMargin: 10
@@ -198,7 +201,7 @@ Page {
             highlight: Rectangle { color:config.highlightColor; radius:  5 }
             currentIndex: -1
         }
-    }
+    } // grid rect end
 
 /*<----------------------------------------------------------------------->*/
     function parseResponse(a){
