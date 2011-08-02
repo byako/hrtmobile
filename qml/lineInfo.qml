@@ -72,14 +72,14 @@ Page {
             width: 200
             height: parent.height
             onClicked: {
-                console.log("i got " + lineId.acceptableInput.toString())
+                responseModel.clear();
                 lineInfoModel.clear();
                 errorLabel.visible = false;
                 getXML()
                 focus = true
 
-                busStopLabel.text=qsTr(lineId.text + " line info here")
-                busStopLabel.visible=true
+                errprLabel.text=qsTr(lineId.text + " line info here")
+                errorLabel.visible=true
 
             }
         }
@@ -158,7 +158,7 @@ Page {
         id:lineInfoModel
 
         ListElement {
-            stopId: "Stop"
+            stopIdLong: "Stop"
             reachTime: "Time"
         }
     }
@@ -166,26 +166,38 @@ Page {
         id:responseModel
 
         ListElement{
-            shortCode: "Name"
+            lineShortCode: "Name"
             direction: "Direction"
+            typeCode: "0"
             type: "type"
-            id: "id"
-            ListElement {
-                stopId: "Stop"
+            lineLongCode: "lineId"
+/*            ListElement {
+                stopIdLong: "Stop"
                 reachTime: "Time"
-            }
+            }*/
         }
     }
 
     Component{
         id:lineInfoDelegate
-        Item {
-            width: grid.cellWidth; height:  grid.cellHeight;
-            Row {
-                spacing: 10;
-                anchors.fill: parent;
-                Text{ text: lineId; font.pixelSize: 25; color: config.textColor}
-                Text{ text: reachTime; font.pixelSize: 25; color: config.textColor}
+        Rectangle {
+            width: list.width;
+            height: 70;
+            radius: 5
+            color: "#606060"
+            Column {
+                spacing: 5
+                anchors.fill: parent
+                Row {
+                    height: 30
+                    spacing: 20
+                    Text{ text: type; font.pixelSize: 25; color: config.textColor}
+                    Text{ text: lineShortCode; font.pixelSize: 25; color: config.textColor}
+                }
+                Row {
+                    height: 30
+                    Text{ text: direction; font.pixelSize: 25; color: config.textColor}
+                }
             }
             MouseArea {
                 anchors.fill:  parent
@@ -211,7 +223,7 @@ Page {
             anchors.leftMargin:10
             anchors.topMargin: 10
             delegate: lineInfoDelegate
-            model: lineInfoModel
+            model: responseModel
             focus: true
             cellWidth: 200
             cellHeight: 30
@@ -219,6 +231,22 @@ Page {
             highlight: Rectangle { color:config.highlightColor; radius:  5 }
             currentIndex: -1
             clip: true
+            visible: false;
+        }
+        ListView {
+            id: list
+            anchors.fill:  parent
+            anchors.leftMargin:10
+            anchors.topMargin: 10
+            anchors.rightMargin: 10
+            delegate: lineInfoDelegate
+            model: responseModel
+            spacing: 10
+            focus: true
+            highlight: Rectangle { color:config.highlightColor; radius:  5 }
+            currentIndex: -1
+            clip: true
+            visible: true;
         }
     } // grid rect end
 /*<----------------------------------------------------------------------->*/
@@ -229,26 +257,33 @@ Page {
     function parseXML(a){
         console.log("here starts XML parsing:");
         var stops;
+        var lineType;
         for (var ii = 0; ii < a.childNodes.length; ++ii) {
             showRequestInfo("we're in : "+ a.childNodes[ii].nodeName);
             showRequestInfo("line No:"+a.childNodes[ii].childNodes[1].firstChild.nodeValue);
             showRequestInfo("line Type: " + a.childNodes[ii].childNodes[2].firstChild.nodeValue);
             showRequestInfo("line Direction:"+a.childNodes[ii].childNodes[3].firstChild.nodeValue + " -> " + a.childNodes[ii].childNodes[4].firstChild.nodeValue);
             showRequestInfo("line Name:"+a.childNodes[ii].childNodes[5].firstChild.nodeValue);
+            switch(a.childNodes[ii].childNodes[2].firstChild.nodeValue) {
+                case "1": { lineType = "Helsinki bus"; break; }
+                case "2": { lineType = "Tram"; break; }
+                case "3": { lineType = "Espoo bus"; break; }
+                case "4": { lineType = "Vantaa bus"; break; }
+                case "5": { lineType = "Regional bus"; break; }
+                case "6": { lineType = "Metro"; break; }
+                case "7": { lineType = "Ferry"; break; }
+                case "8": { lineType = "U-line"; break; }
+                default: { lineType = "unknown"; break; }
+            }
+
+            responseModel.append({"type" : lineType,
+                                 "lineShortCode" : ""+a.childNodes[ii].childNodes[1].firstChild.nodeValue,
+                                 "direction" : "" + a.childNodes[ii].childNodes[3].firstChild.nodeValue + " -> " + a.childNodes[ii].childNodes[4].firstChild.nodeValue});
             showRequestInfo("Transport Stops:");
             stops = a.childNodes[ii].childNodes[8];
             for (var aa = 0; aa < stops.childNodes.length; ++aa) {
                 showRequestInfo(stops.childNodes[aa].childNodes[0].firstChild.nodeValue + " : " + stops.childNodes[aa].childNodes[1].firstChild.nodeValue);
             }
-/*            for (var bb = 0; bb < a.childNodes[ii].childNodes.length; ++bb) {
-                if (a.childNodes[ii].childNodes[bb].childNodes.length == 1)
-                    showRequestInfo("    "+a.childNodes[ii].childNodes[bb].nodeName+" : "+a.childNodes[ii].childNodes[bb].firstChild.nodeValue);
-                else {
-                    for (var cc = 0; cc < a.childNodes[ii].childNodes[bb].childNodes.length; ++cc) {
-                        showRequestInfo("        "+a.childNodes[ii].childNodes[bb].childNodes[cc].nodeName+" : "+a.childNodes[ii].childNodes[bb].childNodes[cc].firstChild.nodeValue);
-                    }
-                }
-            }*/
         }
     }
 
