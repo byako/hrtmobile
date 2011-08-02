@@ -3,7 +3,6 @@ import com.meego 1.0
 import HRTMConfig 1.0
 
 Page {
-
     id: stopInfoPage
     tools: commonTools
     HrtmConfig {id: config}
@@ -191,6 +190,7 @@ Page {
             id: grid
             anchors.fill:  parent
             anchors.leftMargin:10
+            anchors.topMargin: 10
             delegate: trafficDelegate
             model: trafficModel
             focus: true
@@ -199,12 +199,12 @@ Page {
             width: 420
             highlight: Rectangle { color:config.highlightColor; radius:  5 }
             currentIndex: -1
+            clip: true
         }
     } // grid rect end
 
 /*<----------------------------------------------------------------------->*/
     function checkFavorites(){
-        console.log("didn't find. Adding");
         removeFavoriteTool.visible = true;
     }
 
@@ -227,7 +227,6 @@ Page {
         stopAddress.visible = true;
         stopCity.text = lines[3];
         stopCity.visible = true;
-        console.log("Stop name: " + lines[1] + "; Address: " + lines[2] + "; City: " + lines[3]);
         for (var ii = 1; ii < schedule.length-1; ii++) {
             lines = schedule[ii].split("|");
             time_[0] = lines[0].slice(0,2)

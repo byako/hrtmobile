@@ -11,6 +11,21 @@ PageStackWindow {
 
     HrtmConfig {id: config}
 
+    QueryDialog{
+        id: addFavoriteConfirm
+        acceptButtonText: "Add"
+        rejectButtonText: "Back"
+        message: "Add this to the favorites?"
+        titleText: "Favorites"
+        onAccepted: {
+            removeFavoriteTool.visible = true
+            console.log("Adding to the favorites")
+        }
+        onRejected: {
+            console.log("User declined proposition. Kill")
+        }
+    }
+
     ToolBarLayout {
         id: commonTools
 
@@ -21,22 +36,14 @@ PageStackWindow {
              onClicked: {
                  pageStack.pop()
                  backTool.visible = pageStack.currentPage==mainPage ? false : true
+                 if (addFavoriteTool.visible == true) {
+                     addFavoriteTool.visible = false
+                 }
+                 if (removeFavoriteTool.visible == true) {
+                     removeFavoriteTool.visible = false
+                 }
              }
              visible: false
-        }
-        ToolIcon {
-             id: menuTool
-             platformIconId: "toolbar-view-menu";
-             anchors.right: parent===undefined ? undefined : parent.right
-             onClicked: (myMenu.status == DialogStatus.Closed) ? myMenu.open() : myMenu.close()
-        }
-        ToolIcon {
-            id: favoriteTool
-            platformIconId: "toolbar-favorite-mark"
-            anchors.right: menuTool.left
-            onClicked: {
-                (favoriteMenu.status == DialogStatus.Closed) ? favoriteMenu.open() : favoriteMenu.close()
-            }
         }
         ToolIcon {
             id: addFavoriteTool
@@ -44,15 +51,20 @@ PageStackWindow {
             anchors.right: favoriteTool.left
             anchors.verticalCenter: parent.verticalCenter
             onClicked: {
-                (favoriteMenu.status == DialogStatus.Closed) ? favoriteMenu.open() : favoriteMenu.close()
-                if (pageStack.currentPage.objectName == "stopInfoPage") {
-                    console.log("Ok, I'm on stop info page")
-                    removeFavoriteTool.visible = true
-                } else if (pageStack.currentPage.objectName == "lineInfoPage") {
-                    console.log("Ok, I'm on line info page")
-                    removeFavoriteTool.visible = true
-                } else {
-                    console.log("Ok, I don't know what page is it")
+                 switch (pageStack.currentPage.objectName) {
+                    case "stopInfoPage": {
+                        console.log("Ok, I'm on stop info page")
+                        addFavoriteConfirm.open()
+                        break;
+                    }
+                    case "lineInfoPage": {
+                        console.log("Ok, I'm on line info page")
+                        addFavoriteConfirm.open();
+                        break;
+                    }
+                    default: {
+                        console.log("Ok, I don't know what page is it")
+                    }
                 }
             }
             visible: false;
@@ -78,14 +90,49 @@ PageStackWindow {
             visible: false;
             onVisibleChanged: if (visible == true && addFavoriteTool.visible == true) addFavoriteTool.visible = false;
         }
+        ToolIcon {
+            id: favoriteTool
+            platformIconId: "toolbar-favorite-mark"
+            anchors.right: menuTool.left
+            onClicked: {
+                switch (pageStack.currentPage.objectName) {
+                   case "stopInfoPage": {
+                       (stopsMenu.status == DialogStatus.Closed) ? stopsMenu.open() : stopsMenu.close()
+                       break;
+                   }
+                   case "lineInfoPage": {
+                       (linesMenu.status == DialogStatus.Closed) ? linesMenu.open() : linesMenu.close()
+                       break;
+                   }
+                   case "placeInfoPage": {
+                       (linesMenu.status == DialogStatus.Closed) ? linesMenu.open() : linesMenu.close()
+                       break;
+                   }
+                   case "routeInfoPage": {
+                       (linesMenu.status == DialogStatus.Closed) ? linesMenu.open() : linesMenu.close()
+                       break;
+                   }
+                   default: {
+                       (favoriteMenu.status == DialogStatus.Closed) ? favoriteMenu.open() : favoriteMenu.close()
+                   }
+               }
+            }
+        }
+        ToolIcon {
+             id: menuTool
+             platformIconId: "toolbar-view-menu";
+             anchors.right: parent===undefined ? undefined : parent.right
+             onClicked: {
+                 (myMenu.status == DialogStatus.Closed) ? myMenu.open() : myMenu.close()
+             }
+        }
     }
 
     Menu {
         id: myMenu
-        visualParent: pageStack
         MenuLayout {
             MenuItem { text: "Offline mode" }
-            MenuItem { text: "Option" }
+            MenuItem { text: "Options" }
         }
     }
     Menu {
@@ -156,29 +203,23 @@ PageStackWindow {
             }
         }
     }
-
     Menu {
         id: favoriteMenu
-        visualParent: pageStack
         MenuLayout {
             MenuItem {
                 text: "Stops"
-//                platformSubItemIndicator: true
                 onClicked: stopsMenu.open()
             }
             MenuItem {
                 text: "Lines"
-//                platformSubItemIndicator: true
                 onClicked: linesMenu.open()
             }
             MenuItem {
                 text: "Places"
-//                platformSubItemIndicator: true
                 onClicked: placesMenu.open()
             }
             MenuItem {
                 text: "Routes"
-//                platformSubItemIndicator: true
                 onClicked: routesMenu.open()
             }
         }

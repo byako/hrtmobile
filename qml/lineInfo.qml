@@ -8,36 +8,219 @@ Page {
     HrtmConfig {id: config}
     objectName: "lineInfoPage"
 
-    Rectangle{
+    Rectangle{       // dark background
         color: config.bgColor
         anchors.fill: parent
         width: parent.width
         height:  parent.height
     }
-    Label {
-        id: busStopLabel
-        anchors.centerIn: parent
-        text: qsTr("Line Info here")
-        visible: false
-        color: config.textColor
-    }
-    TextInput{
-        id: stopId
-        width: 140
-        maximumLength: 16
-        onFocusChanged: {
-            focus == true ? openSoftwareInputPanel() : closeSoftwareInputPanel()
-            focus == true ? text = qsTr("") : null
+
+    Label{     // error label
+        Rectangle{
+            color: "#606060"
+            radius: 10
+            anchors.fill: parent
+            width: parent.width
+            height:  parent.height
         }
-        selectionColor: config.highlightColor
-        font.pixelSize: 32
-        anchors.top: parent.top
-        anchors.topMargin: 30
-        anchors.left: parent.left
-        anchors.leftMargin: 10
-        text: "Line ID"
+        id: errorLabel;
+        text: qsTr("Error. Wrong line ID ?")
+        anchors.bottomMargin: 100
+        anchors.centerIn: parent
+        visible : false
+        font.pixelSize: 30
         color: config.textColor
+    } // error label end
+
+    Item {          // search box
+        width: 240
+        height: 35
+        anchors.top: parent.top
+        anchors.topMargin: 5
+        anchors.left: parent.left
+        anchors.leftMargin: 5
+        anchors.right: parent.right
+        anchors.rightMargin: 5
+        Rectangle{
+            anchors.top: parent.top
+            anchors.left: parent.left
+            width: 240
+            height: parent.height
+            color: "#7090AA"
+            radius: 15
+            TextInput{
+                id: lineId
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                width: parent.width
+                height: parent.height
+                maximumLength: 16
+                onFocusChanged: {
+                    focus == true ? openSoftwareInputPanel() : closeSoftwareInputPanel()
+                    focus == true ? text = qsTr("") : null
+                }
+                font.pixelSize: 30
+                color: config.textColor
+                text: "Enter LineID"
+            }
+        }
+       Button{
+            anchors.right: parent.right
+            anchors.top: parent.top
+            text: qsTr("Show info")
+            width: 200
+            height: parent.height
+            onClicked: {
+                console.log("i got " + lineId.acceptableInput.toString())
+                lineInfoModel.clear();
+                errorLabel.visible = false;
+                getXML()
+                focus = true
+
+                busStopLabel.text=qsTr(lineId.text + " line info here")
+                busStopLabel.visible=true
+
+            }
+        }
+    } // searchBox end
+
+    Rectangle{      // data
+        id: dataRect
+        anchors.left: parent.left
+        anchors.top:  parent.top
+        anchors.topMargin: 65
+        anchors.right: parent.right
+        height: 120
+        width: parent.width
+        color: "#303030"
+        radius: 10
+        Label {
+            id: stopNameLabel
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.topMargin: 5
+            text: qsTr("Name")
+            color: config.textColor
+            font.pixelSize: 30
+        }
+        Label {
+            id: stopName;
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.topMargin: 10
+            text: qsTr("Name")
+            color: config.textColor
+            font.pixelSize: 25
+            visible: false
+        }
+        Label {
+            id: stopAddressLabel
+            anchors.top: stopNameLabel.bottom
+            anchors.topMargin: 10
+            anchors.left: parent.left
+            text: qsTr("Address")
+            color: config.textColor
+            font.pixelSize: 30
+        }
+        Label {
+            id: stopAddress;
+            anchors.top: stopName.bottom
+            anchors.topMargin: 13
+            anchors.right: parent.right
+            text: qsTr("Address")
+            color: config.textColor
+            font.pixelSize: 25
+            visible: false
+        }
+        Label {
+            id: stopCityLabel;
+            anchors.top: stopAddressLabel.bottom
+            anchors.topMargin: 10
+            anchors.left: parent.left
+            text: qsTr("City")
+            color: config.textColor
+            font.pixelSize: 30
+        }
+        Label {
+            id: stopCity;
+            anchors.right: parent.right;
+            anchors.top: stopAddress.bottom
+            anchors.topMargin: 13
+            text: qsTr("City")
+            color: config.textColor
+            font.pixelSize: 25
+            visible: false
+        }
+    } // data end
+
+    ListModel{
+        id:lineInfoModel
+
+        ListElement {
+            stopId: "Stop"
+            reachTime: "Time"
+        }
     }
+    ListModel{
+        id:responseModel
+
+        ListElement{
+            shortCode: "Name"
+            direction: "Direction"
+            type: "type"
+            id: "id"
+            ListElement {
+                stopId: "Stop"
+                reachTime: "Time"
+            }
+        }
+    }
+
+    Component{
+        id:lineInfoDelegate
+        Item {
+            width: grid.cellWidth; height:  grid.cellHeight;
+            Row {
+                spacing: 10;
+                anchors.fill: parent;
+                Text{ text: lineId; font.pixelSize: 25; color: config.textColor}
+                Text{ text: reachTime; font.pixelSize: 25; color: config.textColor}
+            }
+            MouseArea {
+                anchors.fill:  parent
+                onClicked: {
+                    grid.focus = true;
+                    grid.currentIndex = index;
+                }
+            }
+        }
+    }
+
+    Rectangle{    // grid rect
+        id: infoRect
+        anchors.top: dataRect.bottom
+        anchors.topMargin: 10
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        color: "#303030"
+        GridView {
+            id: grid
+            anchors.fill:  parent
+            anchors.leftMargin:10
+            anchors.topMargin: 10
+            delegate: lineInfoDelegate
+            model: lineInfoModel
+            focus: true
+            cellWidth: 200
+            cellHeight: 30
+            width: 420
+            highlight: Rectangle { color:config.highlightColor; radius:  5 }
+            currentIndex: -1
+            clip: true
+        }
+    } // grid rect end
 /*<----------------------------------------------------------------------->*/
     function showRequestInfo(text) {
         console.log(text)
@@ -87,25 +270,11 @@ Page {
                 showRequestInfo("ERROR")
             }
         }
-    doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&query="+stopId.text); // for line info request
+    doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&query="+lineId.text); // for line info request
 //             http://api.reittiopas.fi/public-ytv/fi/api/?key="+stopId.text+"&user=byako&pass=gfccdjhl");
     console.log("url: " + doc.url);
     doc.send();
 
     }
 /*<----------------------------------------------------------------------->*/
-
-    Button{
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.leftMargin: 10
-        anchors.topMargin: 20
-        text: qsTr("Show info")
-        onClicked: {
-            getXML()
-            busStopLabel.text=qsTr(stopId.text + " line info here")
-            busStopLabel.visible=true
-            focus = true
-        }
-    }
 }
