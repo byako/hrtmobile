@@ -33,6 +33,7 @@ Page {
     } // error label end
 
     Item {          // search box
+        id: searchBox
         width: 240
         height: 35
         anchors.top: parent.top
@@ -78,29 +79,39 @@ Page {
                 getXML()
                 focus = true
 
-                errprLabel.text=qsTr(lineId.text + " line info here")
+                errorLabel.text=qsTr(lineId.text + " line info here")
                 errorLabel.visible=true
 
             }
         }
     } // searchBox end
 
+    Rectangle {
+        id: hrLineSeparator
+        anchors.left: parent.left
+        anchors.top: searchBox.bottom
+        anchors.topMargin: 5
+        width: parent.width
+        height:  2
+        color: config.textColor
+    }
+
     Rectangle{      // data
         id: dataRect
         anchors.left: parent.left
-        anchors.top:  parent.top
-        anchors.topMargin: 65
+        anchors.top:  searchBox.bottom
+        anchors.topMargin: 10
         anchors.right: parent.right
         height: 120
         width: parent.width
-        color: "#303030"
+        color: config.bgColor
         radius: 10
         Label {
             id: stopNameLabel
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.topMargin: 5
-            text: qsTr("Name")
+            text: qsTr("Line")
             color: config.textColor
             font.pixelSize: 30
         }
@@ -109,7 +120,7 @@ Page {
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.topMargin: 10
-            text: qsTr("Name")
+            text: qsTr("Direction")
             color: config.textColor
             font.pixelSize: 25
             visible: false
@@ -119,7 +130,7 @@ Page {
             anchors.top: stopNameLabel.bottom
             anchors.topMargin: 10
             anchors.left: parent.left
-            text: qsTr("Address")
+            text: qsTr("Direction")
             color: config.textColor
             font.pixelSize: 30
         }
@@ -141,6 +152,7 @@ Page {
             text: qsTr("City")
             color: config.textColor
             font.pixelSize: 30
+            visible: false
         }
         Label {
             id: stopCity;
@@ -156,7 +168,6 @@ Page {
 
     ListModel{
         id:lineInfoModel
-
         ListElement {
             stopIdLong: "Stop"
             reachTime: "Time"
@@ -166,11 +177,11 @@ Page {
         id:responseModel
 
         ListElement{
+            lineLongCode: "lineId"
             lineShortCode: "Name"
             direction: "Direction"
             typeCode: "0"
             type: "type"
-            lineLongCode: "lineId"
 /*            ListElement {
                 stopIdLong: "Stop"
                 reachTime: "Time"
@@ -184,7 +195,7 @@ Page {
             width: list.width;
             height: 70;
             radius: 5
-            color: "#606060"
+            color: "#7090AA"
             Column {
                 spacing: 5
                 anchors.fill: parent
@@ -202,11 +213,23 @@ Page {
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
-                    grid.focus = true;
-                    grid.currentIndex = index;
+                    list.focus = true;
+                    list.currentIndex = index;
+                    console.log("picked: line " + responseModel.get(list.currentIndex).lineLongCode)
+//                    console.log("picked: line " + list.currentIndex)
                 }
             }
         }
+    }
+
+    Rectangle {
+        id: hrLineSeparator2
+        anchors.left: parent.left
+        anchors.top: dataRect.bottom
+        anchors.topMargin: 5
+        width: parent.width
+        height:  2
+        color: config.textColor
     }
 
     Rectangle{    // grid rect
@@ -216,7 +239,7 @@ Page {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        color: "#303030"
+        color: config.bgColor
         GridView {
             id: grid
             anchors.fill:  parent
@@ -275,13 +298,18 @@ Page {
                 case "8": { lineType = "U-line"; break; }
                 default: { lineType = "unknown"; break; }
             }
-
-            responseModel.append({"type" : lineType,
+            responseModel.append({"lineLongCode" : "" + a.childNodes[ii].childNodes[0].firstChild.nodeValue,
                                  "lineShortCode" : ""+a.childNodes[ii].childNodes[1].firstChild.nodeValue,
-                                 "direction" : "" + a.childNodes[ii].childNodes[3].firstChild.nodeValue + " -> " + a.childNodes[ii].childNodes[4].firstChild.nodeValue});
+                                 "direction" : "" + a.childNodes[ii].childNodes[3].firstChild.nodeValue + " -> " + a.childNodes[ii].childNodes[4].firstChild.nodeValue,
+                                 "type" : ""+lineType,
+                                 "typeCode" : "" + a.childNodes[ii].childNodes[2].firstChild.nodeValue
+                                 });
             showRequestInfo("Transport Stops:");
             stops = a.childNodes[ii].childNodes[8];
+
             for (var aa = 0; aa < stops.childNodes.length; ++aa) {
+//                ex = lineInfoModel.get(ii)
+//                ex.append({"stopIdLong" : ""+stops.childNodes[aa].childNodes[0].firstChild.nodeValue, "reachTime" : ""+stops.childNodes[aa].childNodes[1].firstChild.nodeValue});
                 showRequestInfo(stops.childNodes[aa].childNodes[0].firstChild.nodeValue + " : " + stops.childNodes[aa].childNodes[1].firstChild.nodeValue);
             }
         }
@@ -291,18 +319,13 @@ Page {
         var doc = new XMLHttpRequest();
         doc.onreadystatechange = function() {
             if (doc.readyState == XMLHttpRequest.HEADERS_RECEIVED) {
-                showRequestInfo("Headers -->");
-                showRequestInfo(doc.getAllResponseHeaders ());
-                showRequestInfo("Last modified -->");
-                showRequestInfo(doc.getResponseHeader ("Last-Modified"));
             } else if (doc.readyState == XMLHttpRequest.DONE) {
                 parseXML(doc.responseXML.documentElement);
-                showRequestInfo("Headers -->");
-                showRequestInfo(doc.getAllResponseHeaders ());
-                showRequestInfo("Last modified -->");
-                showRequestInfo(doc.getResponseHeader ("Last-Modified"));
             } else if (doc.readyState == XMLHttpRequest.ERROR) {
                 showRequestInfo("ERROR")
+                list.visible=false
+                grid.visible=false
+                errorLabel.visible = true
             }
         }
     doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&query="+lineId.text); // for line info request

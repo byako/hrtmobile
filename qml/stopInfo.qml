@@ -33,6 +33,7 @@ Page {
     } // error label end
 
     Item {          // search box
+        id: searchBox
         width: 240
         height: 35
         anchors.top: parent.top
@@ -80,15 +81,25 @@ Page {
         }
     } // searchBox end
 
+    Rectangle {
+        id: hrLineSeparator
+        anchors.left: parent.left
+        anchors.top: searchBox.bottom
+        anchors.topMargin: 5
+        width: parent.width
+        height:  2
+        color: config.textColor
+    }
+
     Rectangle{      // data
         id: dataRect
         anchors.left: parent.left
-        anchors.top:  parent.top
-        anchors.topMargin: 65
+        anchors.top:  searchBox.bottom
+        anchors.topMargin: 10
         anchors.right: parent.right
         height: 120
         width: parent.width
-        color: "#303030"
+        color: config.bgColor
         radius: 10
         Label {
             id: stopNameLabel
@@ -149,6 +160,16 @@ Page {
         }
     } // data end
 
+    Rectangle {
+        id: hrLineSeparator2
+        anchors.left: parent.left
+        anchors.top: dataRect.bottom
+        anchors.topMargin: 5
+        width: parent.width
+        height:  2
+        color: config.textColor
+    }
+
     ListModel{
         id:trafficModel
 
@@ -185,7 +206,7 @@ Page {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        color: "#303030"
+        color: config.bgColor
         GridView {
             id: grid
             anchors.fill:  parent
@@ -234,7 +255,7 @@ Page {
             trafficModel.append({ "departTime" : ""+time_[0]+":"+time_[1], "departLine" : "" + lines[1] })
         }
         grid.focus = true
-        addFavoriteTool.visible = true;
+        addFavoriteTool.visible = true
     }
 
     function getInfo() {
