@@ -1,6 +1,7 @@
 import QtQuick 1.1
 import com.meego 1.0
 import HRTMConfig 1.0
+import "lineInfo.js" as lineInfoScript
 
 Page {
     id: lineInfoPage
@@ -73,7 +74,7 @@ Page {
             width: 200
             height: parent.height
             onClicked: {
-                responseModel.clear();
+                stopReachModel.clear();
                 lineInfoModel.clear();
                 errorLabel.visible = false;
                 getXML()
@@ -86,7 +87,7 @@ Page {
         }
     } // searchBox end
 
-    Rectangle {
+    Rectangle {     // decorative horizontal line
         id: hrLineSeparator
         anchors.left: parent.left
         anchors.top: searchBox.bottom
@@ -166,15 +167,40 @@ Page {
         }
     } // data end
 
-    ListModel{
-        id:lineInfoModel
+    ListModel{      // stops
+        id:stopReachModel
         ListElement {
             stopIdLong: "Stop"
             reachTime: "Time"
         }
     }
+
+    Component{
+        id:stopReachDelegate
+        Rectangle {
+            width: grid.cellWidth;
+            height: grid.cellHeight;
+            radius: 5
+            color: "#7090AA"
+            Row {
+                height: parent.height
+                spacing: 10
+                Text{ text: stopIdLong; font.pixelSize: 25; color: config.textColor}
+                Text{ text: reachTime; font.pixelSize: 25; color: config.textColor}
+            }
+            MouseArea {
+                anchors.fill:  parent
+                onClicked: {
+                    grid.focus = true;
+                    grid.currentIndex = index;
+                    console.log("picked: cell " + lineInfoModel.get(list.currentIndex).lineLongCode)
+                }
+            }
+        }
+    }
+
     ListModel{
-        id:responseModel
+        id:lineInfoModel
 
         ListElement{
             lineLongCode: "lineId"
@@ -215,7 +241,8 @@ Page {
                 onClicked: {
                     list.focus = true;
                     list.currentIndex = index;
-                    console.log("picked: line " + responseModel.get(list.currentIndex).lineLongCode)
+                    console.log("picked: line " + lineInfoModel.get(list.currentIndex).lineLongCode)
+                    getStops(lineInfoModel.get(list.currentIndex).lineLongCode);
 //                    console.log("picked: line " + list.currentIndex)
                 }
             }
@@ -246,7 +273,7 @@ Page {
             anchors.leftMargin:10
             anchors.topMargin: 10
             delegate: lineInfoDelegate
-            model: responseModel
+            model: stopReachModel
             focus: true
             cellWidth: 200
             cellHeight: 30
@@ -263,7 +290,7 @@ Page {
             anchors.topMargin: 10
             anchors.rightMargin: 10
             delegate: lineInfoDelegate
-            model: responseModel
+            model: lineInfoModel
             spacing: 10
             focus: true
             highlight: Rectangle { color:config.highlightColor; radius:  5 }
@@ -277,9 +304,21 @@ Page {
         console.log(text)
     }
 
+    function getStops(a){
+        var stops;
+        stops = lineInfoScript.doc.responseXML.documentElement.childNodes[a].childNodes[8];
+
+        for (var aa = 0; aa < stops.childNodes.length; ++aa) {
+//                ex = lineInfoModel.get(ii)
+//                ex.append({"stopIdLong" : ""+stops.childNodes[aa].childNodes[0].firstChild.nodeValue, "reachTime" : ""+stops.childNodes[aa].childNodes[1].firstChild.nodeValue});
+            showRequestInfo(stops.childNodes[aa].childNodes[0].firstChild.nodeValue + " : " + stops.childNodes[aa].childNodes[1].firstChild.nodeValue);
+            stopReachModel.append({"stopIdLong" : stops.childNodes[aa].childNodes[0].firstChild.nodeValue,
+                                  "reachTime" : stops.childNodes[aa].childNodes[1].firstChild.nodeValue });
+        }
+    }
+
     function parseXML(a){
         console.log("here starts XML parsing:");
-        var stops;
         var lineType;
         for (var ii = 0; ii < a.childNodes.length; ++ii) {
             showRequestInfo("we're in : "+ a.childNodes[ii].nodeName);
@@ -298,40 +337,33 @@ Page {
                 case "8": { lineType = "U-line"; break; }
                 default: { lineType = "unknown"; break; }
             }
-            responseModel.append({"lineLongCode" : "" + a.childNodes[ii].childNodes[0].firstChild.nodeValue,
+            lineInfoModel.append({"lineLongCode" : "" + a.childNodes[ii].childNodes[0].firstChild.nodeValue,
                                  "lineShortCode" : ""+a.childNodes[ii].childNodes[1].firstChild.nodeValue,
                                  "direction" : "" + a.childNodes[ii].childNodes[3].firstChild.nodeValue + " -> " + a.childNodes[ii].childNodes[4].firstChild.nodeValue,
                                  "type" : ""+lineType,
                                  "typeCode" : "" + a.childNodes[ii].childNodes[2].firstChild.nodeValue
                                  });
             showRequestInfo("Transport Stops:");
-            stops = a.childNodes[ii].childNodes[8];
 
-            for (var aa = 0; aa < stops.childNodes.length; ++aa) {
-//                ex = lineInfoModel.get(ii)
-//                ex.append({"stopIdLong" : ""+stops.childNodes[aa].childNodes[0].firstChild.nodeValue, "reachTime" : ""+stops.childNodes[aa].childNodes[1].firstChild.nodeValue});
-                showRequestInfo(stops.childNodes[aa].childNodes[0].firstChild.nodeValue + " : " + stops.childNodes[aa].childNodes[1].firstChild.nodeValue);
-            }
         }
     }
 
     function getXML() {
-        var doc = new XMLHttpRequest();
-        doc.onreadystatechange = function() {
-            if (doc.readyState == XMLHttpRequest.HEADERS_RECEIVED) {
-            } else if (doc.readyState == XMLHttpRequest.DONE) {
-                parseXML(doc.responseXML.documentElement);
-            } else if (doc.readyState == XMLHttpRequest.ERROR) {
+        lineInfoScript.doc.onreadystatechange = function() {
+            if (lineInfoScript.doc.readyState == XMLHttpRequest.HEADERS_RECEIVED) {
+            } else if (lineInfoScript.doc.readyState == XMLHttpRequest.DONE) {
+                parseXML(lineInfoScript.doc.responseXML.documentElement);
+            } else if (lineInfoScript.doc.readyState == XMLHttpRequest.ERROR) {
                 showRequestInfo("ERROR")
                 list.visible=false
                 grid.visible=false
                 errorLabel.visible = true
             }
         }
-    doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&query="+lineId.text); // for line info request
+    lineInfoScript.doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&query="+lineId.text); // for line info request
 //             http://api.reittiopas.fi/public-ytv/fi/api/?key="+stopId.text+"&user=byako&pass=gfccdjhl");
-    console.log("url: " + doc.url);
-    doc.send();
+    console.log("url: " + lineInfoScript.doc.url);
+    lineInfoScript.doc.send();
 
     }
 /*<----------------------------------------------------------------------->*/
