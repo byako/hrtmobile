@@ -1,7 +1,7 @@
 import QtQuick 1.1
 import com.meego 1.0
 import HRTMConfig 1.0
-import "lineInfo.js" as lineInfoScript
+import "lineInfo.js" as JS
 
 Page {
     id: lineInfoPage
@@ -36,19 +36,20 @@ Page {
     Item {          // search box
         id: searchBox
         width: 240
-        height: 35
+        height: 40
         anchors.top: parent.top
         anchors.topMargin: 5
         anchors.left: parent.left
-        anchors.leftMargin: 5
+        anchors.leftMargin: 10
         anchors.right: parent.right
-        anchors.rightMargin: 5
+        anchors.rightMargin: 10
         Rectangle{
-            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 2
             anchors.left: parent.left
             width: 240
-            height: parent.height
-            color: "#7090AA"
+            height: 35
+            color: "#205080"
             radius: 15
             TextInput{
                 id: lineId
@@ -62,28 +63,20 @@ Page {
                     focus == true ? openSoftwareInputPanel() : closeSoftwareInputPanel()
                     focus == true ? text = qsTr("") : null
                 }
+                onAccepted: buttonClicked()
                 font.pixelSize: 30
                 color: config.textColor
                 text: "Enter LineID"
             }
         }
        Button{
+            id: searchButton
             anchors.right: parent.right
-            anchors.top: parent.top
+            anchors.bottom: parent.bottom
             text: qsTr("Show info")
             width: 200
             height: parent.height
-            onClicked: {
-                stopReachModel.clear();
-                lineInfoModel.clear();
-                errorLabel.visible = false;
-                getXML()
-                focus = true
-
-                errorLabel.text=qsTr(lineId.text + " line info here")
-                errorLabel.visible=true
-
-            }
+            onClicked: buttonClicked()
         }
     } // searchBox end
 
@@ -100,70 +93,45 @@ Page {
     Rectangle{      // data
         id: dataRect
         anchors.left: parent.left
+        anchors.leftMargin: 10
         anchors.top:  searchBox.bottom
         anchors.topMargin: 10
         anchors.right: parent.right
-        height: 120
+        anchors.rightMargin: 10
+        visible: false
+        height: 90
         width: parent.width
-        color: config.bgColor
+        color: "#205080"
         radius: 10
         Label {
-            id: stopNameLabel
-            anchors.left: parent.left
-            anchors.top: parent.top
-            anchors.topMargin: 5
-            text: qsTr("Line")
-            color: config.textColor
-            font.pixelSize: 30
-        }
-        Label {
-            id: stopName;
-            anchors.right: parent.right
+            id: lineType;
+            anchors.left: parent.left;
+            anchors.leftMargin: 10
             anchors.top: parent.top
             anchors.topMargin: 10
+            text: qsTr("Line type")
+            color: config.textColor
+            font.pixelSize: 25
+        }
+        Label {
+            id: lineShortCodeName;
+            anchors.left: lineType.right
+            anchors.leftMargin: 10
+            anchors.top: parent.top
+            anchors.topMargin: 10
+            text: qsTr("line")
+            color: config.textColor
+            font.pixelSize: 25
+        }
+        Label {
+            id: lineDirection;
+            anchors.top: lineShortCodeName.bottom
+            anchors.topMargin: 15
+            anchors.left: parent.left
+            anchors.leftMargin: 10
             text: qsTr("Direction")
             color: config.textColor
             font.pixelSize: 25
-            visible: false
-        }
-        Label {
-            id: stopAddressLabel
-            anchors.top: stopNameLabel.bottom
-            anchors.topMargin: 10
-            anchors.left: parent.left
-            text: qsTr("Direction")
-            color: config.textColor
-            font.pixelSize: 30
-        }
-        Label {
-            id: stopAddress;
-            anchors.top: stopName.bottom
-            anchors.topMargin: 13
-            anchors.right: parent.right
-            text: qsTr("Address")
-            color: config.textColor
-            font.pixelSize: 25
-            visible: false
-        }
-        Label {
-            id: stopCityLabel;
-            anchors.top: stopAddressLabel.bottom
-            anchors.topMargin: 10
-            anchors.left: parent.left
-            text: qsTr("City")
-            color: config.textColor
-            font.pixelSize: 30
-            visible: false
-        }
-        Label {
-            id: stopCity;
-            anchors.right: parent.right;
-            anchors.top: stopAddress.bottom
-            anchors.topMargin: 13
-            text: qsTr("City")
-            color: config.textColor
-            font.pixelSize: 25
-            visible: false
         }
     } // data end
 
@@ -181,10 +149,12 @@ Page {
             width: grid.cellWidth;
             height: grid.cellHeight;
             radius: 5
-            color: "#7090AA"
+            color: "#000000"
             Row {
-                height: parent.height
-                spacing: 10
+                anchors.left: parent.left
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                spacing: 30
                 Text{ text: stopIdLong; font.pixelSize: 25; color: config.textColor}
                 Text{ text: reachTime; font.pixelSize: 25; color: config.textColor}
             }
@@ -193,7 +163,6 @@ Page {
                 onClicked: {
                     grid.focus = true;
                     grid.currentIndex = index;
-                    console.log("picked: cell " + lineInfoModel.get(list.currentIndex).lineLongCode)
                 }
             }
         }
@@ -208,10 +177,6 @@ Page {
             direction: "Direction"
             typeCode: "0"
             type: "type"
-/*            ListElement {
-                stopIdLong: "Stop"
-                reachTime: "Time"
-            }*/
         }
     }
 
@@ -221,7 +186,7 @@ Page {
             width: list.width;
             height: 70;
             radius: 5
-            color: "#7090AA"
+            color: "#205080"
             Column {
                 spacing: 5
                 anchors.fill: parent
@@ -241,9 +206,17 @@ Page {
                 onClicked: {
                     list.focus = true;
                     list.currentIndex = index;
-                    console.log("picked: line " + lineInfoModel.get(list.currentIndex).lineLongCode)
-                    getStops(lineInfoModel.get(list.currentIndex).lineLongCode);
-//                    console.log("picked: line " + list.currentIndex)
+//                    console.log("picked: line " + lineInfoModel.get(list.currentIndex).lineLongCode)
+                    getStops(list.currentIndex);
+                    list.visible = false
+                    grid.visible = true
+                    dataRect.visible = true
+                    lineShortCodeName.text = lineInfoModel.get(list.currentIndex).lineShortCode
+//                    lineShortCodeName.visible = true
+                    lineDirection.text = lineInfoModel.get(list.currentIndex).direction
+//                    lineDirection.visible = true
+                    lineType.text = lineInfoModel.get(list.currentIndex).type
+//                    lineType.visible = true
                 }
             }
         }
@@ -272,10 +245,10 @@ Page {
             anchors.fill:  parent
             anchors.leftMargin:10
             anchors.topMargin: 10
-            delegate: lineInfoDelegate
+            delegate: stopReachDelegate
             model: stopReachModel
             focus: true
-            cellWidth: 200
+            cellWidth: 230
             cellHeight: 30
             width: 420
             highlight: Rectangle { color:config.highlightColor; radius:  5 }
@@ -296,7 +269,7 @@ Page {
             highlight: Rectangle { color:config.highlightColor; radius:  5 }
             currentIndex: -1
             clip: true
-            visible: true;
+            visible: false
         }
     } // grid rect end
 /*<----------------------------------------------------------------------->*/
@@ -306,26 +279,16 @@ Page {
 
     function getStops(a){
         var stops;
-        stops = lineInfoScript.doc.responseXML.documentElement.childNodes[a].childNodes[8];
-
+        stops = JS.doc.responseXML.documentElement.childNodes[a].childNodes[8];
         for (var aa = 0; aa < stops.childNodes.length; ++aa) {
-//                ex = lineInfoModel.get(ii)
-//                ex.append({"stopIdLong" : ""+stops.childNodes[aa].childNodes[0].firstChild.nodeValue, "reachTime" : ""+stops.childNodes[aa].childNodes[1].firstChild.nodeValue});
-            showRequestInfo(stops.childNodes[aa].childNodes[0].firstChild.nodeValue + " : " + stops.childNodes[aa].childNodes[1].firstChild.nodeValue);
             stopReachModel.append({"stopIdLong" : stops.childNodes[aa].childNodes[0].firstChild.nodeValue,
                                   "reachTime" : stops.childNodes[aa].childNodes[1].firstChild.nodeValue });
         }
     }
 
     function parseXML(a){
-        console.log("here starts XML parsing:");
         var lineType;
         for (var ii = 0; ii < a.childNodes.length; ++ii) {
-            showRequestInfo("we're in : "+ a.childNodes[ii].nodeName);
-            showRequestInfo("line No:"+a.childNodes[ii].childNodes[1].firstChild.nodeValue);
-            showRequestInfo("line Type: " + a.childNodes[ii].childNodes[2].firstChild.nodeValue);
-            showRequestInfo("line Direction:"+a.childNodes[ii].childNodes[3].firstChild.nodeValue + " -> " + a.childNodes[ii].childNodes[4].firstChild.nodeValue);
-            showRequestInfo("line Name:"+a.childNodes[ii].childNodes[5].firstChild.nodeValue);
             switch(a.childNodes[ii].childNodes[2].firstChild.nodeValue) {
                 case "1": { lineType = "Helsinki bus"; break; }
                 case "2": { lineType = "Tram"; break; }
@@ -343,28 +306,43 @@ Page {
                                  "type" : ""+lineType,
                                  "typeCode" : "" + a.childNodes[ii].childNodes[2].firstChild.nodeValue
                                  });
-            showRequestInfo("Transport Stops:");
-
         }
     }
 
     function getXML() {
-        lineInfoScript.doc.onreadystatechange = function() {
-            if (lineInfoScript.doc.readyState == XMLHttpRequest.HEADERS_RECEIVED) {
-            } else if (lineInfoScript.doc.readyState == XMLHttpRequest.DONE) {
-                parseXML(lineInfoScript.doc.responseXML.documentElement);
-            } else if (lineInfoScript.doc.readyState == XMLHttpRequest.ERROR) {
+        JS.doc.onreadystatechange = function() {
+            if (JS.doc.readyState == XMLHttpRequest.HEADERS_RECEIVED) {
+            } else if (JS.doc.readyState == XMLHttpRequest.DONE) {
+                if (JS.doc.responseXML == null) {
+                    errorLabel.visible = true
+                    errorLabel.text = "No lines found"
+                    list.visible=false
+                    grid.visible=false
+                    return
+                } else {
+                    showRequestInfo("OK, got " + JS.doc.responseXML.documentElement.childNodes.length+ " lines")
+                    parseXML(JS.doc.responseXML.documentElement);
+                    list.visible = true
+                }
+            } else if (JS.doc.readyState == XMLHttpRequest.ERROR) {
                 showRequestInfo("ERROR")
+                errorLabel.visible = true
+                errorLabel.text = "ERROR"
                 list.visible=false
                 grid.visible=false
-                errorLabel.visible = true
             }
         }
-    lineInfoScript.doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&query="+lineId.text); // for line info request
+    JS.doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&query="+lineId.text); // for line info request
 //             http://api.reittiopas.fi/public-ytv/fi/api/?key="+stopId.text+"&user=byako&pass=gfccdjhl");
-    console.log("url: " + lineInfoScript.doc.url);
-    lineInfoScript.doc.send();
+    JS.doc.send();
+    }
 
+    function buttonClicked() {
+        stopReachModel.clear()
+        lineInfoModel.clear()
+        errorLabel.visible = false
+        searchButton.focus = true
+        getXML()
     }
 /*<----------------------------------------------------------------------->*/
 }

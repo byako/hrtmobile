@@ -41,7 +41,7 @@ OTHER_FILES += \
     qml/stopInfo.qml \
     qml/lineInfo.qml \
     qml/lineSchedule.qml \
-    lineInfo.js
+    qml/lineInfo.js
 
 RESOURCES += \
     res.qrc

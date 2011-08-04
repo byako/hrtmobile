@@ -61,23 +61,20 @@ Page {
                     focus == true ? openSoftwareInputPanel() : closeSoftwareInputPanel()
                     focus == true ? text = qsTr("") : null
                 }
+                onAccepted: buttonClicked()
                 font.pixelSize: 30
                 color: config.textColor
                 text: "Enter StopID"
             }
         }
        Button{
+            id: searchButton
             anchors.right: parent.right
             anchors.top: parent.top
             text: qsTr("Show info")
             width: 200
             height: parent.height
-            onClicked: {
-                trafficModel.clear();
-                errorLabel.visible = false;
-                getInfo()
-                focus = true
-            }
+            onClicked: buttonClicked()
         }
     } // searchBox end
 
@@ -101,6 +98,7 @@ Page {
         width: parent.width
         color: config.bgColor
         radius: 10
+        visible: false
         Label {
             id: stopNameLabel
             anchors.left: parent.left
@@ -221,6 +219,7 @@ Page {
             highlight: Rectangle { color:config.highlightColor; radius:  5 }
             currentIndex: -1
             clip: true
+            visible: false
         }
     } // grid rect end
 
@@ -250,11 +249,14 @@ Page {
         stopCity.visible = true;
         for (var ii = 1; ii < schedule.length-1; ii++) {
             lines = schedule[ii].split("|");
-            time_[0] = lines[0].slice(0,2)
-            time_[1] = lines[0].slice(2,4)
+            time_[0] = lines[0].slice(0,lines[0].length -2)
+            time_[1] = lines[0].slice(lines[0].length-2,lines[0].length)
+            if (time_[0] > 23) time_[0]-=24
             trafficModel.append({ "departTime" : ""+time_[0]+":"+time_[1], "departLine" : "" + lines[1] })
         }
         grid.focus = true
+        grid.visible = true
+        dataRect.visible = true
         addFavoriteTool.visible = true
     }
 
@@ -262,19 +264,20 @@ Page {
         var doc = new XMLHttpRequest();
         doc.onreadystatechange = function() {
             if (doc.readyState == XMLHttpRequest.DONE) {
-                errorLabel.text = qsTr("Error. Wrong stop ID ?");
-                errorLabel.visible = false;
-                parseResponse(doc.responseText);
+                errorLabel.text = qsTr("Error. Wrong stop ID ?")
+                errorLabel.visible = false
+                parseResponse(doc.responseText)
             } else if (doc.readyState == XMLHttpRequest.ERROR) {
-                trafficModel.clear();
-                errorLabel.text = qsTr("Request error. Is Network available?");
-                errorLabel.visible = True;
+                trafficModel.clear()
+                dataRect.visible = false
+                errorLabel.text = qsTr("Request error. Is Network available?")
+                errorLabel.visible = True
             }
         }
 //              API 1.0 (plaintext) : faster, more informative
         if (stopId.text == "" || stopId.text.length > 7 || stopId.text.length < 4) {
-            errorLabel.text = qsTr("Wrong stop ID format");
-            errorLabel.visible = true;
+            errorLabel.text = qsTr("Wrong stop ID format")
+            errorLabel.visible = true
             return;
         }
 
@@ -285,6 +288,14 @@ Page {
 
         doc.send();
     }
+
+    function buttonClicked() {
+        trafficModel.clear()
+        errorLabel.visible = false
+        searchButton.focus = true
+        getInfo()
+    }
+
 /*<----------------------------------------------------------------------->*/
 
 }

@@ -5,6 +5,6 @@
         <file>qml/lineInfo.qml</file>
         <file>qml/stopInfo.qml</file>
         <file>qml/lineSchedule.qml</file>
-        <file alias="lineInfo.js">lineInfo.js</file>
+        <file>qml/lineInfo.js</file>
     </qresource>
 </RCC>
