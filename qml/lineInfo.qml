@@ -135,6 +135,85 @@ Page {
         }
     } // data end
 
+    Rectangle {
+        id: tabRect
+        anchors.top: dataRect.bottom
+        anchors.topMargin: 10
+        anchors.left: parent.left
+        anchors.leftMargin: 10
+        anchors.right: parent.right
+        anchors.rightMargin: 10
+        width: parent.width
+        height: 45
+        color: "#000000"
+        Row {
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: parent.width-80
+            height: parent.height
+            Button {
+                Rectangle {
+                    id: linesRect
+                    anchors.fill: parent
+                    color: "#505050"
+                }
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Lines"
+                    color: "#FFFFFF"
+                    font.pixelSize: 25
+                }
+                width: parent.width/2-20
+                onClicked: {
+                    if (grid.visible == true) {
+                        grid.visible = false
+                        linesRect.color = "#707070"
+                        list.visible = true
+                        gridRect.color = "#505050"
+                    }
+                }
+                onPressedChanged: {
+                    if (pressed == true) {
+                        linesRect.color = "#909090"
+                    } else {
+                        linesRect.color = list.visible ? "#707070" : "#505050"
+                    }
+                }
+            }
+            Button {
+                Rectangle {
+                    id: gridRect
+                    anchors.fill: parent
+                    color: "#505050"
+                }
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Info"
+                    color: "#FFFFFF"
+                    font.pixelSize: 25
+                }
+                width: parent.width/2-20
+                onClicked: {
+                    if (list.visible == true) {
+                        grid.visible = true
+                        gridRect.color = "#707070"
+                        list.visible = false
+                        linesRect.color = "#505050"
+                    }
+                }
+                onPressedChanged: {
+                    if (pressed == true) {
+                        gridRect.color = "#909090"
+                    } else {
+                        gridRect.color = grid.visible ? "#707070" : "#505050"
+                    }
+                }
+
+            }
+        }
+    }
+
     ListModel{      // stops
         id:stopReachModel
         ListElement {
@@ -184,12 +263,15 @@ Page {
         id:lineInfoDelegate
         Rectangle {
             width: list.width;
-            height: 70;
-            radius: 5
+            height: 70
+            radius: 10
             color: "#205080"
             Column {
                 spacing: 5
                 anchors.fill: parent
+                anchors.topMargin: 5
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
                 Row {
                     height: 30
                     spacing: 20
@@ -203,20 +285,25 @@ Page {
             }
             MouseArea {
                 anchors.fill:  parent
+                onPressedChanged: {
+                    if (pressed == true) {
+                        parent.color = "#BBBBAA"
+                    } else {
+                        parent.color = "#205080"
+                    }
+                }
                 onClicked: {
-                    list.focus = true;
-                    list.currentIndex = index;
+                    list.focus = true
+                    list.currentIndex = index
 //                    console.log("picked: line " + lineInfoModel.get(list.currentIndex).lineLongCode)
-                    getStops(list.currentIndex);
+                    stopReachModel.clear()
+                    getStops(list.currentIndex)
                     list.visible = false
                     grid.visible = true
                     dataRect.visible = true
                     lineShortCodeName.text = lineInfoModel.get(list.currentIndex).lineShortCode
-//                    lineShortCodeName.visible = true
                     lineDirection.text = lineInfoModel.get(list.currentIndex).direction
-//                    lineDirection.visible = true
                     lineType.text = lineInfoModel.get(list.currentIndex).type
-//                    lineType.visible = true
                 }
             }
         }
@@ -234,7 +321,7 @@ Page {
 
     Rectangle{    // grid rect
         id: infoRect
-        anchors.top: dataRect.bottom
+        anchors.top: tabRect.bottom
         anchors.topMargin: 10
         anchors.left: parent.left
         anchors.right: parent.right
