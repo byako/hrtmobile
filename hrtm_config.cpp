@@ -1,4 +1,5 @@
 #include "hrtm_config.h"
+#include <QFile>
 
 HrtmConfig::HrtmConfig(QDeclarativeItem *parent) :
     QDeclarativeItem(parent)
@@ -50,4 +51,33 @@ int HrtmConfig::currentStyle() const {
 }
 void HrtmConfig::currentStyleSet(int newStyle) {
     currentStyle_ = newStyle;
+}
+
+void HrtmConfig::loadConfig() {
+    QFile configFile("~/.hrtmobile/config");
+    fprintf(stderr,"Loading config from file\n");
+    if(!configFile.open(QIODevice::ReadOnly)) {
+        fprintf(stderr,"Some shit happend. File dissapeared. Error\n");
+        fprintf(stderr,"Creating file and saving default config\n");
+        if (!configFile.open(QIODevice::ReadWrite)) {
+            fprintf(stderr,"This is bad, can't save file. Error\n");
+            return;
+        } else {
+            configFile.close();
+            if(!configFile.open(QIODevice::ReadOnly)) {
+                fprintf(stderr,"Can't open saved file.. Damn it. Error\n");
+            } else {
+                configFile.close();
+                fprintf(stderr, "Nice job!");
+            }
+        }
+    } else {
+        configFile.close();
+        fprintf(stderr,"OK\n");
+    }
+//    QTextStream stream(&configFile);
+}
+
+void HrtmConfig::saveConfig() {
+
 }

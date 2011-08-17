@@ -32,7 +32,8 @@ public:
     void colorStyleNameSet(const QString &);
     int currentStyle() const;
     void currentStyleSet(int);
-
+    Q_INVOKABLE void saveConfig();
+    Q_INVOKABLE void loadConfig();
 signals:
     void bgColorChanged();
     void textColorChanged();

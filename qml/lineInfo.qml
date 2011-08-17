@@ -6,7 +6,7 @@ import "lineInfo.js" as JS
 Page {
     id: lineInfoPage
     tools: commonTools
-    HrtmConfig {id: config}
+    HrtmConfig{ id:config }
     objectName: "lineInfoPage"
 
     Rectangle{       // dark background
@@ -76,8 +76,11 @@ Page {
             text: qsTr("Show info")
             width: 200
             height: parent.height
-            onClicked: buttonClicked()
-        }
+            onClicked: {
+                config.loadConfig()
+                buttonClicked()
+            }
+       }
     } // searchBox end
 
     Rectangle {     // decorative horizontal line
@@ -90,7 +93,7 @@ Page {
         color: config.textColor
     }
 
-    Rectangle{      // data
+    Rectangle{      // labels
         id: dataRect
         anchors.left: parent.left
         anchors.leftMargin: 10
@@ -135,78 +138,78 @@ Page {
         }
     } // data end
 
-    Rectangle {
+    Rectangle {  // tabs rect
         id: tabRect
         anchors.top: dataRect.bottom
         anchors.topMargin: 10
-        anchors.left: parent.left
-        anchors.leftMargin: 10
+        anchors.horizontalCenter: parent.horizontalCenter
         anchors.right: parent.right
-        anchors.rightMargin: 10
-        width: parent.width
+        width: (parent.width-80)
         height: 45
         color: "#000000"
         Row {
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: parent.width-80
+            anchors.right: parent.right
+            width: (parent.width-100)
             height: parent.height
             Button {
                 Rectangle {
-                    id: linesRect
+                    id: linesTab
                     anchors.fill: parent
                     color: "#505050"
+                    radius: 5
                 }
                 Text {
+                    id: linesTabText
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
                     text: "Lines"
                     color: "#FFFFFF"
                     font.pixelSize: 25
                 }
-                width: parent.width/2-20
+                width: parent.width/2
                 onClicked: {
                     if (grid.visible == true) {
                         grid.visible = false
-                        linesRect.color = "#707070"
                         list.visible = true
-                        gridRect.color = "#505050"
                     }
                 }
                 onPressedChanged: {
                     if (pressed == true) {
-                        linesRect.color = "#909090"
+                        linesTab.color = "#909090"
                     } else {
-                        linesRect.color = list.visible ? "#707070" : "#505050"
+                        linesTab.color = list.visible ? "#A0A0A0" : "#505050"
+                        linesTabText.color = list.visible ? "#000000" : "#FFFFFF"
                     }
                 }
             }
             Button {
                 Rectangle {
-                    id: gridRect
+                    id: stopsTab
                     anchors.fill: parent
                     color: "#505050"
+                    radius: 5
                 }
                 Text {
+                    id: stopsTabText
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
                     text: "Info"
                     color: "#FFFFFF"
                     font.pixelSize: 25
                 }
-                width: parent.width/2-20
+                width: parent.width/2
                 onClicked: {
                     if (list.visible == true) {
                         grid.visible = true
-                        gridRect.color = "#707070"
                         list.visible = false
-                        linesRect.color = "#505050"
                     }
                 }
                 onPressedChanged: {
                     if (pressed == true) {
-                        gridRect.color = "#909090"
+                        stopsTab.color = "#909090"
                     } else {
-                        gridRect.color = grid.visible ? "#707070" : "#505050"
+                        stopsTab.color = grid.visible ? "#A0A0A0" : "#505050"
+                        stopsTabText.color = grid.visible ? "#000000" : "#FFFFFF"
                     }
                 }
 
@@ -228,7 +231,7 @@ Page {
             width: grid.cellWidth;
             height: grid.cellHeight;
             radius: 5
-            color: "#000000"
+            color: "#205080"
             Row {
                 anchors.left: parent.left
                 anchors.leftMargin: 10
@@ -295,7 +298,6 @@ Page {
                 onClicked: {
                     list.focus = true
                     list.currentIndex = index
-//                    console.log("picked: line " + lineInfoModel.get(list.currentIndex).lineLongCode)
                     stopReachModel.clear()
                     getStops(list.currentIndex)
                     list.visible = false
@@ -322,11 +324,12 @@ Page {
     Rectangle{    // grid rect
         id: infoRect
         anchors.top: tabRect.bottom
-        anchors.topMargin: 10
+//        anchors.topMargin: 10
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        color: config.bgColor
+        color: "#A0A0A0"
+        radius: 5
         GridView {
             id: grid
             anchors.fill:  parent
@@ -342,6 +345,14 @@ Page {
             currentIndex: -1
             clip: true
             visible: false;
+            onVisibleChanged: {
+                if (visible == true) {
+                    stopsTab.color="#A0A0A0"
+                    stopsTabText.color = "#000000"
+                    linesTab.color="#505050"
+                    linesTabText.color = "#FFFFFF"
+                }
+            }
         }
         ListView {
             id: list
@@ -357,6 +368,14 @@ Page {
             currentIndex: -1
             clip: true
             visible: false
+            onVisibleChanged: {
+                if (visible == true) {
+                    linesTab.color="#A0A0A0"
+                    linesTabText.color = "#000000"
+                    stopsTab.color="#505050"
+                    stopsTabText.color = "#FFFFFF"
+                }
+            }
         }
     } // grid rect end
 /*<----------------------------------------------------------------------->*/
