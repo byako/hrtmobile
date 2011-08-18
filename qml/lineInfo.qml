@@ -104,7 +104,7 @@ Page {
         visible: false
         height: 90
         width: parent.width
-        color: "#205080"
+        color: "#000000"
         radius: 10
         Label {
             id: lineType;
@@ -149,9 +149,10 @@ Page {
         color: "#000000"
         Row {
             anchors.right: parent.right
-            width: (parent.width-100)
+            width: parent.width
             height: parent.height
             Button {
+                width: parent.width/3
                 Rectangle {
                     id: linesTab
                     anchors.fill: parent
@@ -166,23 +167,23 @@ Page {
                     color: "#FFFFFF"
                     font.pixelSize: 25
                 }
-                width: parent.width/2
                 onClicked: {
-                    if (grid.visible == true) {
-                        grid.visible = false
+                    if (list.visible == false) {
                         list.visible = true
+                        grid.visible = false
+                        schedule.visible = false
                     }
                 }
                 onPressedChanged: {
                     if (pressed == true) {
                         linesTab.color = "#909090"
                     } else {
-                        linesTab.color = list.visible ? "#A0A0A0" : "#505050"
-                        linesTabText.color = list.visible ? "#000000" : "#FFFFFF"
+                        linesTab.color = list.visible ? "#205080" : "#505050"
                     }
                 }
             }
             Button {
+                width: parent.width/3
                 Rectangle {
                     id: stopsTab
                     anchors.fill: parent
@@ -197,27 +198,57 @@ Page {
                     color: "#FFFFFF"
                     font.pixelSize: 25
                 }
-                width: parent.width/2
                 onClicked: {
-                    if (list.visible == true) {
-                        grid.visible = true
+                    if (grid.visible == false) {
                         list.visible = false
+                        grid.visible = true
+                        schedule.visible = false
                     }
                 }
                 onPressedChanged: {
                     if (pressed == true) {
                         stopsTab.color = "#909090"
                     } else {
-                        stopsTab.color = grid.visible ? "#A0A0A0" : "#505050"
-                        stopsTabText.color = grid.visible ? "#000000" : "#FFFFFF"
+                        stopsTab.color = grid.visible ? "#205080" : "#505050"
                     }
                 }
 
             }
+            Button {
+                width: parent.width/3
+                Rectangle {
+                    id: scheduleTab
+                    anchors.fill: parent
+                    color: "#505050"
+                    radius: 5
+                }
+                Text {
+                    id: scheduleTabText
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Schedule"
+                    color: "#FFFFFF"
+                    font.pixelSize: 25
+                }
+                onClicked: {
+                    if (schedule.visible == false) {
+                        list.visible = false
+                        grid.visible = false
+                        schedule.visible = true
+                    }
+                }
+                onPressedChanged: {
+                    if (pressed == true) {
+                        scheduleTab.color = "#909090"
+                    } else {
+                        scheduleTab.color = schedule.visible ? "#205080" : "#505050"
+                    }
+                }
+            }
         }
     }
 
-    ListModel{      // stops
+    ListModel{      // stops list model
         id:stopReachModel
         ListElement {
             stopIdLong: "Stop"
@@ -225,20 +256,20 @@ Page {
         }
     }
 
-    Component{
+    Component{  // stops reach delegate
         id:stopReachDelegate
         Rectangle {
             width: grid.cellWidth;
             height: grid.cellHeight;
             radius: 5
-            color: "#205080"
+            color: "#000000"
             Row {
                 anchors.left: parent.left
                 anchors.leftMargin: 10
                 anchors.rightMargin: 10
                 spacing: 30
-                Text{ text: stopIdLong; font.pixelSize: 25; color: config.textColor}
-                Text{ text: reachTime; font.pixelSize: 25; color: config.textColor}
+                Text{ text: stopIdLong; font.pixelSize: 25; color: "#ffffff"}
+                Text{ text: reachTime; font.pixelSize: 25; color: "#ffffff"}
             }
             MouseArea {
                 anchors.fill:  parent
@@ -250,7 +281,7 @@ Page {
         }
     }
 
-    ListModel{
+    ListModel{  // lineInfo list model
         id:lineInfoModel
 
         ListElement{
@@ -262,13 +293,13 @@ Page {
         }
     }
 
-    Component{
+    Component{  // lineInfo delegate
         id:lineInfoDelegate
         Rectangle {
             width: list.width;
             height: 70
             radius: 10
-            color: "#205080"
+            color: "#000000"
             Column {
                 spacing: 5
                 anchors.fill: parent
@@ -278,21 +309,21 @@ Page {
                 Row {
                     height: 30
                     spacing: 20
-                    Text{ text: type; font.pixelSize: 25; color: config.textColor}
-                    Text{ text: lineShortCode; font.pixelSize: 25; color: config.textColor}
+                    Text{ text: type; font.pixelSize: 25; color: "#ffffff"}
+                    Text{ text: lineShortCode; font.pixelSize: 25; color: "#ffffff"}
                 }
                 Row {
                     height: 30
-                    Text{ text: direction; font.pixelSize: 25; color: config.textColor}
+                    Text{ text: direction; font.pixelSize: 25; color: "#ffffff"}
                 }
             }
             MouseArea {
                 anchors.fill:  parent
                 onPressedChanged: {
                     if (pressed == true) {
-                        parent.color = "#BBBBAA"
-                    } else {
                         parent.color = "#205080"
+                    } else {
+                        parent.color = "#000000"
                     }
                 }
                 onClicked: {
@@ -311,6 +342,39 @@ Page {
         }
     }
 
+    ListModel{      // schedule list model
+        id:scheduleModel
+        ListElement {
+            stopIdLong: "Stop"
+            reachTime: "Time"
+        }
+    }
+
+    Component{  // schedule delegate
+        id:scheduleDelegate
+        Rectangle {
+            width: grid.cellWidth;
+            height: grid.cellHeight;
+            radius: 5
+            color: "#000000"
+            Row {
+                anchors.left: parent.left
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                spacing: 30
+                Text{ text: stopIdLong; font.pixelSize: 25; color: "#ffffff"}
+                Text{ text: reachTime; font.pixelSize: 25; color: "#ffffff"}
+            }
+            MouseArea {
+                anchors.fill:  parent
+                onClicked: {
+                    grid.focus = true;
+                    grid.currentIndex = index;
+                }
+            }
+        }
+    }
+
     Rectangle {
         id: hrLineSeparator2
         anchors.left: parent.left
@@ -324,36 +388,11 @@ Page {
     Rectangle{    // grid rect
         id: infoRect
         anchors.top: tabRect.bottom
-//        anchors.topMargin: 10
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        color: "#A0A0A0"
+        color: "#205080"
         radius: 5
-        GridView {
-            id: grid
-            anchors.fill:  parent
-            anchors.leftMargin:10
-            anchors.topMargin: 10
-            delegate: stopReachDelegate
-            model: stopReachModel
-            focus: true
-            cellWidth: 230
-            cellHeight: 30
-            width: 420
-            highlight: Rectangle { color:config.highlightColor; radius:  5 }
-            currentIndex: -1
-            clip: true
-            visible: false;
-            onVisibleChanged: {
-                if (visible == true) {
-                    stopsTab.color="#A0A0A0"
-                    stopsTabText.color = "#000000"
-                    linesTab.color="#505050"
-                    linesTabText.color = "#FFFFFF"
-                }
-            }
-        }
         ListView {
             id: list
             anchors.fill:  parent
@@ -363,21 +402,65 @@ Page {
             delegate: lineInfoDelegate
             model: lineInfoModel
             spacing: 10
-            focus: true
             highlight: Rectangle { color:config.highlightColor; radius:  5 }
             currentIndex: -1
             clip: true
             visible: false
             onVisibleChanged: {
                 if (visible == true) {
-                    linesTab.color="#A0A0A0"
-                    linesTabText.color = "#000000"
-                    stopsTab.color="#505050"
-                    stopsTabText.color = "#FFFFFF"
+                    linesTab.color = "#205080"
+                    stopsTab.color = "#505050"
+                    scheduleTab.color = "#505050"
                 }
             }
         }
+        GridView {
+            id: grid
+            anchors.fill:  parent
+            anchors.leftMargin:10
+            anchors.topMargin: 10
+            delegate: stopReachDelegate
+            model: stopReachModel
+            cellWidth: 230
+            cellHeight: 30
+            width: 420
+            highlight: Rectangle { color:config.highlightColor; radius:  5 }
+            currentIndex: -1
+            clip: true
+            visible: false;
+            onVisibleChanged: {
+                if (visible == true) {
+                    stopsTab.color = "#205070"
+                    linesTab.color = "#505050"
+                    scheduleTab.color = "#505050"
+                }
+            }
+        }
+        GridView {
+            id: schedule
+            anchors.fill:  parent
+            anchors.leftMargin:10
+            anchors.topMargin: 10
+            delegate: scheduleDelegate
+            model: scheduleModel
+            cellWidth: 150
+            cellHeight: 30
+            width: 420
+            highlight: Rectangle { color:config.highlightColor; radius:  5 }
+            currentIndex: -1
+            clip: true
+            visible: false;
+            onVisibleChanged: {
+                if (visible == true) {
+                    stopsTab.color = "#505050"
+                    linesTab.color = "#505050"
+                    scheduleTab.color = "#205080"
+                }
+            }
+        }
+        visible: false;
     } // grid rect end
+
 /*<----------------------------------------------------------------------->*/
     function showRequestInfo(text) {
         console.log(text)
@@ -393,6 +476,7 @@ Page {
     }
 
     function parseXML(a){
+        infoRect.visible = true;
         var lineType;
         for (var ii = 0; ii < a.childNodes.length; ++ii) {
             switch(a.childNodes[ii].childNodes[2].firstChild.nodeValue) {
@@ -441,6 +525,34 @@ Page {
     JS.doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&query="+lineId.text); // for line info request
 //             http://api.reittiopas.fi/public-ytv/fi/api/?key="+stopId.text+"&user=byako&pass=gfccdjhl");
     JS.doc.send();
+    }
+
+    function getSchedule(url) {
+        var scheduleHtmlReply = new XMLHttpRequest();
+        scheduleHtmlReply.onreadystatechanged = function() {
+            if (scheduleHtmlReply.readyState == XMLHttpRequest.HEADERS_RECEIVED) {
+            } else if (scheduleHtmlReply.readyState == XMLHttpRequest.DONE) {
+                if (scheduleHtmlReply.responseXML == null) {
+                    errorLabel.visible = true
+                    errorLabel.text = "No lines found"
+                    list.visible=false
+                    grid.visible=false
+                    return
+                } else {
+                    showRequestInfo("OK, got " + scheduleHtmlReply.responseXML.documentElement.childNodes.length+ " lines")
+                    parseXML(scheduleHtmlReply.responseXML.documentElement);
+                    list.visible = true
+                }
+            } else if (scheduleHtmlReply.readyState == XMLHttpRequest.ERROR) {
+                showRequestInfo("ERROR")
+                errorLabel.visible = true
+                errorLabel.text = "ERROR"
+                list.visible=false
+                grid.visible=false
+            }
+    }
+        scheduleHtmlReply.open("GET",url);
+        scheduleHtmlReply.send();
     }
 
     function buttonClicked() {

@@ -144,7 +144,7 @@ PageStackWindow {
                 enabled: false
             }
             MenuItem {
-                text: "Back"
+                text: "Selct category"
                 onClicked: {
                     stopsMenu.close()
                     favoriteMenu.open()
@@ -161,7 +161,7 @@ PageStackWindow {
                 enabled: false
             }
             MenuItem {
-                text: "Back"
+                text: "Selct category"
                 onClicked: {
                     linesMenu.close()
                     favoriteMenu.open()
@@ -178,7 +178,7 @@ PageStackWindow {
                 enabled: false
             }
             MenuItem {
-                text: "Back"
+                text: "Selct category"
                 onClicked: {
                     placesMenu.close()
                     favoriteMenu.open()
@@ -195,7 +195,7 @@ PageStackWindow {
                 enabled: false
             }
             MenuItem {
-                text: "Back"
+                text: "Selct category"
                 onClicked: {
                     routesMenu.close()
                     favoriteMenu.open()
