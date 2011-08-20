@@ -138,114 +138,52 @@ Page {
         }
     } // data end
 
-    Rectangle {  // tabs rect
+    ButtonRow {  // tabs rect
         id: tabRect
         anchors.top: dataRect.bottom
         anchors.topMargin: 10
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.right: parent.right
-        width: (parent.width-80)
-        height: 45
-        color: "#000000"
-        Row {
-            anchors.right: parent.right
-            width: parent.width
-            height: parent.height
+        width: (parent.width-10)
             Button {
-                width: parent.width/3
-                Rectangle {
-                    id: linesTab
-                    anchors.fill: parent
-                    color: "#505050"
-                    radius: 5
-                }
-                Text {
-                    id: linesTabText
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "Lines"
-                    color: "#FFFFFF"
-                    font.pixelSize: 25
-                }
+                id: linesButton
+                text: "Lines"
                 onClicked: {
                     if (list.visible == false) {
                         list.visible = true
                         grid.visible = false
                         schedule.visible = false
-                    }
-                }
-                onPressedChanged: {
-                    if (pressed == true) {
-                        linesTab.color = "#909090"
-                    } else {
-                        linesTab.color = list.visible ? "#205080" : "#505050"
+                        scheduleButtons.visible = false
                     }
                 }
             }
             Button {
-                width: parent.width/3
-                Rectangle {
-                    id: stopsTab
-                    anchors.fill: parent
-                    color: "#505050"
-                    radius: 5
-                }
-                Text {
-                    id: stopsTabText
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "Info"
-                    color: "#FFFFFF"
-                    font.pixelSize: 25
-                }
+                id: stopsButton
+                text: "Info"
                 onClicked: {
                     if (grid.visible == false) {
                         list.visible = false
                         grid.visible = true
                         schedule.visible = false
+                        scheduleButtons.visible = false
                     }
                 }
-                onPressedChanged: {
-                    if (pressed == true) {
-                        stopsTab.color = "#909090"
-                    } else {
-                        stopsTab.color = grid.visible ? "#205080" : "#505050"
-                    }
-                }
-
             }
             Button {
-                width: parent.width/3
-                Rectangle {
-                    id: scheduleTab
-                    anchors.fill: parent
-                    color: "#505050"
-                    radius: 5
-                }
-                Text {
-                    id: scheduleTabText
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "Schedule"
-                    color: "#FFFFFF"
-                    font.pixelSize: 25
-                }
+                id: scheduleButton
+                text: "Schedule"
                 onClicked: {
                     if (schedule.visible == false) {
                         list.visible = false
                         grid.visible = false
                         schedule.visible = true
-                    }
-                }
-                onPressedChanged: {
-                    if (pressed == true) {
-                        scheduleTab.color = "#909090"
-                    } else {
-                        scheduleTab.color = schedule.visible ? "#205080" : "#505050"
+                        if (JS.scheduleLoaded == 0) {
+                            getSchedule(list.currentIndex)
+                        }
+                        scheduleButtons.visible = true
                     }
                 }
             }
-        }
     }
 
     ListModel{      // stops list model
@@ -327,26 +265,59 @@ Page {
                     }
                 }
                 onClicked: {
-                    list.focus = true
-                    list.currentIndex = index
-                    stopReachModel.clear()
-                    getStops(list.currentIndex)
+//                    list.focus = true
                     list.visible = false
                     grid.visible = true
                     dataRect.visible = true
-                    lineShortCodeName.text = lineInfoModel.get(list.currentIndex).lineShortCode
-                    lineDirection.text = lineInfoModel.get(list.currentIndex).direction
-                    lineType.text = lineInfoModel.get(list.currentIndex).type
+                    if (list.currentIndex != index) {
+                        list.currentIndex = index
+                        JS.scheduleLoaded = 0
+                        scheduleClear()
+                        stopReachModel.clear()
+                        getStops(list.currentIndex)
+                        lineShortCodeName.text = lineInfoModel.get(list.currentIndex).lineShortCode
+                        lineDirection.text = lineInfoModel.get(list.currentIndex).direction
+                        lineType.text = lineInfoModel.get(list.currentIndex).type
+                    }
                 }
             }
         }
     }
 
-    ListModel{      // schedule list model
-        id:scheduleModel
+    ListModel{      // schedule list model direction 1 Mon-Fri
+        id:scheduleModelDir1MonFri
         ListElement {
-            stopIdLong: "Stop"
-            reachTime: "Time"
+            departTime: "Time"
+        }
+    }
+    ListModel{      // schedule list model direction 1 Sat
+        id:scheduleModelDir1Sat
+        ListElement {
+            departTime: "Time"
+        }
+    }
+    ListModel{      // schedule list model direction 1 Sun
+        id:scheduleModelDir1Sun
+        ListElement {
+            departTime: "Time"
+        }
+    }
+    ListModel{      // schedule list model direction 2 Mon-Fri
+        id:scheduleModelDir2MonFri
+        ListElement {
+            departTime: "Time"
+        }
+    }
+    ListModel{      // schedule list model direction 2 Sat
+        id:scheduleModelDir2Sat
+        ListElement {
+            departTime: "Time"
+        }
+    }
+    ListModel{      // schedule list model direction 2 Sun
+        id:scheduleModelDir2Sun
+        ListElement {
+            departTime: "Time"
         }
     }
 
@@ -361,15 +332,13 @@ Page {
                 anchors.left: parent.left
                 anchors.leftMargin: 10
                 anchors.rightMargin: 10
-                spacing: 30
-                Text{ text: stopIdLong; font.pixelSize: 25; color: "#ffffff"}
-                Text{ text: reachTime; font.pixelSize: 25; color: "#ffffff"}
+                Text{ text: departTime; font.pixelSize: 25; color: "#ffffff"}
             }
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
-                    grid.focus = true;
-                    grid.currentIndex = index;
+                    schedule.focus = true;
+                    schedule.currentIndex = index;
                 }
             }
         }
@@ -408,13 +377,11 @@ Page {
             visible: false
             onVisibleChanged: {
                 if (visible == true) {
-                    linesTab.color = "#205080"
-                    stopsTab.color = "#505050"
-                    scheduleTab.color = "#505050"
+                    tabRect.checkedButton = linesButton;
                 }
             }
         }
-        GridView {
+        GridView {  // stops reach model show
             id: grid
             anchors.fill:  parent
             anchors.leftMargin:10
@@ -430,20 +397,59 @@ Page {
             visible: false;
             onVisibleChanged: {
                 if (visible == true) {
-                    stopsTab.color = "#205070"
-                    linesTab.color = "#505050"
-                    scheduleTab.color = "#505050"
+                    tabRect.checkedButton = stopsButton;
                 }
             }
         }
-        GridView {
+
+        ButtonRow {
+            width: parent.width-10
+            id: scheduleButtons
+            anchors.top: parent.top
+            anchors.topMargin: 10
+            anchors.horizontalCenter: parent.horizontalCenter
+            visible: false
+            Button {
+                id: scheduleButton1
+                text: "End stop"
+                onClicked: {
+                }
+            }
+            Button {
+                id: scheduleButton2
+                text: "Mon-Fri"
+                onClicked: {
+                    JS.currentSchedule = 0
+                    scheduleShow();
+                }
+            }
+            Button {
+                id: scheduleButton3
+                text: "Sat"
+                onClicked: {
+                    JS.currentSchedule = 1
+                    scheduleShow();
+                }
+            }
+            Button {
+                id: scheduleButton4
+                text: "Sun"
+                onClicked: {
+                    JS.currentSchedule = 2
+                    scheduleShow();
+                }
+            }
+        }
+
+        GridView {  // scheduleModel* show
             id: schedule
             anchors.fill:  parent
             anchors.leftMargin:10
-            anchors.topMargin: 10
+//            anchors.top: scheduleButtons.bottom
+            anchors.topMargin: 50
             delegate: scheduleDelegate
-            model: scheduleModel
-            cellWidth: 150
+            model: scheduleModelDir1MonFri
+            cellWidth: 155
             cellHeight: 30
             width: 420
             highlight: Rectangle { color:config.highlightColor; radius:  5 }
@@ -452,9 +458,7 @@ Page {
             visible: false;
             onVisibleChanged: {
                 if (visible == true) {
-                    stopsTab.color = "#505050"
-                    linesTab.color = "#505050"
-                    scheduleTab.color = "#205080"
+                    tabRect.checkedButton = scheduleButton;
                 }
             }
         }
@@ -527,32 +531,116 @@ Page {
     JS.doc.send();
     }
 
-    function getSchedule(url) {
-        var scheduleHtmlReply = new XMLHttpRequest();
-        scheduleHtmlReply.onreadystatechanged = function() {
+    function parseHttp(text_) {
+        scheduleClear();
+        var tables = new Array;
+        var lines = new Array;
+        var text = new String;
+        var times = new Array;
+        var one = new Array;
+        var two = new Array;
+        var three = new Array;
+        var cur=0;
+        text = text_;
+        lines = text.split("\n");
+        for (var ii=0; ii < lines.length; ii++) {
+            if (lines[ii].search("line_dirtitle") != -1) {
+                tables.push(ii);
+                console.log("line " + ii + " : " + lines[ii]);
+            }
+        }
+        text.slice
+        for (var ii=0; ii<tables.length; ii++) {
+            cur = tables[ii];
+            while (lines[cur-1].search("</table>") == -1) {
+                if (lines[cur].search("time") != -1) {
+                    times = lines[cur].split("<");
+//                    console.log("time: " + times[1].slice(times[1].length-5));
+                    one.push(times[1].slice(times[1].length-5));
+//                    console.log("time: " + times[2].slice(times[2].length-5));
+                    two.push(times[2].slice(times[2].length-5));
+//                    console.log("time: " + times[3].slice(times[3].length-5));
+                    if (times[3].slice(times[3].length-1) != ";") {
+                        three.push(times[3].slice(times[3].length-5));
+                    }
+                }
+                cur++;
+            }
+            console.log("Ok, next table");
+            for (var bb=0; bb<one.length; bb++) {
+                scheduleModelDir1MonFri.append({"departTime" : one[0]});
+                one.shift();
+            };
+        }
+        JS.scheduleLoaded = 1;
+        JS.currentSchedule = 0;
+    }
+
+    function getSchedule(a) {
+        var scheduleHtmlReply = new XMLHttpRequest()
+        if (a==-1) {
+            a=1
+        }
+        scheduleHtmlReply.onreadystatechange = function() {
             if (scheduleHtmlReply.readyState == XMLHttpRequest.HEADERS_RECEIVED) {
             } else if (scheduleHtmlReply.readyState == XMLHttpRequest.DONE) {
-                if (scheduleHtmlReply.responseXML == null) {
-                    errorLabel.visible = true
-                    errorLabel.text = "No lines found"
-                    list.visible=false
-                    grid.visible=false
-                    return
-                } else {
-                    showRequestInfo("OK, got " + scheduleHtmlReply.responseXML.documentElement.childNodes.length+ " lines")
-                    parseXML(scheduleHtmlReply.responseXML.documentElement);
-                    list.visible = true
-                }
+                    parseHttp(scheduleHtmlReply.responseText)
+                    schedule.visible = true
             } else if (scheduleHtmlReply.readyState == XMLHttpRequest.ERROR) {
                 showRequestInfo("ERROR")
                 errorLabel.visible = true
                 errorLabel.text = "ERROR"
                 list.visible=false
                 grid.visible=false
+                schedule.visible=false
             }
+        }
+        scheduleHtmlReply.open("GET",JS.doc.responseXML.documentElement.childNodes[a].childNodes[6].firstChild.nodeValue)
+        scheduleHtmlReply.send()
     }
-        scheduleHtmlReply.open("GET",url);
-        scheduleHtmlReply.send();
+
+    function scheduleClear() {
+        scheduleModelDir1MonFri.clear();
+        scheduleModelDir1Sat.clear();
+        scheduleModelDir1Sun.clear();
+        scheduleModelDir2MonFri.clear();
+        scheduleModelDir2Sat.clear();
+        scheduleModelDir2Sun.clear();
+    }
+
+    function scheduleShow() {
+        grid.visible = false;
+        list.visible = false;
+        switch(JS.currentSchedule) {
+            case 0:
+                schedule.model = scheduleModelDir1MonFri;
+                schedule.visible = true;
+                break;
+            case 1:
+                schedule.model = scheduleModelDir1Sat;
+                schedule.visible = true;
+                break;
+            case 2:
+                schedule.model = scheduleModelDir1Sun;
+                schedule.visible = true;
+                break;
+            case 3:
+                schedule.model = scheduleModelDir2MonFri;
+                schedule.visible = true;
+                break;
+            case 4:
+                schedule.model = scheduleModelDir2Sat;
+                schedule.visible = true;
+                break;
+            case 5:
+                schedule.model = scheduleModelDir2Sun;
+                schedule.visible = true;
+                break;
+            case -1:
+                schedule.visible = false;
+            default:
+                console.log("ERROR. Unknows switch code in scheduleShow\n")
+        }
     }
 
     function buttonClicked() {
