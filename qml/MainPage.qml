@@ -47,13 +47,13 @@ Page {
         }
     }
     Button{
-        id:lineScheduleButton
+        id:routeButton
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: stopInfoButton.bottom
         anchors.topMargin: 10
-        text: qsTr("Line schedule")
+        text: qsTr("Route")
         onClicked: {
-            pageStack.push(Qt.resolvedUrl("lineSchedule.qml"))
+            pageStack.push(Qt.resolvedUrl("route.qml"))
             backTool.visible=true
         }
     }

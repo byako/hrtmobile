@@ -6,7 +6,7 @@ HrtmConfig::HrtmConfig(QDeclarativeItem *parent) :
 {
     bgColor_.setRgb(0,0,0,255);
     textColor_.setRgb(205, 217, 255, 255);
-    highlightColor_.setRgb(70, 70, 180, 255);
+    highlightColor_.setRgb(36, 90, 140, 255);
     colorStyleName_ = "Dark";
 /*
     color_style.append("Dark");

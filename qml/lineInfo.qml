@@ -93,7 +93,7 @@ Page {
         color: config.textColor
     }
 
-    Rectangle{      // labels
+    Rectangle{      // data rect: info labels
         id: dataRect
         anchors.left: parent.left
         anchors.leftMargin: 10
@@ -104,7 +104,7 @@ Page {
         visible: false
         height: 90
         width: parent.width
-        color: "#000000"
+        color: config.bgColor
         radius: 10
         Label {
             id: lineType;
@@ -137,6 +137,17 @@ Page {
             font.pixelSize: 25
         }
     } // data end
+
+
+    Rectangle {     // decorative horizontal line
+        id: hrLineSeparator2
+        anchors.left: parent.left
+        anchors.top: dataRect.bottom
+        anchors.topMargin: 5
+        width: parent.width
+        height:  2
+        color: config.textColor
+    }
 
     ButtonRow {  // tabs rect
         id: tabRect
@@ -196,18 +207,14 @@ Page {
 
     Component{  // stops reach delegate
         id:stopReachDelegate
-        Rectangle {
+        Item {
             width: grid.cellWidth;
             height: grid.cellHeight;
-            radius: 5
-            color: "#000000"
             Row {
-                anchors.left: parent.left
-                anchors.leftMargin: 10
-                anchors.rightMargin: 10
+                anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 30
-                Text{ text: stopIdLong; font.pixelSize: 25; color: "#ffffff"}
-                Text{ text: reachTime; font.pixelSize: 25; color: "#ffffff"}
+                Text{ text: stopIdLong; font.pixelSize: 25; color: config.textColor}
+                Text{ text: reachTime; font.pixelSize: 25; color: config.textColor}
             }
             MouseArea {
                 anchors.fill:  parent
@@ -236,8 +243,8 @@ Page {
         Rectangle {
             width: list.width;
             height: 70
-            radius: 10
-            color: "#000000"
+            radius: 20
+            color: "#333333"
             Column {
                 spacing: 5
                 anchors.fill: parent
@@ -247,25 +254,24 @@ Page {
                 Row {
                     height: 30
                     spacing: 20
-                    Text{ text: type; font.pixelSize: 25; color: "#ffffff"}
-                    Text{ text: lineShortCode; font.pixelSize: 25; color: "#ffffff"}
+                    Text{ text: type; font.pixelSize: 25; color: config.textColor}
+                    Text{ text: lineShortCode; font.pixelSize: 25; color: config.textColor}
                 }
                 Row {
                     height: 30
-                    Text{ text: direction; font.pixelSize: 25; color: "#ffffff"}
+                    Text{ text: direction; font.pixelSize: 25; color: config.textColor}
                 }
             }
             MouseArea {
                 anchors.fill:  parent
                 onPressedChanged: {
                     if (pressed == true) {
-                        parent.color = "#205080"
+                        parent.color = config.highlightColor
                     } else {
-                        parent.color = "#000000"
+                        parent.color = "#333333"
                     }
                 }
                 onClicked: {
-//                    list.focus = true
                     list.visible = false
                     grid.visible = true
                     dataRect.visible = true
@@ -323,35 +329,23 @@ Page {
 
     Component{  // schedule delegate
         id:scheduleDelegate
-        Rectangle {
-            width: grid.cellWidth;
-            height: grid.cellHeight;
-            radius: 5
-            color: "#000000"
+        Item {
+            width: schedule.cellWidth
+            height: schedule.cellHeight
             Row {
-                anchors.left: parent.left
-                anchors.leftMargin: 10
-                anchors.rightMargin: 10
-                Text{ text: departTime; font.pixelSize: 25; color: "#ffffff"}
+                anchors.horizontalCenter: parent.horizontalCenter
+                Text{ text: departTime; font.pixelSize: 25; color: config.textColor}
             }
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
-                    schedule.focus = true;
-                    schedule.currentIndex = index;
+                    schedule.focus = true
+                    if (schedule.currentIndex != index) {
+                        schedule.currentIndex = index
+                    }
                 }
             }
         }
-    }
-
-    Rectangle {
-        id: hrLineSeparator2
-        anchors.left: parent.left
-        anchors.top: dataRect.bottom
-        anchors.topMargin: 5
-        width: parent.width
-        height:  2
-        color: config.textColor
     }
 
     Rectangle{    // grid rect
@@ -360,9 +354,9 @@ Page {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        color: "#205080"
+        color: config.bgColor
         radius: 5
-        ListView {
+        ListView {  // list
             id: list
             anchors.fill:  parent
             anchors.leftMargin:10
@@ -402,21 +396,18 @@ Page {
             }
         }
 
-        ButtonRow {
-            width: parent.width-10
+        ButtonRow {  // scheduleButtons week period choose
             id: scheduleButtons
             anchors.top: parent.top
             anchors.topMargin: 10
-            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.left: parent.left
+            anchors.leftMargin: 10
+            anchors.right: parent.right
+            anchors.rightMargin: 10
             visible: false
+            height: 35
             Button {
-                id: scheduleButton1
-                text: "End stop"
-                onClicked: {
-                }
-            }
-            Button {
-                id: scheduleButton2
+                id: scheduleButton0
                 text: "Mon-Fri"
                 onClicked: {
                     JS.currentSchedule = 0
@@ -424,7 +415,7 @@ Page {
                 }
             }
             Button {
-                id: scheduleButton3
+                id: scheduleButton1
                 text: "Sat"
                 onClicked: {
                     JS.currentSchedule = 1
@@ -432,7 +423,7 @@ Page {
                 }
             }
             Button {
-                id: scheduleButton4
+                id: scheduleButton2
                 text: "Sun"
                 onClicked: {
                     JS.currentSchedule = 2
@@ -443,16 +434,18 @@ Page {
 
         GridView {  // scheduleModel* show
             id: schedule
-            anchors.fill:  parent
+            anchors.left: parent.left
             anchors.leftMargin:10
-//            anchors.top: scheduleButtons.bottom
-            anchors.topMargin: 50
+            anchors.right: parent.right
+            anchors.rightMargin: 10
+            anchors.top: parent.top
+            anchors.topMargin: 70
+            anchors.bottom: parent.bottom
             delegate: scheduleDelegate
             model: scheduleModelDir1MonFri
-            cellWidth: 155
+            cellWidth: 115
             cellHeight: 30
-            width: 420
-            highlight: Rectangle { color:config.highlightColor; radius:  5 }
+            highlight: Rectangle { color: config.highlightColor; radius:  5 }
             currentIndex: -1
             clip: true
             visible: false;
@@ -543,14 +536,14 @@ Page {
         var cur=0;
         text = text_;
         lines = text.split("\n");
-        for (var ii=0; ii < lines.length; ii++) {
+        for (var ii=0; ii < lines.length; ++ii) {
             if (lines[ii].search("line_dirtitle") != -1) {
                 tables.push(ii);
                 console.log("line " + ii + " : " + lines[ii]);
             }
         }
         text.slice
-        for (var ii=0; ii<tables.length; ii++) {
+        for (var ii=0; ii<tables.length; ++ii) {
             cur = tables[ii];
             while (lines[cur-1].search("</table>") == -1) {
                 if (lines[cur].search("time") != -1) {
@@ -566,11 +559,76 @@ Page {
                 }
                 cur++;
             }
-            console.log("Ok, next table");
-            for (var bb=0; bb<one.length; bb++) {
-                scheduleModelDir1MonFri.append({"departTime" : one[0]});
-                one.shift();
-            };
+            switch (ii) {
+            case 0: // Dir 1 MonFri
+                while (one.length > 0) {
+                    scheduleModelDir1MonFri.append({"departTime" : one.shift()});
+                };
+                while (two.length > 0) {
+                    scheduleModelDir1MonFri.append({"departTime" : two.shift()});
+                }
+                while (three.length > 0) {
+                    scheduleModelDir1MonFri.append({"departTime" : three.shift()});
+                }
+                break;
+            case 1: // Dir 2 MonFri
+                while (one.length > 0) {
+                    scheduleModelDir2MonFri.append({"departTime" : one.shift()});
+                };
+                while (two.length > 0) {
+                    scheduleModelDir2MonFri.append({"departTime" : two.shift()});
+                }
+                while (three.length > 0) {
+                    scheduleModelDir2MonFri.append({"departTime" : three.shift()});
+                }
+                break;
+            case 2: // Dir 2 MonFri
+                while (one.length > 0) {
+                    scheduleModelDir1Sat.append({"departTime" : one.shift()});
+                };
+                while (two.length > 0) {
+                    scheduleModelDir1Sat.append({"departTime" : two.shift()});
+                }
+                while (three.length > 0) {
+                    scheduleModelDir1Sat.append({"departTime" : three.shift()});
+                }
+                break;
+            case 3: // Dir 2 MonFri
+                while (one.length > 0) {
+                    scheduleModelDir2Sat.append({"departTime" : one.shift()});
+                };
+                while (two.length > 0) {
+                    scheduleModelDir2Sat.append({"departTime" : two.shift()});
+                }
+                while (three.length > 0) {
+                    scheduleModelDir2Sat.append({"departTime" : three.shift()});
+                }
+                break;
+            case 4: // Dir 2 MonFri
+                while (one.length > 0) {
+                    scheduleModelDir1Sun.append({"departTime" : one.shift()});
+                };
+                while (two.length > 0) {
+                    scheduleModelDir1Sun.append({"departTime" : two.shift()});
+                }
+                while (three.length > 0) {
+                    scheduleModelDir1Sun.append({"departTime" : three.shift()});
+                }
+                break;
+            case 5: // Dir 2 MonFri
+                while (one.length > 0) {
+                    scheduleModelDir2Sun.append({"departTime" : one.shift()});
+                };
+                while (two.length > 0) {
+                    scheduleModelDir2Sun.append({"departTime" : two.shift()});
+                }
+                while (three.length > 0) {
+                    scheduleModelDir2Sun.append({"departTime" : three.shift()});
+                }
+                break;
+            default:
+                break;
+            }
         }
         JS.scheduleLoaded = 1;
         JS.currentSchedule = 0;
@@ -580,6 +638,9 @@ Page {
         var scheduleHtmlReply = new XMLHttpRequest()
         if (a==-1) {
             a=1
+            if (list.count==0) {
+                return;
+            }
         }
         scheduleHtmlReply.onreadystatechange = function() {
             if (scheduleHtmlReply.readyState == XMLHttpRequest.HEADERS_RECEIVED) {

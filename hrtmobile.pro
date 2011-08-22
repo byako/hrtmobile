@@ -3,7 +3,7 @@
 # Additional import path used to resolve QML modules in Creator's code model
 QML_IMPORT_PATH =
 
-QT+= declarative network
+QT+= declarative
 symbian:TARGET.UID3 = 0xE6AD570E
 
 # Smart Installer package's UID
@@ -40,8 +40,8 @@ OTHER_FILES += \
     qtc_packaging/debian_harmattan/changelog \
     qml/stopInfo.qml \
     qml/lineInfo.qml \
-    qml/lineSchedule.qml \
-    qml/lineInfo.js
+    qml/lineInfo.js \
+    qml/route.qml
 
 RESOURCES += \
     res.qrc

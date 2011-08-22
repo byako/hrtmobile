@@ -1,6 +1,6 @@
 #include <QtGui/QApplication>
-#include <QtDeclarative>
-
+//#include <QtDeclarative>
+#include <QDeclarativeView>
 #include <QCoreApplication>
 #include <QDeclarativeEngine>
 #include <QDeclarativeComponent>

@@ -78,7 +78,7 @@ Page {
         }
     } // searchBox end
 
-    Rectangle {
+    Rectangle {     // HR separator
         id: hrLineSeparator
         anchors.left: parent.left
         anchors.top: searchBox.bottom
@@ -158,7 +158,7 @@ Page {
         }
     } // data end
 
-    Rectangle {
+    Rectangle {     // HR separator 2
         id: hrLineSeparator2
         anchors.left: parent.left
         anchors.top: dataRect.bottom
@@ -168,9 +168,8 @@ Page {
         color: config.textColor
     }
 
-    ListModel{
+    ListModel{      // Traffic Model (Time depart; Line No)
         id:trafficModel
-
         ListElement {
             departTime: "Time"
             departLine: "Line"
