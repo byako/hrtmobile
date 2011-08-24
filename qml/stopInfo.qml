@@ -183,7 +183,11 @@ Page {
             Row {
                 spacing: 10;
                 anchors.fill: parent;                
-                Text{ text: departTime; font.pixelSize: 25; color: config.textColor}
+                Text{
+                    text: departTime
+                    font.pixelSize: 25
+                    color: trafficModel.get(grid.currentIndex).departLine == departLine ? "#00FF00" : config.textColor
+                }
                 Text{ text: departLine; font.pixelSize: 25; color: config.textColor}
             }
             MouseArea {
@@ -255,6 +259,7 @@ Page {
         }
         grid.focus = true
         grid.visible = true
+        grid.currentIndex = 0
         dataRect.visible = true
         addFavoriteTool.visible = true
     }
