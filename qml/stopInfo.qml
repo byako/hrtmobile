@@ -99,20 +99,40 @@ Page {
         color: config.bgColor
         radius: 10
         visible: false
+            Rectangle {
+                id: showMapButton
+                anchors.top: parent.top
+                anchors.right: parent.right
+                anchors.rightMargin: 20
+                anchors.topMargin: 30
+                color: "#777777"
+                height: 60
+                width: 60
+                radius: 10
+                Button {
+                    anchors.fill: parent
+                    text: "M"
+                    onClicked: {
+
+                    }
+                }
+            }
+
         Label {
             id: stopNameLabel
-            anchors.left: parent.left
             anchors.top: parent.top
             anchors.topMargin: 5
+            anchors.left: parent.left
             text: qsTr("Name")
             color: config.textColor
             font.pixelSize: 30
         }
         Label {
             id: stopName;
-            anchors.right: parent.right
             anchors.top: parent.top
             anchors.topMargin: 10
+            anchors.right: showMapButton.left
+            anchors.rightMargin: 20
             text: qsTr("Name")
             color: config.textColor
             font.pixelSize: 25
@@ -131,7 +151,8 @@ Page {
             id: stopAddress;
             anchors.top: stopName.bottom
             anchors.topMargin: 13
-            anchors.right: parent.right
+            anchors.right: showMapButton.left
+            anchors.rightMargin: 20
             text: qsTr("Address")
             color: config.textColor
             font.pixelSize: 25
@@ -148,9 +169,10 @@ Page {
         }
         Label {
             id: stopCity;
-            anchors.right: parent.right;
             anchors.top: stopAddress.bottom
             anchors.topMargin: 13
+            anchors.right: showMapButton.left
+            anchors.rightMargin: 20
             text: qsTr("City")
             color: config.textColor
             font.pixelSize: 25
@@ -176,7 +198,7 @@ Page {
         }
     }
 
-    Component{
+    Component{      // Traffic delegate
         id:trafficDelegate
         Item {
             width: grid.cellWidth; height:  grid.cellHeight;
@@ -220,7 +242,7 @@ Page {
             cellHeight: 30
             width: 420
             highlight: Rectangle { color:config.highlightColor; radius:  5 }
-            currentIndex: -1
+            currentIndex: 0
             clip: true
             visible: false
         }
@@ -242,6 +264,7 @@ Page {
             errorLabel.visible = true;
             return;
         }
+        grid.currentIndex = 0
         schedule = schedText.split("\n");
         lines = schedule[0].split("|");
         stopName.text = lines[1];
@@ -259,7 +282,6 @@ Page {
         }
         grid.focus = true
         grid.visible = true
-        grid.currentIndex = 0
         dataRect.visible = true
         addFavoriteTool.visible = true
     }
