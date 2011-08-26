@@ -7,6 +7,8 @@ Page {
     tools: commonTools
     HrtmConfig {id: config}
     objectName: "stopInfoPage"
+    property string longitude: ""
+    property string latitude: ""
 
     Rectangle{       // dark background
         color: config.bgColor;
@@ -113,7 +115,10 @@ Page {
                     anchors.fill: parent
                     text: "M"
                     onClicked: {
-
+//                        pageStack.Push(Qt.resolvedUrl("route.qml"))
+//                        routePage.map.
+                        console.log("Here comes da map:")
+                        console.log("long: " + longitude + "; lat: " + latitude)
                     }
                 }
             }
@@ -198,6 +203,14 @@ Page {
         }
     }
 
+    ListModel{
+        id:infoModel
+        ListElement{
+            fieldName: ""
+            fieldValue: ""
+        }
+    }
+
     Component{      // Traffic delegate
         id:trafficDelegate
         Item {
@@ -249,7 +262,7 @@ Page {
     } // grid rect end
 
 /*<----------------------------------------------------------------------->*/
-    function checkFavorites(){
+    function checkFavorites() { // database API use here TODO
         removeFavoriteTool.visible = true;
     }
 
@@ -259,22 +272,18 @@ Page {
         var schedule = new Array;
         var lines = new Array;
         var time_ = Array
-        if (schedText.slice(0,5) == "Error") {
-            trafficModel.clear();
-            errorLabel.visible = true;
-            return;
-        }
+
         grid.currentIndex = 0
-        schedule = schedText.split("\n");
-        lines = schedule[0].split("|");
-        stopName.text = lines[1];
-        stopName.visible = true;
-        stopAddress.text = lines[2];
-        stopAddress.visible = true;
-        stopCity.text = lines[3];
-        stopCity.visible = true;
+        schedule = schedText.split("\n")
+        lines = schedule[0].split("|")
+        stopName.text = lines[1]
+        stopName.visible = true
+        stopAddress.text = lines[2]
+        stopAddress.visible = true
+        stopCity.text = lines[3]
+        stopCity.visible = true
         for (var ii = 1; ii < schedule.length-1; ii++) {
-            lines = schedule[ii].split("|");
+            lines = schedule[ii].split("|")
             time_[0] = lines[0].slice(0,lines[0].length -2)
             time_[1] = lines[0].slice(lines[0].length-2,lines[0].length)
             if (time_[0] > 23) time_[0]-=24
@@ -286,40 +295,68 @@ Page {
         addFavoriteTool.visible = true
     }
 
-    function getInfo() {
-        var doc = new XMLHttpRequest();
+    function showError(text) {
+        //here comes da error show windows with da text
+    }
+
+    function getSchedule() {  // Use Api v1.0 to get just schedule - less data traffic, more departures in one reply
+        var doc = new XMLHttpRequest()
         doc.onreadystatechange = function() {
             if (doc.readyState == XMLHttpRequest.DONE) {
-                errorLabel.text = qsTr("Error. Wrong stop ID ?")
-                errorLabel.visible = false
-                parseResponse(doc.responseText)
+                if (schedText.slice(0,5) == "Error") {
+                    showError("Error. Wrong stop ID ?")
+                    return
+                } else {
+                    parseResponse(doc.responseText)
+                }
             } else if (doc.readyState == XMLHttpRequest.ERROR) {
-                trafficModel.clear()
-                dataRect.visible = false
-                errorLabel.text = qsTr("Request error. Is Network available?")
-                errorLabel.visible = True
+                showError("Request error. Is Network available?")
             }
         }
-//              API 1.0 (plaintext) : faster, more informative
-        if (stopId.text == "" || stopId.text.length > 7 || stopId.text.length < 4) {
-            errorLabel.text = qsTr("Wrong stop ID format")
-            errorLabel.visible = true
-            return;
-        }
-
+        //              API 1.0 (plaintext) : faster, more informative
         doc.open("GET", "http://api.reittiopas.fi/public-ytv/fi/api/?stop="+ stopId.text +"&user=byako&pass=gfccdjhl");
-//              API 2.0 (XML) : slower
-//              http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&query="+stopId.text); // for line info request
-//              http://api.reittiopas.fi/public-ytv/fi/api/?key="+stopId.text+"&user=byako&pass=gfccdjhl");
+        doc.send();
+    }
 
+    function parseInfo(a){
+        var lineType;
+        for (var ii = 0; ii < a.childNodes.length; ++ii) {
+//            switch(a.childNodes[ii].childNodes[2].firstChild.nodeValue) {
+/*            lineInfoModel.append({"" : "" + a.childNodes[ii].childNodes[0].firstChild.nodeValue})
+                                ( {"lineShortCode" : ""+a.childNodes[ii].childNodes[1].firstChild.nodeValue)}
+                                 "direction" : "" + a.childNodes[ii].childNodes[3].firstChild.nodeValue + " -> " + a.childNodes[ii].childNodes[4].firstChild.nodeValue,
+                                 "type" : ""+lineType,
+                                 "typeCode" : "" + a.childNodes[ii].childNodes[2].firstChild.nodeValue
+                                 });*/
+            infoModel.append({"fieldName" : , "fieldValue" : ""})
+        }
+    }
+
+    function getInfo() {  // Use Api v2.0 - more informative about the stop itself, conditions, coordinates
+        var doc = new XMLHttpRequest()
+        doc.onreadystatechange = function() {
+            if (doc.readyState == XMLHttpRequest.DONE) {
+                parseResponse(doc.responseXML)
+            } else if (doc.readyState == XMLHttpRequest.ERROR) {
+                showError("Request error. Is Network available?")
+            }
+        }
+//              API 2.0 (XML) : slower
+        doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=stop&code=" + stopID.text + "&user=byako&pass=gfccdjhl&format=xml")
         doc.send();
     }
 
     function buttonClicked() {
+        if (stopId.text == "" || stopId.text.length > 7 || stopId.text.length < 4) {
+            showError("Wrong stop ID format")
+            return;
+        }
         trafficModel.clear()
+        infoModel.clear()
         errorLabel.visible = false
         searchButton.focus = true
         getInfo()
+        getSchedule()
     }
 
 /*<----------------------------------------------------------------------->*/
