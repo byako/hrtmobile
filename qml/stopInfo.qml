@@ -7,8 +7,8 @@ Page {
     tools: commonTools
     HrtmConfig {id: config}
     objectName: "stopInfoPage"
-    property string longitude: ""
-    property string latitude: ""
+    property string longit: ""
+    property string latit: ""
 
     Rectangle{       // dark background
         color: config.bgColor;
@@ -34,7 +34,7 @@ Page {
         color: config.textColor
     } // error label end
 
-    Item {          // search box
+    Item {          // Search box
         id: searchBox
         width: 240
         height: 35
@@ -90,7 +90,7 @@ Page {
         color: config.textColor
     }
 
-    Rectangle{      // data
+    Rectangle{      // Data
         id: dataRect
         anchors.left: parent.left
         anchors.top:  searchBox.bottom
@@ -114,11 +114,11 @@ Page {
                 Button {
                     anchors.fill: parent
                     text: "M"
+                    visible: false
                     onClicked: {
-//                        pageStack.Push(Qt.resolvedUrl("route.qml"))
-//                        routePage.map.
                         console.log("Here comes da map:")
                         console.log("long: " + longitude + "; lat: " + latitude)
+                        pageStack.Push(Qt.resolvedUrl("route.qml"))
                     }
                 }
             }
@@ -203,11 +203,11 @@ Page {
         }
     }
 
-    ListModel{
+    ListModel{      // stopInfo
         id:infoModel
-        ListElement{
-            fieldName: ""
-            fieldValue: ""
+        ListElement {
+            longit: ""
+            atitit: ""
         }
     }
 
@@ -266,7 +266,7 @@ Page {
         removeFavoriteTool.visible = true;
     }
 
-    function parseResponse(a){
+    function parseResponse(a) { // parsing plaintext table | fetching schedule
         var schedText = new String;
         schedText = a;
         var schedule = new Array;
@@ -295,15 +295,15 @@ Page {
         addFavoriteTool.visible = true
     }
 
-    function showError(text) {
+    function showError(text) {  // show popup splash window with error
         //here comes da error show windows with da text
     }
 
-    function getSchedule() {  // Use Api v1.0 to get just schedule - less data traffic, more departures in one reply
+    function getSchedule() {    // Use Api v1.0 to get just schedule - less data traffic, more departures in one reply
         var doc = new XMLHttpRequest()
         doc.onreadystatechange = function() {
             if (doc.readyState == XMLHttpRequest.DONE) {
-                if (schedText.slice(0,5) == "Error") {
+                if (doc.responseText.slice(0,5) == "Error") {
                     showError("Error. Wrong stop ID ?")
                     return
                 } else {
@@ -318,35 +318,46 @@ Page {
         doc.send();
     }
 
-    function parseInfo(a){
-        var lineType;
+    function parseInfo(a) {     //
+        var lonat = Array;
+        var coords = String
+        console.log("parseInfo invoked")
+        console.log(""+a)
+        infoModel.clear()
         for (var ii = 0; ii < a.childNodes.length; ++ii) {
 //            switch(a.childNodes[ii].childNodes[2].firstChild.nodeValue) {
-/*            lineInfoModel.append({"" : "" + a.childNodes[ii].childNodes[0].firstChild.nodeValue})
-                                ( {"lineShortCode" : ""+a.childNodes[ii].childNodes[1].firstChild.nodeValue)}
+/*            lineInfoModel.append({"" : "" + a.childNodes[ii].childNodes[0].firstChild.nodeValue,
+                                "lineShortCode" : ""+a.childNodes[ii].childNodes[1].firstChild.nodeValue,
                                  "direction" : "" + a.childNodes[ii].childNodes[3].firstChild.nodeValue + " -> " + a.childNodes[ii].childNodes[4].firstChild.nodeValue,
                                  "type" : ""+lineType,
                                  "typeCode" : "" + a.childNodes[ii].childNodes[2].firstChild.nodeValue
                                  });*/
-            infoModel.append({"fieldName" : , "fieldValue" : ""})
+            coords = a.childNodes[ii].childNodes[8].firstChild.nodeValue
+            lonat = coords.split(",")
+            infoModel.append({"long" : lonat[0], "atit" : lonat[1]})
+            longit = lonat[0]
+            latit = lonat[1]
+            console.log("longit: "+lonat[0]+"; atitit: "+lonat[1])
+            showMapButton.visible = true
         }
     }
 
-    function getInfo() {  // Use Api v2.0 - more informative about the stop itself, conditions, coordinates
+    function getInfo() {        // Use Api v2.0 - more informative about the stop itself, conditions, coordinates
+        console.log("getInfo invoked")
         var doc = new XMLHttpRequest()
         doc.onreadystatechange = function() {
             if (doc.readyState == XMLHttpRequest.DONE) {
-                parseResponse(doc.responseXML)
+                parseInfo(doc.responseXML.documentElement)
             } else if (doc.readyState == XMLHttpRequest.ERROR) {
                 showError("Request error. Is Network available?")
             }
         }
 //              API 2.0 (XML) : slower
-        doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=stop&code=" + stopID.text + "&user=byako&pass=gfccdjhl&format=xml")
+        doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=stop&code=" + stopId.text + "&user=byako&pass=gfccdjhl&format=xml")
         doc.send();
     }
 
-    function buttonClicked() {
+    function buttonClicked() {  // SearchBox action
         if (stopId.text == "" || stopId.text.length > 7 || stopId.text.length < 4) {
             showError("Wrong stop ID format")
             return;
