@@ -204,7 +204,6 @@ Page {
             reachTime: "Time"
         }
     }
-
     Component{  // stops reach delegate
         id:stopReachDelegate
         Item {
@@ -225,7 +224,6 @@ Page {
             }
         }
     }
-
     ListModel{  // lineInfo list model
         id:lineInfoModel
 
@@ -237,7 +235,6 @@ Page {
             type: "type"
         }
     }
-
     Component{  // lineInfo delegate
         id:lineInfoDelegate
         Rectangle {
@@ -326,7 +323,6 @@ Page {
             departTime: "Time"
         }
     }
-
     Component{  // schedule delegate
         id:scheduleDelegate
         Item {

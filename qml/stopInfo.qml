@@ -10,14 +10,13 @@ Page {
     property string longit: ""
     property string latit: ""
 
-    Rectangle{       // dark background
+    Rectangle{      // dark background
         color: config.bgColor;
         anchors.fill: parent
         width: parent.width
         height:  parent.height
     }
-
-    Label{     // error label
+    Label{          // error label
         Rectangle{
             color: "#606060"
             radius: 10
@@ -32,8 +31,7 @@ Page {
         visible : false
         font.pixelSize: 30
         color: config.textColor
-    } // error label end
-
+    }
     Item {          // Search box
         id: searchBox
         width: 240
@@ -78,8 +76,7 @@ Page {
             height: parent.height
             onClicked: buttonClicked()
         }
-    } // searchBox end
-
+    }
     Rectangle {     // HR separator
         id: hrLineSeparator
         anchors.left: parent.left
@@ -89,7 +86,6 @@ Page {
         height:  2
         color: config.textColor
     }
-
     Rectangle{      // Data
         id: dataRect
         anchors.left: parent.left
@@ -101,7 +97,7 @@ Page {
         color: config.bgColor
         radius: 10
         visible: false
-            Rectangle {
+        Rectangle { // showMapButton
                 id: showMapButton
                 anchors.top: parent.top
                 anchors.right: parent.right
@@ -112,21 +108,21 @@ Page {
                 width: 60
                 radius: 10
                 Button {
+                    id: showMapButtonButton
                     anchors.fill: parent
                     text: "M"
                     visible: false
                     onClicked: {
                         console.log("Here comes da map:")
-                        console.log("long: " + longitude + "; lat: " + latitude)
-                        pageStack.Push(Qt.resolvedUrl("route.qml"))
+                        console.log("long: " + longit + "; lat: " + latit)
+                        pageStack.push(Qt.resolvedUrl("route.qml"))
                     }
                 }
             }
-
         Label {
             id: stopNameLabel
             anchors.top: parent.top
-            anchors.topMargin: 5
+            anchors.topMargin: 3
             anchors.left: parent.left
             text: qsTr("Name")
             color: config.textColor
@@ -135,7 +131,7 @@ Page {
         Label {
             id: stopName;
             anchors.top: parent.top
-            anchors.topMargin: 10
+            anchors.topMargin: 5
             anchors.right: showMapButton.left
             anchors.rightMargin: 20
             text: qsTr("Name")
@@ -146,7 +142,7 @@ Page {
         Label {
             id: stopAddressLabel
             anchors.top: stopNameLabel.bottom
-            anchors.topMargin: 10
+            anchors.topMargin: 2
             anchors.left: parent.left
             text: qsTr("Address")
             color: config.textColor
@@ -155,7 +151,7 @@ Page {
         Label {
             id: stopAddress;
             anchors.top: stopName.bottom
-            anchors.topMargin: 13
+            anchors.topMargin: 8
             anchors.right: showMapButton.left
             anchors.rightMargin: 20
             text: qsTr("Address")
@@ -166,7 +162,7 @@ Page {
         Label {
             id: stopCityLabel;
             anchors.top: stopAddressLabel.bottom
-            anchors.topMargin: 10
+            anchors.topMargin: 2
             anchors.left: parent.left
             text: qsTr("City")
             color: config.textColor
@@ -175,7 +171,7 @@ Page {
         Label {
             id: stopCity;
             anchors.top: stopAddress.bottom
-            anchors.topMargin: 13
+            anchors.topMargin: 8
             anchors.right: showMapButton.left
             anchors.rightMargin: 20
             text: qsTr("City")
@@ -183,8 +179,7 @@ Page {
             font.pixelSize: 25
             visible: false
         }
-    } // data end
-
+    }
     Rectangle {     // HR separator 2
         id: hrLineSeparator2
         anchors.left: parent.left
@@ -194,6 +189,32 @@ Page {
         height:  2
         color: config.textColor
     }
+    ButtonRow {     // tabs rect
+        id: tabRect
+        anchors.top: hrLineSeparator2.bottom
+        anchors.topMargin: 5
+        anchors.horizontalCenter: parent.horizontalCenter
+            Button {
+                id: stopInfo
+                text: "Information"
+                onClicked: {
+                    if (list.visible == false) {
+                        list.visible = true
+                        grid.visible = false
+                    }
+                }
+            }
+            Button {
+                id: stopSchedule
+                text: "Schedule"
+                onClicked: {
+                    if (grid.visible == false) {
+                        grid.visible = true
+                        list.visible = false
+                    }
+                }
+            }
+    }
 
     ListModel{      // Traffic Model (Time depart; Line No)
         id:trafficModel
@@ -202,22 +223,13 @@ Page {
             departLine: "Line"
         }
     }
-
-    ListModel{      // stopInfo
-        id:infoModel
-        ListElement {
-            longit: ""
-            atitit: ""
-        }
-    }
-
     Component{      // Traffic delegate
         id:trafficDelegate
         Item {
             width: grid.cellWidth; height:  grid.cellHeight;
             Row {
                 spacing: 10;
-                anchors.fill: parent;                
+                anchors.fill: parent;
                 Text{
                     text: departTime
                     font.pixelSize: 25
@@ -234,15 +246,54 @@ Page {
             }
         }
     }
+    ListModel{      // stopInfo
+        id:infoModel
+        ListElement {
+            propName: ""
+            propValue: ""
+        }
+    }
+    Component{      // stop info delegate
+        id: infoDelegate
+        Rectangle {
+            width: list.width
+            height: 50
+            radius: 10
+            color: config.bgColor
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 10
+                Text{
+                    text: propName
+                    font.pixelSize: 30
+                    color: config.textColor
+                }
+                Text{
+                    text: propValue
+                    font.pixelSize: 30
+                    color: config.textColor
+                }
+            }
+            MouseArea {
+                anchors.fill:  parent
+                onClicked: {
+                    list.focus = true
+                    list.currentIndex = index
+                }
+            }
+        }
+    }
 
-    Rectangle{    // grid rect
+
+    Rectangle{      // grid rect
         id: infoRect
-        anchors.top: dataRect.bottom
+        anchors.top: tabRect.bottom
         anchors.topMargin: 10
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         color: config.bgColor
+        radius: 10
         GridView {
             id: grid
             anchors.fill:  parent
@@ -258,6 +309,17 @@ Page {
             currentIndex: 0
             clip: true
             visible: false
+        }
+        ListView {
+            id: list
+            visible: false
+            anchors.fill: parent
+            anchors.topMargin: 10
+            delegate:  infoDelegate
+            model: infoModel
+            highlight: Rectangle { color:config.highlightColor; radius:  5 }
+            currentIndex: 0
+            clip: true
         }
     } // grid rect end
 
@@ -319,7 +381,7 @@ Page {
     }
 
     function parseInfo(a) {     //
-        var lonat = Array;
+        var lonlat = Array;
         var coords = String
         console.log("parseInfo invoked")
         console.log(""+a)
@@ -333,12 +395,13 @@ Page {
                                  "typeCode" : "" + a.childNodes[ii].childNodes[2].firstChild.nodeValue
                                  });*/
             coords = a.childNodes[ii].childNodes[8].firstChild.nodeValue
-            lonat = coords.split(",")
-            infoModel.append({"long" : lonat[0], "atit" : lonat[1]})
-            longit = lonat[0]
-            latit = lonat[1]
-            console.log("longit: "+lonat[0]+"; atitit: "+lonat[1])
-            showMapButton.visible = true
+            lonlat = coords.split(",")
+            infoModel.append({"propName" : "longitude" , "propValue" : lonlat[0]})
+            infoModel.append({"propName" : "latitude" , "propValue" : lonlat[0]})
+            longit = lonlat[0]
+            latit = lonlat[1]
+            console.log("longit: "+lonlat[0]+"; atitit: "+lonlat[1])
+            showMapButtonButton.visible = true
         }
     }
 
@@ -368,6 +431,7 @@ Page {
         searchButton.focus = true
         getInfo()
         getSchedule()
+        tabRect.checkedButton = stopSchedule
     }
 
 /*<----------------------------------------------------------------------->*/
