@@ -8,6 +8,7 @@ Page {
     tools: commonTools
     HrtmConfig{ id:config }
     objectName: "lineInfoPage"
+    Component.onCompleted: JS.loadConfig()
 
     Rectangle{       // dark background
         color: config.bgColor

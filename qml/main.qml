@@ -203,7 +203,7 @@ PageStackWindow {
             }
         }
     }
-    Menu {
+    Menu { // main favorites
         id: favoriteMenu
         MenuLayout {
             MenuItem {
