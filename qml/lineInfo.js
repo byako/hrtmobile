@@ -9,25 +9,32 @@ function loadConfig() {
     var text_ = new String
     db.transaction(
         function(tx) {
-            tx.executeSql("DROP TABLE Config");
-            
-            var rs = tx.executeSql("SELECT * FROM Config")
-	    if (rs.rows == 0) {
-                 initDB();
-            }
+/*            tx.executeSql("DROP TABLE IF EXISTS Config");
+            tx.executeSql("DROP TABLE IF EXISTS Stops");
+            tx.executeSql("DROP TABLE IF EXISTS Lines");
+            tx.executeSql("DROP TABLE IF EXISTS StopSchedule");
+            tx.executeSql("DROP TABLE IF EXISTS LineStops");
+            tx.executeSql("DROP TABLE IF EXISTS LineCoords");*/
 
-            rs = tx.executeSql('SELECT * FROM Config');
+            console.log("dropped tables")
+//            if (!tx.executeSql("SELECT * FROM Config")) {
+//                 initDB();
+//                 createDefaultConfig();
+//            }
+//            showDB();
+            var rs = tx.executeSql('SELECT * FROM Config');
             var r = ""
             for(var i = 0; i < rs.rows.length; i++) {
                 r += rs.rows.item(i).option + ", " + rs.rows.item(i).value + "\n"
             }
 
-            console.log("Did something, here's da result: " + r)
+            console.log("Did something, here's da result:\n " + r)
         }
     )
 }
 
 function initDB() {
+    console.log("initializing Database ")
     var db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
     db.transaction(
         function(tx) {
@@ -37,22 +44,52 @@ function initDB() {
 	    tx.executeSql('CREATE TABLE IF NOT EXISTS StopSchedule(stopId TEXT, weekTime TEXT, departTime TEXT, lineId)');
 	    tx.executeSql('CREATE TABLE IF NOT EXISTS LineStops(lineId TEXT, stopId TEXT)');
 	    tx.executeSql('CREATE TABLE IF NOT EXISTS LineCoords(option TEXT, value TEXT)');
+        tx.executeSql('COMMIT');
 	}
     )
+    console.log("created 6 tables")
 }
 
 function createDefaultConfig() {
+    console.log("Creating default Config table content")
     var db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
     db.transaction(
         function(tx) {
             tx.executeSql('INSERT INTO Config VALUES(?, ?)', [ 'bgColor', '#000000' ]);
             tx.executeSql('INSERT INTO Config VALUES(?, ?)', [ 'textColor', '#205080' ]);
             tx.executeSql('INSERT INTO Config VALUES(?, ?)', [ 'highlightColor', '#123456' ]);
+            tx.executeSql("COMMIT")
         }
     )
 }
 
+function showDB() {
+    console.log("DEBUG: showDatabase invoked: ");
+    var db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
+    db.transaction(
+        function(tx) {
+            var rs, ii;
+            if (tx.executeSql("SELECT * FROM CONFIG")) {
+                rs = tx.executeSql("SELECT * FROM CONFIG");
+                for (ii=0; ii < rs.rows.length; ++ii ) {
+                    console.log("" + rs.rows.item(ii).option + " : " + rs.rows.item(ii).value)
+                }
+            }
+/*	    if (rs.length > 0) {
+		console.log("found " + ts.length + " tables\n");
+	    } else {
+                console.log("no tables found\n");
+		return;
+            }
+	    for (var ii=0; ii < rs.length; ++ii) {
+		console.log("table: " + rs[ii]);
+            }*/
+	}
+    )
+}
+
 function addStop(string) {
+    console.log("Add stop: ")
     var fields = new Array;
     fields = string.split(";");
     if (fields.length < 6) {

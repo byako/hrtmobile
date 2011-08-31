@@ -7,6 +7,7 @@ Page {
     tools: commonTools
     HrtmConfig {id: config}
     objectName: "mainPage"
+    orientationLock: PageOrientation.LockPortrait
 
     Rectangle{
         color: config.bgColor;

@@ -9,6 +9,7 @@ Page {
     HrtmConfig{ id:config }
     objectName: "lineInfoPage"
     Component.onCompleted: JS.loadConfig()
+    orientationLock: PageOrientation.LockPortrait
 
     Rectangle{       // dark background
         color: config.bgColor

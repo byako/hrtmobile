@@ -1,6 +1,7 @@
 import QtQuick 1.1
 import com.meego 1.0
 import HRTMConfig 1.0
+import "lineInfo.js" as JS
 
 Page {
     id: stopInfoPage
@@ -9,6 +10,8 @@ Page {
     objectName: "stopInfoPage"
     property string longit: ""
     property string latit: ""
+    property string stopAddString: ""
+    orientationLock: PageOrientation.LockPortrait
 
     Rectangle{      // dark background
         color: config.bgColor;
@@ -394,14 +397,25 @@ Page {
                                  "type" : ""+lineType,
                                  "typeCode" : "" + a.childNodes[ii].childNodes[2].firstChild.nodeValue
                                  });*/
+            stopAddString += a.childNodes[ii].childNodes[0].firstChild.nodeValue
+            stopAddString += ";"
+            stopAddString += a.childNodes[ii].childNodes[2].firstChild.nodeValue
+            stopAddString += ";"
+            stopAddString += a.childNodes[ii].childNodes[4].firstChild.nodeValue
+            stopAddString += ";"
             coords = a.childNodes[ii].childNodes[8].firstChild.nodeValue
             lonlat = coords.split(",")
             infoModel.append({"propName" : "longitude" , "propValue" : lonlat[0]})
+            stopAddString += lonlat[0]
+            stopAddString += ";"
             infoModel.append({"propName" : "latitude" , "propValue" : lonlat[0]})
+            stopAddString += lonlat[1]
+            stopAddString += ";"
             longit = lonlat[0]
             latit = lonlat[1]
             console.log("longit: "+lonlat[0]+"; atitit: "+lonlat[1])
             showMapButtonButton.visible = true
+            JS.addStop(stopAddString)
         }
     }
 

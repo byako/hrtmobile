@@ -7,6 +7,7 @@ Page {
     HrtmConfig { id: config }
     anchors.fill: parent
     tools: commonTools
+    orientationLock: PageOrientation.LockPortrait
 
     Rectangle {
         id: background
