@@ -12,7 +12,7 @@ Page {
     property string latit: ""
     property string stopAddString: ""
     orientationLock: PageOrientation.LockPortrait
-
+    Component.onCompleted: { infoModel.clear(); trafficModel.clear(); fillModel(); }
     Rectangle{      // dark background
         color: config.bgColor;
         anchors.fill: parent
@@ -198,12 +198,24 @@ Page {
         anchors.topMargin: 5
         anchors.horizontalCenter: parent.horizontalCenter
             Button {
+                id: recentButton
+                text: "Recent"
+                onClicked: {
+                    if (recentList.visible == false) {
+                        list.visible = false
+                        grid.visible = false
+                        recentList.visible = true
+                    }
+                }
+            }
+            Button {
                 id: stopInfo
-                text: "Information"
+                text: "Info"
                 onClicked: {
                     if (list.visible == false) {
                         list.visible = true
                         grid.visible = false
+                        recentList.visible = false
                     }
                 }
             }
@@ -214,19 +226,88 @@ Page {
                     if (grid.visible == false) {
                         grid.visible = true
                         list.visible = false
+                        recentList.visible = false
                     }
                 }
             }
     }
 
-    ListModel{      // Traffic Model (Time depart; Line No)
+    ListModel{      // recent stops list
+        id: recentModel
+        ListElement {
+            stopIdLong: ""
+            stopIdShort: ""
+            stopName: ""
+            stopAddress: ""
+            stopCity: ""
+            stopLongitude: ""
+            stopLatitude: ""
+        }
+    }
+    Component{      // recent stops delegate
+        id: recentDelegate
+        Rectangle {
+            width: recentList.width
+            height: 70
+            radius: 20
+            color: "#333333"
+            Column {
+//                anchors.leftMargin: 10
+//                anchors.rightMargin: 10
+                height: parent.height
+                width: parent.width
+                Row {
+                    anchors.left: parent.left
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    spacing: 20
+                    Text{
+                        text: stopName
+                        font.pixelSize: 30
+                        color: config.textColor
+                    }
+                    Text{
+                        text: stopIdShort
+                        font.pixelSize: 30
+                        color: config.textColor
+                    }
+                }
+                Row {
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    anchors.right: parent.right
+                    spacing: 20
+                    Text{
+                        text: stopAddress
+                        font.pixelSize: 30
+                        color: config.textColor
+                    }
+                    Text{
+                        text: stopCity
+                        font.pixelSize: 30
+                        color: config.textColor
+                    }
+                }
+            }
+            MouseArea {
+                anchors.fill:  parent
+                onClicked: {
+                    recentList.focus = true
+                    recentList.currentIndex = index
+                    stopId.text = recentModel.get(recentList.currentIndex).stopIdShort
+                    buttonClicked()
+                }
+            }
+        }
+    }
+    ListModel{      // traffic Model (Time depart; Line No)
         id:trafficModel
         ListElement {
             departTime: "Time"
             departLine: "Line"
         }
     }
-    Component{      // Traffic delegate
+    Component{      // traffic delegate
         id:trafficDelegate
         Item {
             width: grid.cellWidth; height:  grid.cellHeight;
@@ -297,7 +378,7 @@ Page {
         anchors.bottom: parent.bottom
         color: config.bgColor
         radius: 10
-        GridView {
+        GridView {  // stopSchedule grid
             id: grid
             anchors.fill:  parent
             anchors.leftMargin:10
@@ -313,7 +394,7 @@ Page {
             clip: true
             visible: false
         }
-        ListView {
+        ListView {  // stop info list
             id: list
             visible: false
             anchors.fill: parent
@@ -324,13 +405,26 @@ Page {
             currentIndex: 0
             clip: true
         }
+        ListView {  // recentList
+            id: recentList
+            visible: true
+            spacing: 10
+            anchors.fill: parent
+            anchors.topMargin: 10
+            anchors.leftMargin: 10
+            anchors.rightMargin: 10
+            delegate:  recentDelegate
+            model: recentModel
+            highlight: Rectangle { color:config.highlightColor; radius:  5 }
+            currentIndex: 0
+            clip: true
+        }
     } // grid rect end
 
 /*<----------------------------------------------------------------------->*/
     function checkFavorites() { // database API use here TODO
         removeFavoriteTool.visible = true;
     }
-
     function parseResponse(a) { // parsing plaintext table | fetching schedule
         var schedText = new String;
         schedText = a;
@@ -356,14 +450,14 @@ Page {
         }
         grid.focus = true
         grid.visible = true
+        list.visible = false
+        recentList.visible = false
         dataRect.visible = true
         addFavoriteTool.visible = true
     }
-
     function showError(text) {  // show popup splash window with error
         //here comes da error show windows with da text
     }
-
     function getSchedule() {    // Use Api v1.0 to get just schedule - less data traffic, more departures in one reply
         var doc = new XMLHttpRequest()
         doc.onreadystatechange = function() {
@@ -382,7 +476,6 @@ Page {
         doc.open("GET", "http://api.reittiopas.fi/public-ytv/fi/api/?stop="+ stopId.text +"&user=byako&pass=gfccdjhl");
         doc.send();
     }
-
     function parseInfo(a) {     //
         var lonlat = Array;
         var coords = String
@@ -399,7 +492,11 @@ Page {
                                  });*/
             stopAddString += a.childNodes[ii].childNodes[0].firstChild.nodeValue
             stopAddString += ";"
+            stopAddString += a.childNodes[ii].childNodes[1].firstChild.nodeValue
+            stopAddString += ";"
             stopAddString += a.childNodes[ii].childNodes[2].firstChild.nodeValue
+            stopAddString += ";"
+            stopAddString += stopAddress.text
             stopAddString += ";"
             stopAddString += a.childNodes[ii].childNodes[4].firstChild.nodeValue
             stopAddString += ";"
@@ -416,9 +513,9 @@ Page {
             console.log("longit: "+lonlat[0]+"; atitit: "+lonlat[1])
             showMapButtonButton.visible = true
             JS.addStop(stopAddString)
+            stopAddString = ""
         }
     }
-
     function getInfo() {        // Use Api v2.0 - more informative about the stop itself, conditions, coordinates
         console.log("getInfo invoked")
         var doc = new XMLHttpRequest()
@@ -433,7 +530,6 @@ Page {
         doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=stop&code=" + stopId.text + "&user=byako&pass=gfccdjhl&format=xml")
         doc.send();
     }
-
     function buttonClicked() {  // SearchBox action
         if (stopId.text == "" || stopId.text.length > 7 || stopId.text.length < 4) {
             showError("Wrong stop ID format")
@@ -446,8 +542,22 @@ Page {
         getInfo()
         getSchedule()
         tabRect.checkedButton = stopSchedule
+        fillModel()
     }
-
+    function fillModel() {
+             JS.__db().transaction(
+                 function(tx) {
+//                     __ensureTables(tx);
+                     var rs = tx.executeSql("SELECT * FROM Stops ORDER BY stopName ASC");
+                     recentModel.clear();
+                     if (rs.rows.length > 0) {
+                         for (var i=0; i<rs.rows.length; ++i) {
+                                 recentModel.append(rs.rows.item(i))
+                             console.log("model-append: " + rs.rows.item(i).stopIdShort + ";" + rs.rows.item(i).stopCity)
+                         }
+                     }
+                 }
+             )
+         }
 /*<----------------------------------------------------------------------->*/
-
 }
