@@ -2,12 +2,15 @@ import QtQuick 1.0
 import com.meego 1.0
 import HRTMConfig 1.0
 import QtMobility.location 1.2
+import "lineInfo.js" as JS
+
 Page {
     id: routePage
     HrtmConfig { id: config }
     anchors.fill: parent
     tools: commonTools
     orientationLock: PageOrientation.LockPortrait
+    Component.onCompleted: setCurrent()
 
     Rectangle {
         id: background
@@ -16,7 +19,6 @@ Page {
         height:  parent.height
         color: config.bgColor
     }
-
     Map {
              id: map
              z : 1
@@ -30,7 +32,6 @@ Page {
                  latitude: 60.1636
                  longitude: 24.9167
              }
-
              MapCircle {
                  id : circle
                  center : Coordinate {
@@ -48,7 +49,6 @@ Page {
                      }
                  }
              }
-
              MapMouseArea {
                  property int lastX : -1
                  property int lastY : -1
@@ -80,8 +80,7 @@ Page {
                  }
              }
          }
-
-         Keys.onPressed: {
+    Keys.onPressed: {
              if (event.key == Qt.Key_Plus) {
                  map.zoomLevel += 1
              } else if (event.key == Qt.Key_Minus) {
@@ -94,4 +93,34 @@ Page {
                  }
              }
          }
+    function setCurrent() {
+             JS.__db().transaction(
+                 function(tx) {
+                        var option = "setCurrentPosition"
+                     try {
+                        var rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", [option])
+                     } catch(e) {
+                         console.log("EXCEPTION: " + e)
+                     }
+                     if (rs.rows.length > 0) {
+                         option = "longitude"
+                         rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", [option])
+                         map.center.longitude = rs.rows.item(0).value
+                         circle.center.longitude = rs.rows.item(0).value
+                         option = "latitude"
+                         rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", [option])
+                         map.center.latitude = rs.rows.item(0).value
+                         circle.center.latitude = rs.rows.item(0).value
+                         option = "latitude"
+                         tx.executeSql("DELETE FROM Current WHERE option=?", [option])
+                         option = "longitude"
+                         tx.executeSql("DELETE FROM Current WHERE option=?", [option])
+                         option = "setCurrentPosition"
+                         tx.executeSql("DELETE FROM Current WHERE option=?", [option])
+                     } else {
+                         console.log("Didn't find setCurrentPosition in DB")
+                     }
+                 }
+             )
+    }
 }

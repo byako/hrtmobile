@@ -57,3 +57,9 @@ QMAKE_LFLAGS += -pie -rdynamic
 
 HEADERS += \
     hrtm_config.h
+
+contains(MEEGO_EDITION,harmattan) {
+    icon.files = hrtmobile.png
+    icon.path = /usr/share/icons/hicolor/80x80/apps
+    INSTALLS += icon
+}

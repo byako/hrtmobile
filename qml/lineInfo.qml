@@ -2,23 +2,26 @@ import QtQuick 1.1
 import com.meego 1.0
 import HRTMConfig 1.0
 import "lineInfo.js" as JS
+import com.nokia.extras 1.0
 
 Page {
     id: lineInfoPage
     tools: commonTools
     HrtmConfig{ id:config }
     objectName: "lineInfoPage"
-    Component.onCompleted: JS.loadConfig()
     orientationLock: PageOrientation.LockPortrait
 
-    Rectangle{       // dark background
+    Component.onCompleted: { // load configand recent lines
+//        JS.cleanAll()
+//        JS.initDB()
+    }
+    Rectangle{  // dark background
         color: config.bgColor
         anchors.fill: parent
         width: parent.width
         height:  parent.height
     }
-
-    Label{     // error label
+    Label{      // error label
         Rectangle{
             color: "#606060"
             radius: 10
@@ -33,9 +36,8 @@ Page {
         visible : false
         font.pixelSize: 30
         color: config.textColor
-    } // error label end
-
-    Item {          // search box
+    }
+    Item {      // search box
         id: searchBox
         width: 240
         height: 40
@@ -79,13 +81,11 @@ Page {
             width: 200
             height: parent.height
             onClicked: {
-                config.loadConfig()
                 buttonClicked()
             }
        }
-    } // searchBox end
-
-    Rectangle {     // decorative horizontal line
+    }
+    Rectangle { // decorative horizontal line
         id: hrLineSeparator
         anchors.left: parent.left
         anchors.top: searchBox.bottom
@@ -94,8 +94,7 @@ Page {
         height:  2
         color: config.textColor
     }
-
-    Rectangle{      // data rect: info labels
+    Rectangle{  // data rect: info labels
         id: dataRect
         anchors.left: parent.left
         anchors.leftMargin: 10
@@ -138,10 +137,8 @@ Page {
             color: config.textColor
             font.pixelSize: 25
         }
-    } // data end
-
-
-    Rectangle {     // decorative horizontal line
+    }
+    Rectangle { // decorative horizontal line
         id: hrLineSeparator2
         anchors.left: parent.left
         anchors.top: dataRect.bottom
@@ -150,8 +147,7 @@ Page {
         height:  2
         color: config.textColor
     }
-
-    ButtonRow {  // tabs rect
+    ButtonRow { // tabs rect
         id: tabRect
         anchors.top: dataRect.bottom
         anchors.topMargin: 10
@@ -190,7 +186,7 @@ Page {
                         list.visible = false
                         grid.visible = false
                         schedule.visible = true
-                        if (JS.scheduleLoaded == 0) {
+                        if (JS.scheduleLoaded == 0 && lineId.text != "") {
                             getSchedule(list.currentIndex)
                         }
                         scheduleButtons.visible = true
@@ -198,8 +194,8 @@ Page {
                 }
             }
     }
-
-    ListModel{      // stops list model
+//--  Lists and delegates  ---------------------------------------------------//
+    ListModel{  // stops list model
         id:stopReachModel
         ListElement {
             stopIdLong: "Stop"
@@ -288,38 +284,37 @@ Page {
             }
         }
     }
-
-    ListModel{      // schedule list model direction 1 Mon-Fri
+    ListModel{  // schedule list model direction 1 Mon-Fri
         id:scheduleModelDir1MonFri
         ListElement {
             departTime: "Time"
         }
     }
-    ListModel{      // schedule list model direction 1 Sat
+    ListModel{  // schedule list model direction 1 Sat
         id:scheduleModelDir1Sat
         ListElement {
             departTime: "Time"
         }
     }
-    ListModel{      // schedule list model direction 1 Sun
+    ListModel{  // schedule list model direction 1 Sun
         id:scheduleModelDir1Sun
         ListElement {
             departTime: "Time"
         }
     }
-    ListModel{      // schedule list model direction 2 Mon-Fri
+    ListModel{  // schedule list model direction 2 Mon-Fri
         id:scheduleModelDir2MonFri
         ListElement {
             departTime: "Time"
         }
     }
-    ListModel{      // schedule list model direction 2 Sat
+    ListModel{  // schedule list model direction 2 Sat
         id:scheduleModelDir2Sat
         ListElement {
             departTime: "Time"
         }
     }
-    ListModel{      // schedule list model direction 2 Sun
+    ListModel{  // schedule list model direction 2 Sun
         id:scheduleModelDir2Sun
         ListElement {
             departTime: "Time"
@@ -346,7 +341,7 @@ Page {
         }
     }
 
-    Rectangle{    // grid rect
+    Rectangle{  // grid rect
         id: infoRect
         anchors.top: tabRect.bottom
         anchors.left: parent.left
@@ -393,7 +388,6 @@ Page {
                 }
             }
         }
-
         ButtonRow {  // scheduleButtons week period choose
             id: scheduleButtons
             anchors.top: parent.top
@@ -429,7 +423,6 @@ Page {
                 }
             }
         }
-
         GridView {  // scheduleModel* show
             id: schedule
             anchors.left: parent.left
@@ -454,13 +447,12 @@ Page {
             }
         }
         visible: false;
-    } // grid rect end
+    }
 
-/*<----------------------------------------------------------------------->*/
+/*<-------------------------------------------------------------------------->*/
     function showRequestInfo(text) {
         console.log(text)
     }
-
     function getStops(a){
         var stops;
         stops = JS.doc.responseXML.documentElement.childNodes[a].childNodes[8];
@@ -469,7 +461,6 @@ Page {
                                   "reachTime" : stops.childNodes[aa].childNodes[1].firstChild.nodeValue });
         }
     }
-
     function parseXML(a){
         infoRect.visible = true;
         var lineType;
@@ -493,7 +484,6 @@ Page {
                                  });
         }
     }
-
     function getXML() {
         JS.doc.onreadystatechange = function() {
             if (JS.doc.readyState == XMLHttpRequest.HEADERS_RECEIVED) {
@@ -521,7 +511,6 @@ Page {
 //             http://api.reittiopas.fi/public-ytv/fi/api/?key="+stopId.text+"&user=byako&pass=gfccdjhl");
     JS.doc.send();
     }
-
     function parseHttp(text_) {
         scheduleClear();
         var tables = new Array;
@@ -631,7 +620,6 @@ Page {
         JS.scheduleLoaded = 1;
         JS.currentSchedule = 0;
     }
-
     function getSchedule(a) {
         var scheduleHtmlReply = new XMLHttpRequest()
         if (a==-1) {
@@ -657,7 +645,6 @@ Page {
         scheduleHtmlReply.open("GET",JS.doc.responseXML.documentElement.childNodes[a].childNodes[6].firstChild.nodeValue)
         scheduleHtmlReply.send()
     }
-
     function scheduleClear() {
         scheduleModelDir1MonFri.clear();
         scheduleModelDir1Sat.clear();
@@ -666,7 +653,6 @@ Page {
         scheduleModelDir2Sat.clear();
         scheduleModelDir2Sun.clear();
     }
-
     function scheduleShow() {
         grid.visible = false;
         list.visible = false;
@@ -701,7 +687,6 @@ Page {
                 console.log("ERROR. Unknows switch code in scheduleShow\n")
         }
     }
-
     function buttonClicked() {
         stopReachModel.clear()
         lineInfoModel.clear()

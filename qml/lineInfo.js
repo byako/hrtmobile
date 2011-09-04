@@ -15,19 +15,7 @@ function loadConfig() {
     var text_ = new String
     db.transaction(
         function(tx) {
-            tx.executeSql("DROP TABLE IF EXISTS Config");
-            tx.executeSql("DROP TABLE IF EXISTS Stops");
-            tx.executeSql("DROP TABLE IF EXISTS Lines");
-            tx.executeSql("DROP TABLE IF EXISTS StopSchedule");
-            tx.executeSql("DROP TABLE IF EXISTS LineStops");
-            tx.executeSql("DROP TABLE IF EXISTS LineCoords");
-
-            console.log("dropped tables")
-//            if (!tx.executeSql("SELECT * FROM Config")) {
-                 initDB();
 //                 createDefaultConfig();
-//            }
-//            showDB();
             var rs = tx.executeSql('SELECT * FROM Config');
             var r = ""
             for(var i = 0; i < rs.rows.length; i++) {
@@ -41,20 +29,31 @@ function loadConfig() {
 
 function initDB() {
     console.log("initializing Database ")
-    var db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
-    db.transaction(
+    __db().transaction(
         function(tx) {
-	    tx.executeSql('CREATE TABLE IF NOT EXISTS Config(option TEXT, value TEXT)');
-        tx.executeSql('CREATE TABLE IF NOT EXISTS Stops(stopIdLong TEXT, stopIdShort TEXT, stopName TEXT, stopAddress TEXT, stopCity TEXT, stopLongitude TEXT, stopLatitude TEXT)');
-        tx.executeSql('CREATE TABLE IF NOT EXISTS Lines(lineId TEXT, lineType TEXT, lineName TEXT, startstopIdLong TEXT, rndStopId TEXT)');
-        tx.executeSql('CREATE TABLE IF NOT EXISTS StopSchedule(stopIdLong TEXT, weekTime TEXT, departTime TEXT, lineId)');
-        tx.executeSql('CREATE TABLE IF NOT EXISTS LineStops(lineId TEXT, stopIdLong TEXT)');
-	    tx.executeSql('CREATE TABLE IF NOT EXISTS LineCoords(option TEXT, value TEXT)');
-        tx.executeSql('COMMIT');
+            tx.executeSql('CREATE TABLE IF NOT EXISTS Config(option TEXT, value TEXT)')
+            tx.executeSql('CREATE TABLE IF NOT EXISTS Stops(stopIdLong TEXT, stopIdShort TEXT, stopName TEXT, stopAddress TEXT, stopCity TEXT, stopLongitude TEXT, stopLatitude TEXT)')
+            tx.executeSql('CREATE TABLE IF NOT EXISTS Lines(lineId TEXT, lineType TEXT, lineName TEXT, startstopIdLong TEXT, rndStopId TEXT)')
+            tx.executeSql('CREATE TABLE IF NOT EXISTS StopSchedule(stopIdLong TEXT, weekTime TEXT, departTime TEXT, lineId)')
+            tx.executeSql('CREATE TABLE IF NOT EXISTS LineStops(lineId TEXT, stopIdLong TEXT)')
+            tx.executeSql('CREATE TABLE IF NOT EXISTS LineCoords(option TEXT, value TEXT)')
+            tx.executeSql('CREATE TABLE IF NOT EXISTS Current(option TEXT, value TEXT)')
 	}
     )
 }
-
+function cleanAll() {
+    __db().transaction(
+        function(tx) {
+            tx.executeSql("DROP TABLE IF EXISTS Config");
+            tx.executeSql("DROP TABLE IF EXISTS Stops");
+            tx.executeSql("DROP TABLE IF EXISTS Lines");
+            tx.executeSql("DROP TABLE IF EXISTS StopSchedule");
+            tx.executeSql("DROP TABLE IF EXISTS LineStops");
+            tx.executeSql("DROP TABLE IF EXISTS LineCoords");
+            tx.executeSql('DROP TABLE IF EXISTS Current');
+        }
+    )
+}
 function createDefaultConfig() {
     console.log("Creating default Config table content")
     var db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
@@ -67,7 +66,6 @@ function createDefaultConfig() {
         }
     )
 }
-
 function showDB() {
     console.log("DEBUG: showDatabase invoked: ");
     var db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
@@ -92,7 +90,6 @@ function showDB() {
 	}
     )
 }
-
 function addStop(string) {
     console.log("Add stop: " + string)
     var fields = new Array;

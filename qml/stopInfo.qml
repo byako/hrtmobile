@@ -2,6 +2,7 @@ import QtQuick 1.1
 import com.meego 1.0
 import HRTMConfig 1.0
 import "lineInfo.js" as JS
+import com.nokia.extras 1.0
 
 Page {
     id: stopInfoPage
@@ -12,14 +13,35 @@ Page {
     property string latit: ""
     property string stopAddString: ""
     orientationLock: PageOrientation.LockPortrait
+
+    InfoBanner {
+        id: errorBanner
+        text: "Error description here"
+        anchors.top: parent.top
+        anchors.topMargin: 8
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 50
+//        opacity: 80
+        enabled: true
+        visible: true
+        timerShowTime: 1000
+        timerEnabled: true
+    }
     Component.onCompleted: { infoModel.clear(); trafficModel.clear(); fillModel(); }
-    Rectangle{      // dark background
+    Rectangle {     // dark background
         color: config.bgColor;
         anchors.fill: parent
         width: parent.width
         height:  parent.height
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                focus: true
+            }
+        }
     }
-    Label{          // error label
+    Label {         // error label
         Rectangle{
             color: "#606060"
             radius: 10
@@ -89,7 +111,7 @@ Page {
         height:  2
         color: config.textColor
     }
-    Rectangle{      // Data
+    Rectangle {     // Data
         id: dataRect
         anchors.left: parent.left
         anchors.top:  searchBox.bottom
@@ -118,6 +140,7 @@ Page {
                     onClicked: {
                         console.log("Here comes da map:")
                         console.log("long: " + longit + "; lat: " + latit)
+                        pushCoordinates()
                         pageStack.push(Qt.resolvedUrl("route.qml"))
                     }
                 }
@@ -232,7 +255,7 @@ Page {
             }
     }
 
-    ListModel{      // recent stops list
+    ListModel {     // recent stops list
         id: recentModel
         ListElement {
             stopIdLong: ""
@@ -244,7 +267,7 @@ Page {
             stopLatitude: ""
         }
     }
-    Component{      // recent stops delegate
+    Component {     // recent stops delegate
         id: recentDelegate
         Rectangle {
             width: recentList.width
@@ -252,8 +275,6 @@ Page {
             radius: 20
             color: "#333333"
             Column {
-//                anchors.leftMargin: 10
-//                anchors.rightMargin: 10
                 height: parent.height
                 width: parent.width
                 Row {
@@ -263,28 +284,28 @@ Page {
                     spacing: 20
                     Text{
                         text: stopName
-                        font.pixelSize: 30
+                        font.pixelSize: 35
                         color: config.textColor
                     }
                     Text{
                         text: stopIdShort
-                        font.pixelSize: 30
+                        font.pixelSize: 35
                         color: config.textColor
                     }
                 }
                 Row {
                     anchors.leftMargin: 10
                     anchors.rightMargin: 10
-                    anchors.right: parent.right
+                    anchors.left: parent.left
                     spacing: 20
                     Text{
-                        text: stopAddress
-                        font.pixelSize: 30
+                        text: stopCity
+                        font.pixelSize: 20
                         color: config.textColor
                     }
                     Text{
-                        text: stopCity
-                        font.pixelSize: 30
+                        text: stopAddress
+                        font.pixelSize: 20
                         color: config.textColor
                     }
                 }
@@ -295,19 +316,34 @@ Page {
                     recentList.focus = true
                     recentList.currentIndex = index
                     stopId.text = recentModel.get(recentList.currentIndex).stopIdShort
-                    buttonClicked()
+                    latit = stopLatitude
+                    longit = stopLongitude
+                    showMapButtonButton.visible = true
+                    trafficModel.clear()
+                    infoModel.clear()
+                    searchButton.focus = true
+                    getSchedule()
+                    getInfo()
+                    tabRect.checkedButton = stopSchedule
+                }
+                onPressedChanged: {
+                    if (pressed == true) {
+                        parent.color = "#205080"
+                    } else {
+                        parent.color = "#333333"
+                    }
                 }
             }
         }
     }
-    ListModel{      // traffic Model (Time depart; Line No)
+    ListModel {     // traffic Model (Time depart; Line No)
         id:trafficModel
         ListElement {
             departTime: "Time"
             departLine: "Line"
         }
     }
-    Component{      // traffic delegate
+    Component {     // traffic delegate
         id:trafficDelegate
         Item {
             width: grid.cellWidth; height:  grid.cellHeight;
@@ -330,14 +366,14 @@ Page {
             }
         }
     }
-    ListModel{      // stopInfo
+    ListModel {     // stopInfo
         id:infoModel
         ListElement {
             propName: ""
             propValue: ""
         }
     }
-    Component{      // stop info delegate
+    Component {     // stop info delegate
         id: infoDelegate
         Rectangle {
             width: list.width
@@ -364,12 +400,18 @@ Page {
                     list.focus = true
                     list.currentIndex = index
                 }
+                onPressedChanged: {
+                    if (pressed == true) {
+                        parent.color = "#"
+                    } else {
+
+                    }
+                }
             }
         }
     }
 
-
-    Rectangle{      // grid rect
+    Rectangle {     // grid rect
         id: infoRect
         anchors.top: tabRect.bottom
         anchors.topMargin: 10
@@ -419,7 +461,7 @@ Page {
             currentIndex: 0
             clip: true
         }
-    } // grid rect end
+    }
 
 /*<----------------------------------------------------------------------->*/
     function checkFavorites() { // database API use here TODO
@@ -456,7 +498,9 @@ Page {
         addFavoriteTool.visible = true
     }
     function showError(text) {  // show popup splash window with error
-        //here comes da error show windows with da text
+     //   errorBanner.text = text
+        console.log("show error 2")
+        errorBanner.show()
     }
     function getSchedule() {    // Use Api v1.0 to get just schedule - less data traffic, more departures in one reply
         var doc = new XMLHttpRequest()
@@ -530,34 +574,46 @@ Page {
         doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=stop&code=" + stopId.text + "&user=byako&pass=gfccdjhl&format=xml")
         doc.send();
     }
-    function buttonClicked() {  // SearchBox action
+    function buttonClicked() {  // SearchBox actioncommander keen
         if (stopId.text == "" || stopId.text.length > 7 || stopId.text.length < 4) {
             showError("Wrong stop ID format")
             return;
         }
         trafficModel.clear()
         infoModel.clear()
-        errorLabel.visible = false
         searchButton.focus = true
         getInfo()
         getSchedule()
         tabRect.checkedButton = stopSchedule
         fillModel()
+        showMapButtonButton.visible = false
     }
-    function fillModel() {
+    function fillModel() {      // checkout recent stops from database
              JS.__db().transaction(
                  function(tx) {
-//                     __ensureTables(tx);
                      var rs = tx.executeSql("SELECT * FROM Stops ORDER BY stopName ASC");
                      recentModel.clear();
                      if (rs.rows.length > 0) {
                          for (var i=0; i<rs.rows.length; ++i) {
                                  recentModel.append(rs.rows.item(i))
-                             console.log("model-append: " + rs.rows.item(i).stopIdShort + ";" + rs.rows.item(i).stopCity)
                          }
                      }
                  }
              )
          }
+    function pushCoordinates() {
+        JS.__db().transaction(
+            function(tx) {
+                var option = "setCurrentPosition"
+                var value = "true"
+                tx.executeSql("INSERT INTO Current VALUES(?,?)",[option,"true"])
+                option = "longitude"
+                tx.executeSql("INSERT INTO Current VALUES(?,?)",[option,longit])
+                option = "latitude"
+                tx.executeSql("INSERT INTO Current VALUES(?,?)",[option,latit])
+            }
+        )
+    }
+
 /*<----------------------------------------------------------------------->*/
 }
