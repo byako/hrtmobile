@@ -4,12 +4,9 @@ var doc = new XMLHttpRequest
 var scheduleLoaded=0
 var currentSchedule=-1
 
-function __db()
-{
+function __db(){
     return openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
 }
-
-
 function loadConfig() {
     var db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
     var text_ = new String
@@ -26,7 +23,6 @@ function loadConfig() {
         }
     )
 }
-
 function initDB() {
     console.log("initializing Database ")
     __db().transaction(

@@ -10,7 +10,7 @@ Page {
     anchors.fill: parent
     tools: commonTools
     orientationLock: PageOrientation.LockPortrait
-    Component.onCompleted: setCurrent()
+    Component.onCompleted: { setCurrent(); setLineShape(); }
 
     Rectangle {
         id: background
@@ -20,48 +20,47 @@ Page {
         color: config.bgColor
     }
     Map {
-             id: map
-             z : 1
-             plugin : Plugin {
-                                 name : "nokia"
-                             }
-             size.width: parent.width
-             size.height: parent.height
-             zoomLevel: 14
-             center: Coordinate {
-                 latitude: 60.1636
-                 longitude: 24.9167
-             }
-             MapCircle {
-                 id : circle
-                 center : Coordinate {
-                             latitude : 60.1636
-                             longitude : 24.9167
-                         }
-                 color : "#80FF0000"
-                 radius : 30.0
-                 MapMouseArea {
-                     onPositionChanged: {
-                         if (mouse.button == Qt.LeftButton)
-                             circle.center = mouse.coordinate
-                         if (mouse.button == Qt.RightButton)
-                             circle.radius = circle.center.distanceTo(mouse.coordinate)
-                     }
-                 }
-             }
-             MapMouseArea {
-                 property int lastX : -1
-                 property int lastY : -1
-
-                 onPressed : {
-                     lastX = mouse.x
-                     lastY = mouse.y
-                 }
-                 onReleased : {
+        id: map
+        z : 1
+        plugin : Plugin {
+            name : "nokia"
+        }
+        size.width: parent.width
+        size.height: parent.height
+        zoomLevel: 14
+        center: Coordinate {
+            latitude: 60.1636
+            longitude: 24.9167
+        }
+        MapCircle {
+            id : circle
+            center : Coordinate {
+                latitude : 60.1636
+                longitude : 24.9167
+            }
+            color : "#80FF0000"
+            radius : 30.0
+            MapMouseArea {
+                onPositionChanged: {
+                    if (mouse.button == Qt.LeftButton)
+                        circle.center = mouse.coordinate
+                    if (mouse.button == Qt.RightButton)
+                        circle.radius = circle.center.distanceTo(mouse.coordinate)
+                }
+            }
+        }
+        MapMouseArea {
+            property int lastX : -1
+            property int lastY : -1
+            onPressed : {
+                lastX = mouse.x
+                lastY = mouse.y
+            }
+            onReleased : {
                      lastX = -1
                      lastY = -1
                  }
-                 onPositionChanged: {
+            onPositionChanged: {
                      if (mouse.button == Qt.LeftButton) {
                          if ((lastX != -1) && (lastY != -1)) {
                              var dx = mouse.x - lastX
@@ -72,55 +71,78 @@ Page {
                          lastY = mouse.y
                      }
                  }
-                 onDoubleClicked: {
+            onDoubleClicked: {
                      map.center = mouse.coordinate
                      map.zoomLevel += 1
                      lastX = -1
                      lastY = -1
                  }
-             }
-         }
+        }
+        MapPolyline {
+
+        }
+    }
     Keys.onPressed: {
-             if (event.key == Qt.Key_Plus) {
-                 map.zoomLevel += 1
-             } else if (event.key == Qt.Key_Minus) {
-                 map.zoomLevel -= 1
-             } else if (event.key == Qt.Key_T) {
-                 if (map.mapType == Map.StreetMap) {
-                     map.mapType = Map.SatelliteMapDay
-                 } else if (map.mapType == Map.SatelliteMapDay) {
-                     map.mapType = Map.StreetMap
-                 }
-             }
-         }
+        if (event.key == Qt.Key_Plus) {
+            map.zoomLevel += 1
+        } else if (event.key == Qt.Key_Minus) {
+            map.zoomLevel -= 1
+        } else if (event.key == Qt.Key_T) {
+            if (map.mapType == Map.StreetMap) {
+                map.mapType = Map.SatelliteMapDay
+            } else if (map.mapType == Map.SatelliteMapDay) {
+                map.mapType = Map.StreetMap
+            }
+        }
+    }
     function setCurrent() {
-             JS.__db().transaction(
-                 function(tx) {
-                        var option = "setCurrentPosition"
-                     try {
-                        var rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", [option])
-                     } catch(e) {
-                         console.log("EXCEPTION: " + e)
-                     }
-                     if (rs.rows.length > 0) {
-                         option = "longitude"
-                         rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", [option])
-                         map.center.longitude = rs.rows.item(0).value
-                         circle.center.longitude = rs.rows.item(0).value
-                         option = "latitude"
-                         rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", [option])
-                         map.center.latitude = rs.rows.item(0).value
-                         circle.center.latitude = rs.rows.item(0).value
-                         option = "latitude"
-                         tx.executeSql("DELETE FROM Current WHERE option=?", [option])
-                         option = "longitude"
-                         tx.executeSql("DELETE FROM Current WHERE option=?", [option])
-                         option = "setCurrentPosition"
-                         tx.executeSql("DELETE FROM Current WHERE option=?", [option])
-                     } else {
-                         console.log("Didn't find setCurrentPosition in DB")
-                     }
-                 }
-             )
+        JS.__db().transaction(
+            function(tx) {
+                try {
+                    var rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", ["setCurrentPosition"])
+                } catch(e) {
+                    console.log("EXCEPTION: " + e)
+                }
+                if (rs.rows.length > 0) {
+                    rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", ["longitude"])
+                    map.center.longitude = rs.rows.item(0).value
+                    circle.center.longitude = rs.rows.item(0).value
+                    rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", ["latitude"])
+                    map.center.latitude = rs.rows.item(0).value
+                    circle.center.latitude = rs.rows.item(0).value
+                    tx.executeSql("DELETE FROM Current WHERE option=?", ["latitude"])
+                    tx.executeSql("DELETE FROM Current WHERE option=?", ["longitude"])
+                    tx.executeSql("DELETE FROM Current WHERE option=?", ["option"])
+                } else {
+                    console.log("Didn't find setCurrentPosition in DB")
+                }
+            }
+        )
+    }
+    function setLineShape() {
+        JS.__db().transaction(
+            function(tx) {
+                try {
+                    var rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", ["setLineShape"])
+                } catch(e) {
+                    console.log("EXCEPTION: " + e)
+                }
+                if (rs.rows.length > 0) {
+                    rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", ["lineShape"])
+                    var coords = new Array
+                    var lonlat = new Array
+                    console.log("line shape: ")
+                    coords = rs.rows.item(0).value.split("|")
+                    for (var ii=0;ii<coords.length;++ii) {
+                        lonlat = coords[ii].split(",")
+                        console.log(""+ lonlat[0]+":"+lonlat[1])
+                    }
+                    tx.executeSql("DELETE FROM Current WHERE option=?", ["setLineShape"])
+                    tx.executeSql("DELETE FROM Current WHERE option=?", ["lineShape"])
+                } else {
+                    console.log("Didn't find setCurrentPosition in DB")
+                }
+            }
+        )
     }
 }

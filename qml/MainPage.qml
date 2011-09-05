@@ -52,10 +52,21 @@ Page {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: stopInfoButton.bottom
         anchors.topMargin: 10
-        text: qsTr("Route")
+        text: qsTr("Map")
         onClicked: {
             pageStack.push(Qt.resolvedUrl("route.qml"))
             backTool.visible=true
+        }
+    }
+    Button{
+        id:realtimeButton
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: routeButton.bottom
+        anchors.topMargin: 10
+        text: qsTr("Realtime schedule")
+        onClicked: {
+//            pageStack.push(Qt.resolvedUrl("route.qml"))
+//            backTool.visible=true
         }
     }
 }

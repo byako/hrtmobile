@@ -12,8 +12,6 @@ Page {
     orientationLock: PageOrientation.LockPortrait
 
     Component.onCompleted: { // load configand recent lines
-//        JS.cleanAll()
-//        JS.initDB()
     }
     Rectangle{  // dark background
         color: config.bgColor
@@ -168,10 +166,11 @@ Page {
             }
             Button {
                 id: stopsButton
-                text: "Info"
+                text: "Stops"
                 onClicked: {
                     if (grid.visible == false) {
                         list.visible = false
+                        updateStopReachModel()
                         grid.visible = true
                         schedule.visible = false
                         scheduleButtons.visible = false
@@ -193,31 +192,50 @@ Page {
                     }
                 }
             }
+            Button {
+                id: showMap
+                text: "showMap"
+                onClicked: {
+                    if (list.currentIndex >= 0) {
+                        console.log("pushing line shape")
+                        pushLineShape(list.currentIndex)
+                        pageStack.push(Qt.resolvedUrl("route.qml"))
+                    }
+                }
+            }
     }
 //--  Lists and delegates  ---------------------------------------------------//
     ListModel{  // stops list model
         id:stopReachModel
         ListElement {
             stopIdLong: "Stop"
+            stopName: "Name"
             reachTime: "Time"
         }
     }
     Component{  // stops reach delegate
         id:stopReachDelegate
         Item {
-            width: grid.cellWidth;
-            height: grid.cellHeight;
+            width: grid.width;
+            height: 50;
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 30
-                Text{ text: stopIdLong; font.pixelSize: 25; color: config.textColor}
-                Text{ text: reachTime; font.pixelSize: 25; color: config.textColor}
+                anchors.verticalCenter: parent.verticalCenter
+                height: parent.height
+                spacing: 15
+//                Text{ text: stopName; font.pixelSize: 25; color: config.textColor}
+                Text{ text: stopName == "" ? stopIdLong:stopName; font.pixelSize: 30; color: config.textColor}
+                Text{ text: reachTime; font.pixelSize: 30; color: config.textColor}
             }
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
                     grid.focus = true;
                     grid.currentIndex = index;
+                }
+                onPressAndHold: {
+                    pushStopId(stopIdLong);
+                    pageStack.push(Qt.resolvedUrl("stopInfo.qml"));
                 }
             }
         }
@@ -340,7 +358,7 @@ Page {
             }
         }
     }
-
+//--                        --------------------------------------------------//
     Rectangle{  // grid rect
         id: infoRect
         anchors.top: tabRect.bottom
@@ -368,16 +386,13 @@ Page {
                 }
             }
         }
-        GridView {  // stops reach model show
+        ListView {  // stops reach model show
             id: grid
             anchors.fill:  parent
             anchors.leftMargin:10
             anchors.topMargin: 10
             delegate: stopReachDelegate
             model: stopReachModel
-            cellWidth: 230
-            cellHeight: 30
-            width: 420
             highlight: Rectangle { color:config.highlightColor; radius:  5 }
             currentIndex: -1
             clip: true
@@ -454,10 +469,12 @@ Page {
         console.log(text)
     }
     function getStops(a){
-        var stops;
+        var stops,stopName_;
         stops = JS.doc.responseXML.documentElement.childNodes[a].childNodes[8];
         for (var aa = 0; aa < stops.childNodes.length; ++aa) {
+            stopName_ = getStopName(stops.childNodes[aa].childNodes[0].firstChild.nodeValue)
             stopReachModel.append({"stopIdLong" : stops.childNodes[aa].childNodes[0].firstChild.nodeValue,
+                                  "stopName" : stopName_,
                                   "reachTime" : stops.childNodes[aa].childNodes[1].firstChild.nodeValue });
         }
     }
@@ -693,6 +710,46 @@ Page {
         errorLabel.visible = false
         searchButton.focus = true
         getXML()
+    }
+    function pushStopId(stopIdLongSet) {
+        JS.__db().transaction(
+            function(tx) {
+                var option = "setCurrentStop"
+                tx.executeSql("INSERT INTO Current VALUES(?,?)",[option,"true"])
+                option = "stopIdLong"
+                tx.executeSql("INSERT INTO Current VALUES(?,?)",[option,stopIdLongSet])
+            }
+        )
+    }
+    function updateStopReachModel() {
+        for (var ii=0;ii<stopReachModel.count;++ii) {
+            stopReachModel.set(ii,{"stopName" : getStopName(stopReachModel.get(ii).stopIdLong)});
+        }
+    }
+
+    function getStopName(stopIdLong) {
+        var return_v = ""
+        JS.__db().transaction(
+            function(tx) {
+               try {
+                    var rs = tx.executeSql("SELECT * FROM Stops WHERE stopIdLong=?", [stopIdLong])
+               } catch(e) {
+                    console.log("EXCEPTION: " + e)
+               }
+               if (rs.rows.length > 0) {
+                   return_v = rs.rows.item(0).stopName
+               }
+            }
+        )
+        return return_v
+    }
+    function pushLineShape(a) {
+        JS.__db().transaction(
+            function(tx) {
+                tx.executeSql("INSERT INTO Current VALUES(?,?)",["setLineShape","true"])
+                tx.executeSql("INSERT INTO Current VALUES(?,?)",["lineShape",JS.doc.responseXML.documentElement.childNodes[a].childNodes[7].firstChild.nodeValue])
+            }
+        )
     }
 /*<----------------------------------------------------------------------->*/
 }

@@ -28,7 +28,7 @@ Page {
         timerShowTime: 1000
         timerEnabled: true
     }
-    Component.onCompleted: { infoModel.clear(); trafficModel.clear(); fillModel(); }
+    Component.onCompleted: { infoModel.clear(); trafficModel.clear(); fillModel(); setCurrent(); }
     Rectangle {     // dark background
         color: config.bgColor;
         anchors.fill: parent
@@ -319,12 +319,8 @@ Page {
                     latit = stopLatitude
                     longit = stopLongitude
                     showMapButtonButton.visible = true
-                    trafficModel.clear()
                     infoModel.clear()
-                    searchButton.focus = true
-                    getSchedule()
-                    getInfo()
-                    tabRect.checkedButton = stopSchedule
+                    updateSchedule()
                 }
                 onPressedChanged: {
                     if (pressed == true) {
@@ -579,14 +575,17 @@ Page {
             showError("Wrong stop ID format")
             return;
         }
-        trafficModel.clear()
         infoModel.clear()
-        searchButton.focus = true
         getInfo()
-        getSchedule()
-        tabRect.checkedButton = stopSchedule
+        updateSchedule()
         fillModel()
         showMapButtonButton.visible = false
+    }
+    function updateSchedule() { // update only schedule
+        trafficModel.clear()
+        searchButton.focus = true
+        getSchedule()
+        tabRect.checkedButton = stopSchedule
     }
     function fillModel() {      // checkout recent stops from database
              JS.__db().transaction(
@@ -605,7 +604,6 @@ Page {
         JS.__db().transaction(
             function(tx) {
                 var option = "setCurrentPosition"
-                var value = "true"
                 tx.executeSql("INSERT INTO Current VALUES(?,?)",[option,"true"])
                 option = "longitude"
                 tx.executeSql("INSERT INTO Current VALUES(?,?)",[option,longit])
@@ -614,6 +612,45 @@ Page {
             }
         )
     }
-
+    function setCurrent() {
+             JS.__db().transaction(
+                 function(tx) {
+                    var option = "setCurrentStop"
+                    try {
+                        var rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", [option])
+                    } catch(e) {
+                         console.log("EXCEPTION: " + e)
+                    }
+                    if (rs.rows.length > 0) {
+                        option = "stopIdLong"
+                        rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", [option])
+                        option = rs.rows.item(0).value  // this stopId we need to show
+                        try {
+                            rs = tx.executeSql("SELECT * FROM Stops WHERE stopIdLong=?", [option])
+                        } catch(e) {
+                            console.log("exception : "+e)
+                        }
+                        if (rs.rows.length > 0) {
+                            stopId.text = rs.rows.item(0).stopIdShort
+                            latit = rs.rows.item(0).stopLatitude
+                            longit = rs.rows.item(0).stopLongitude
+                            showMapButtonButton.visible = true
+                            infoModel.clear()
+                            updateSchedule()
+                        } else {
+                            stopId.text = option
+                            searchButton.focus = true
+                            buttonClicked()
+                        }
+                        option = "setCurrentStop"
+                        tx.executeSql("DELETE FROM Current WHERE option=?", [option])
+                        option = "stopIdLong"
+                        tx.executeSql("DELETE FROM Current WHERE option=?", [option])
+                    } else {
+                        console.log("Didn't find setCurrentStop in DB")
+                    }
+                 }
+             )
+    }
 /*<----------------------------------------------------------------------->*/
 }

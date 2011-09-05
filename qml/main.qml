@@ -1,6 +1,7 @@
 import QtQuick 1.1
 import com.meego 1.0
 import HRTMConfig 1.0
+import "lineInfo.js" as JS
 
 PageStackWindow {
     id: appWindow
@@ -28,7 +29,6 @@ PageStackWindow {
 
     ToolBarLayout {
         id: commonTools
-
         visible: true
         ToolIcon {
              id: backTool
@@ -131,7 +131,14 @@ PageStackWindow {
     Menu {
         id: myMenu
         MenuLayout {
-            MenuItem { text: "Offline mode" }
+            MenuItem {
+                text: "Clean DB"
+                onClicked: {
+                    JS.cleanAll()
+                    JS.initDB()
+                }
+            }
+            MenuItem { text: "Offline Mode" }
             MenuItem { text: "Options" }
         }
     }
