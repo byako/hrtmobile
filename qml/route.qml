@@ -135,19 +135,12 @@ Page {
                     rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", ["lineShape"])
                     var coords = new Array
                     var lonlat = new Array
-                    console.log("line shape: ")
                     coords = rs.rows.item(0).value.split("|")
                     for (var ii=0;ii<coords.length;++ii) {
                         lonlat = coords[ii].split(",")
-                        lonlat[0] = lonlat[0].slice(0,2) + "." + lonlat[0].slice(2,lonlat[0].length)
-                        lonlat[1] = lonlat[1].slice(0,2) + "." + lonlat[1].slice(2,lonlat[1].length)
                         temp.longitude = lonlat[0]
                         temp.latitude = lonlat[1]
                         lineShape.addCoordinate(temp)
-//                        console.log(""+ lonlat[0]+":"+lonlat[1]+ "total: " + lineShape.path.length)
-                    }
-                    for (ii=0;ii<lineShape.path.length;++ii) {
-                        console.log(""+ lineShape.path[ii].longitude+":"+lineShape.path[ii].latitude)
                     }
                     tx.executeSql("DELETE FROM Current WHERE option=?", ["setLineShape"])
                     tx.executeSql("DELETE FROM Current WHERE option=?", ["lineShape"])

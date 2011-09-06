@@ -14,6 +14,7 @@ Page {
         anchors.fill: parent
         width: parent.width
         height:  parent.height
+        Image { source: ":/images/background4.jpg"; fillMode: Image.Center; anchors.fill: parent; }
     }
     Label {
         id: label
@@ -68,5 +69,14 @@ Page {
 //            pageStack.push(Qt.resolvedUrl("route.qml"))
 //            backTool.visible=true
         }
+    }
+    Rectangle{
+        color: config.bgColor;
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.topMargin: 10
+        height: 274
+        width: 80
+        Image { source: ":/images/icon_transport.png"; fillMode: Image.Center; anchors.fill: parent; opacity: 50 }
     }
 }

@@ -34,6 +34,7 @@ Page {
         anchors.fill: parent
         width: parent.width
         height:  parent.height
+        Image { source: ":/images/background4.jpg"; fillMode: Image.Center; anchors.fill: parent; }
         MouseArea {
             anchors.fill: parent
             onClicked: {
@@ -111,7 +112,7 @@ Page {
         height:  2
         color: config.textColor
     }
-    Rectangle {     // Data
+    Item {     // Data
         id: dataRect
         anchors.left: parent.left
         anchors.top:  searchBox.bottom
@@ -119,8 +120,8 @@ Page {
         anchors.right: parent.right
         height: 120
         width: parent.width
-        color: config.bgColor
-        radius: 10
+//        color: config.bgColor
+//        radius: 10
         visible: false
         Rectangle { // showMapButton
                 id: showMapButton
@@ -407,15 +408,15 @@ Page {
         }
     }
 
-    Rectangle {     // grid rect
+    Item {     // grid rect
         id: infoRect
         anchors.top: tabRect.bottom
         anchors.topMargin: 10
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        color: config.bgColor
-        radius: 10
+//        color: config.bgColor
+//        radius: 10
         GridView {  // stopSchedule grid
             id: grid
             anchors.fill:  parent

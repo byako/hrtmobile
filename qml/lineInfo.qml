@@ -18,6 +18,7 @@ Page {
         anchors.fill: parent
         width: parent.width
         height:  parent.height
+        Image { source: ":/images/background4.jpg"; fillMode: Image.Center; anchors.fill: parent; }
     }
     Label{      // error label
         Rectangle{
@@ -92,7 +93,7 @@ Page {
         height:  2
         color: config.textColor
     }
-    Rectangle{  // data rect: info labels
+    Item{  // data rect: info labels
         id: dataRect
         anchors.left: parent.left
         anchors.leftMargin: 10
@@ -103,8 +104,8 @@ Page {
         visible: false
         height: 90
         width: parent.width
-        color: config.bgColor
-        radius: 10
+//        color: config.bgColor
+//        radius: 10
         Label {
             id: lineType;
             anchors.left: parent.left;
@@ -359,14 +360,14 @@ Page {
         }
     }
 //--                        --------------------------------------------------//
-    Rectangle{  // grid rect
+    Item{  // grid rect
         id: infoRect
         anchors.top: tabRect.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        color: config.bgColor
-        radius: 5
+//        color: config.bgColor
+//        radius: 5
         ListView {  // list
             id: list
             anchors.fill:  parent
