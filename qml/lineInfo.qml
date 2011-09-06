@@ -194,7 +194,7 @@ Page {
             }
             Button {
                 id: showMap
-                text: "showMap"
+                text: "Map"
                 onClicked: {
                     if (list.currentIndex >= 0) {
                         console.log("pushing line shape")
@@ -524,7 +524,7 @@ Page {
                 grid.visible=false
             }
         }
-    JS.doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&query="+lineId.text); // for line info request
+    JS.doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&epsg_out=wgs84&query="+lineId.text); // for line info request
 //             http://api.reittiopas.fi/public-ytv/fi/api/?key="+stopId.text+"&user=byako&pass=gfccdjhl");
     JS.doc.send();
     }

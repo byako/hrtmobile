@@ -603,12 +603,9 @@ Page {
     function pushCoordinates() {
         JS.__db().transaction(
             function(tx) {
-                var option = "setCurrentPosition"
-                tx.executeSql("INSERT INTO Current VALUES(?,?)",[option,"true"])
-                option = "longitude"
-                tx.executeSql("INSERT INTO Current VALUES(?,?)",[option,longit])
-                option = "latitude"
-                tx.executeSql("INSERT INTO Current VALUES(?,?)",[option,latit])
+                tx.executeSql("INSERT INTO Current VALUES(?,?)",["setCurrentPosition","true"])
+                tx.executeSql("INSERT INTO Current VALUES(?,?)",["longitude",longit])
+                tx.executeSql("INSERT INTO Current VALUES(?,?)",["latitude",latit])
             }
         )
     }
