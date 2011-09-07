@@ -4,15 +4,26 @@ import HRTMConfig 1.0
 import "lineInfo.js" as JS
 import com.nokia.extras 1.0
 
+
+
 Page {
     id: stopInfoPage
     tools: commonTools
-    HrtmConfig {id: config}
+    Item {
+        id: config
+        property string bgColor: ""
+        property string textColor: ""
+        property string highlightColor: ""
+        property string bgImage: ""
+        property string highlightColorBg: ""
+    }
     objectName: "stopInfoPage"
     property string longit: ""
     property string latit: ""
     property string stopAddString: ""
     orientationLock: PageOrientation.LockPortrait
+
+    Component.onCompleted: { JS.loadConfig(config); infoModel.clear(); trafficModel.clear(); fillModel(); setCurrent(); }
 
     InfoBanner {
         id: errorBanner
@@ -28,13 +39,12 @@ Page {
         timerShowTime: 1000
         timerEnabled: true
     }
-    Component.onCompleted: { infoModel.clear(); trafficModel.clear(); fillModel(); setCurrent(); }
     Rectangle {     // dark background
         color: config.bgColor;
         anchors.fill: parent
         width: parent.width
         height:  parent.height
-        Image { source: ":/images/background4.jpg"; fillMode: Image.Center; anchors.fill: parent; }
+        Image { source: config.bgImage ; fillMode: Image.Center; anchors.fill: parent; }
         MouseArea {
             anchors.fill: parent
             onClicked: {
@@ -112,7 +122,7 @@ Page {
         height:  2
         color: config.textColor
     }
-    Item {     // Data
+    Item {          // Data
         id: dataRect
         anchors.left: parent.left
         anchors.top:  searchBox.bottom
@@ -255,7 +265,6 @@ Page {
                 }
             }
     }
-
     ListModel {     // recent stops list
         id: recentModel
         ListElement {
@@ -350,7 +359,7 @@ Page {
                 Text{
                     text: departTime
                     font.pixelSize: 25
-                    color: trafficModel.get(grid.currentIndex).departLine == departLine ? "#00FF00" : config.textColor
+                    color: trafficModel.get(grid.currentIndex).departLine == departLine ? config.highlightColor : config.textColor
                 }
                 Text{ text: departLine; font.pixelSize: 25; color: config.textColor}
             }
@@ -372,11 +381,9 @@ Page {
     }
     Component {     // stop info delegate
         id: infoDelegate
-        Rectangle {
+        Item {
             width: list.width
             height: 50
-            radius: 10
-            color: config.bgColor
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 10
@@ -396,13 +403,6 @@ Page {
                 onClicked: {
                     list.focus = true
                     list.currentIndex = index
-                }
-                onPressedChanged: {
-                    if (pressed == true) {
-                        parent.color = "#"
-                    } else {
-
-                    }
                 }
             }
         }
@@ -428,7 +428,7 @@ Page {
             cellWidth: 155
             cellHeight: 30
             width: 420
-            highlight: Rectangle { color:config.highlightColor; radius:  5 }
+            highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
             currentIndex: 0
             clip: true
             visible: false
@@ -440,7 +440,7 @@ Page {
             anchors.topMargin: 10
             delegate:  infoDelegate
             model: infoModel
-            highlight: Rectangle { color:config.highlightColor; radius:  5 }
+            highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
             currentIndex: 0
             clip: true
         }
@@ -454,7 +454,7 @@ Page {
             anchors.rightMargin: 10
             delegate:  recentDelegate
             model: recentModel
-            highlight: Rectangle { color:config.highlightColor; radius:  5 }
+            highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
             currentIndex: 0
             clip: true
         }
@@ -613,16 +613,14 @@ Page {
     function setCurrent() {
              JS.__db().transaction(
                  function(tx) {
-                    var option = "setCurrentStop"
                     try {
-                        var rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", [option])
+                        var rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", ["setCurrentStop"])
                     } catch(e) {
                          console.log("EXCEPTION: " + e)
                     }
                     if (rs.rows.length > 0) {
-                        option = "stopIdLong"
-                        rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", [option])
-                        option = rs.rows.item(0).value  // this stopId we need to show
+                        rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", ["stopIdLong"])
+                        var option = rs.rows.item(0).value  // this stopId we need to show
                         try {
                             rs = tx.executeSql("SELECT * FROM Stops WHERE stopIdLong=?", [option])
                         } catch(e) {
@@ -640,10 +638,8 @@ Page {
                             searchButton.focus = true
                             buttonClicked()
                         }
-                        option = "setCurrentStop"
-                        tx.executeSql("DELETE FROM Current WHERE option=?", [option])
-                        option = "stopIdLong"
-                        tx.executeSql("DELETE FROM Current WHERE option=?", [option])
+                        tx.executeSql("DELETE FROM Current WHERE option=?", ["setCurrentStop"])
+                        tx.executeSql("DELETE FROM Current WHERE option=?", ["stopIdLong"])
                     } else {
                         console.log("Didn't find setCurrentStop in DB")
                     }

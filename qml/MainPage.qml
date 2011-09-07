@@ -1,20 +1,28 @@
 import QtQuick 1.1
 import com.meego 1.0
 import HRTMConfig 1.0
+import "lineInfo.js" as JS
 
 Page {
     id: mainPage
     tools: commonTools
-    HrtmConfig {id: config}
+    Item {
+        id: config
+        property string bgColor: ""
+        property string textColor: ""
+        property string highlightColor: ""
+        property string bgImage: ""
+        property string highlightColorBg: ""
+    }
     objectName: "mainPage"
     orientationLock: PageOrientation.LockPortrait
-
+    Component.onCompleted: { JS.loadConfig(config)}
     Rectangle{
         color: config.bgColor;
         anchors.fill: parent
         width: parent.width
         height:  parent.height
-        Image { source: ":/images/background4.jpg"; fillMode: Image.Center; anchors.fill: parent; }
+        Image { source: config.bgImage; fillMode: Image.Center; anchors.fill: parent; }
     }
     Label {
         id: label
@@ -70,7 +78,7 @@ Page {
 //            backTool.visible=true
         }
     }
-    Rectangle{
+    Rectangle{  // lines page icon
         color: config.bgColor;
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter

@@ -7,27 +7,36 @@ var currentSchedule=-1
 function __db(){
     return openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
 }
-function loadConfig() {
-    var db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
-    var text_ = new String
-    db.transaction(
-        function(tx) {
-//                 createDefaultConfig();
-            var rs = tx.executeSql('SELECT * FROM Config');
-            var r = ""
-            for(var i = 0; i < rs.rows.length; i++) {
-                r += rs.rows.item(i).option + ", " + rs.rows.item(i).value + "\n"
-            }
+function setTheme() {
+    var currentTheme = getCurrent("currentTheme")
+    console.log("got current theme: " + currentTheme)
 
-            console.log("Did something, here's da result:\n " + r)
+    __db().transaction(
+        function(tx) {
+            try {
+                var rs = tx.executeSql('SELECT * FROM Config WHERE theme=?',[currentTheme]);
+            } catch (e) {
+                console.log("exception: "+e)
+            }
+            for(var i = 0; i < rs.rows.length; i++) {
+                tx.executeSql("DELETE FROM Current WHERE option=?", [rs.rows.item(i).option])
+                tx.executeSql("INSERT INTO Current VALUES(?, ?)",[rs.rows.item(i).option,rs.rows.item(i).value])
+            }
         }
     )
+}
+function loadConfig(config2) {
+    config2.bgColor = getCurrent("bgColor")
+    config2.bgImage = getCurrent("bgImage")
+    config2.highlightColor = getCurrent("highlightColor")
+    config2.textColor = getCurrent("textColor")
+    config2.highlightColorBg = getCurrent("highlightColorBg")
 }
 function initDB() {
     console.log("initializing Database ")
     __db().transaction(
         function(tx) {
-            tx.executeSql('CREATE TABLE IF NOT EXISTS Config(option TEXT, value TEXT)')
+            tx.executeSql('CREATE TABLE IF NOT EXISTS Config(option TEXT, value TEXT, theme TEXT)')
             tx.executeSql('CREATE TABLE IF NOT EXISTS Stops(stopIdLong TEXT, stopIdShort TEXT, stopName TEXT, stopAddress TEXT, stopCity TEXT, stopLongitude TEXT, stopLatitude TEXT)')
             tx.executeSql('CREATE TABLE IF NOT EXISTS Lines(lineId TEXT, lineType TEXT, lineName TEXT, startstopIdLong TEXT, rndStopId TEXT)')
             tx.executeSql('CREATE TABLE IF NOT EXISTS StopSchedule(stopIdLong TEXT, weekTime TEXT, departTime TEXT, lineId)')
@@ -36,6 +45,8 @@ function initDB() {
             tx.executeSql('CREATE TABLE IF NOT EXISTS Current(option TEXT, value TEXT)')
 	}
     )
+    createDefaultConfig()
+    setTheme()
 }
 function cleanAll() {
     __db().transaction(
@@ -55,10 +66,16 @@ function createDefaultConfig() {
     var db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
     db.transaction(
         function(tx) {
-            tx.executeSql('INSERT INTO Config VALUES(?, ?)', [ 'bgColor', '#000000' ]);
-            tx.executeSql('INSERT INTO Config VALUES(?, ?)', [ 'textColor', '#205080' ]);
-            tx.executeSql('INSERT INTO Config VALUES(?, ?)', [ 'highlightColor', '#123456' ]);
-            tx.executeSql("COMMIT")
+            try {
+                tx.executeSql("INSERT INTO Current VALUES(?, ?)",["currentTheme","black"])
+                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'bgColor', '#000000' , "black"]);
+                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'textColor', '#cdd9ff', "black"]);
+                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'highlightColor', '#00ee10', "black"]);
+                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'highlightColorBg', '#666666', "black"]);
+                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'bgImage', '', "black"]);
+            } catch(e) {
+                console.log("Exception: " + e)
+            }
         }
     )
 }
@@ -86,6 +103,9 @@ function showDB() {
 	}
     )
 }
+function addLine(string) {
+// TODO : this function
+}
 function addStop(string) {
     console.log("Add stop: " + string)
     var fields = new Array;
@@ -110,4 +130,20 @@ function addStop(string) {
             }
 	}
     );
+}
+function getCurrent(string) {
+    var return_v=""
+    __db().transaction(
+        function(tx) {
+            try {
+                var rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", [string])
+            } catch(e) {
+                console.log("EXCEPTION: " + e)
+            }
+            if (rs.rows.length > 0) {
+                return_v = rs.rows.item(0).value
+            }
+        }
+    )
+    return return_v
 }

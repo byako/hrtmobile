@@ -7,18 +7,26 @@ import com.nokia.extras 1.0
 Page {
     id: lineInfoPage
     tools: commonTools
-    HrtmConfig{ id:config }
+    Item {      // config object
+        id: config
+        property string bgColor: ""
+        property string textColor: ""
+        property string highlightColor: ""
+        property string bgImage: ""
+        property string highlightColorBg: ""
+    }
     objectName: "lineInfoPage"
     orientationLock: PageOrientation.LockPortrait
 
     Component.onCompleted: { // load configand recent lines
+        JS.loadConfig(config)
     }
     Rectangle{  // dark background
         color: config.bgColor
         anchors.fill: parent
         width: parent.width
         height:  parent.height
-        Image { source: ":/images/background4.jpg"; fillMode: Image.Center; anchors.fill: parent; }
+        Image { source: config.bgImage; fillMode: Image.Center; anchors.fill: parent; }
     }
     Label{      // error label
         Rectangle{
@@ -104,8 +112,6 @@ Page {
         visible: false
         height: 90
         width: parent.width
-//        color: config.bgColor
-//        radius: 10
         Label {
             id: lineType;
             anchors.left: parent.left;
@@ -224,7 +230,6 @@ Page {
                 anchors.verticalCenter: parent.verticalCenter
                 height: parent.height
                 spacing: 15
-//                Text{ text: stopName; font.pixelSize: 25; color: config.textColor}
                 Text{ text: stopName == "" ? stopIdLong:stopName; font.pixelSize: 30; color: config.textColor}
                 Text{ text: reachTime; font.pixelSize: 30; color: config.textColor}
             }
@@ -280,7 +285,7 @@ Page {
                 anchors.fill:  parent
                 onPressedChanged: {
                     if (pressed == true) {
-                        parent.color = config.highlightColor
+                        parent.color = config.highlightColorBg
                     } else {
                         parent.color = "#333333"
                     }
@@ -366,8 +371,6 @@ Page {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-//        color: config.bgColor
-//        radius: 5
         ListView {  // list
             id: list
             anchors.fill:  parent
@@ -377,7 +380,7 @@ Page {
             delegate: lineInfoDelegate
             model: lineInfoModel
             spacing: 10
-            highlight: Rectangle { color:config.highlightColor; radius:  5 }
+            highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
             currentIndex: -1
             clip: true
             visible: false
@@ -394,7 +397,7 @@ Page {
             anchors.topMargin: 10
             delegate: stopReachDelegate
             model: stopReachModel
-            highlight: Rectangle { color:config.highlightColor; radius:  5 }
+            highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
             currentIndex: -1
             clip: true
             visible: false;
@@ -452,7 +455,7 @@ Page {
             model: scheduleModelDir1MonFri
             cellWidth: 115
             cellHeight: 30
-            highlight: Rectangle { color: config.highlightColor; radius:  5 }
+            highlight: Rectangle { color: config.highlightColorBg; radius:  5 }
             currentIndex: -1
             clip: true
             visible: false;
@@ -464,7 +467,6 @@ Page {
         }
         visible: false;
     }
-
 /*<-------------------------------------------------------------------------->*/
     function showRequestInfo(text) {
         console.log(text)
@@ -727,7 +729,6 @@ Page {
             stopReachModel.set(ii,{"stopName" : getStopName(stopReachModel.get(ii).stopIdLong)});
         }
     }
-
     function getStopName(stopIdLong) {
         var return_v = ""
         JS.__db().transaction(
