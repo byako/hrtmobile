@@ -6,6 +6,9 @@ import "lineInfo.js" as JS
 Page {
     id: mainPage
     tools: commonTools
+    objectName: "mainPage"
+    orientationLock: PageOrientation.LockPortrait
+
     Item {
         id: config
         property string bgColor: ""
@@ -14,8 +17,6 @@ Page {
         property string bgImage: ""
         property string highlightColorBg: ""
     }
-    objectName: "mainPage"
-    orientationLock: PageOrientation.LockPortrait
     Component.onCompleted: { JS.loadConfig(config)}
     Rectangle{
         color: config.bgColor;
@@ -74,12 +75,9 @@ Page {
         anchors.topMargin: 10
         text: qsTr("Realtime schedule")
         onClicked: {
-//            pageStack.push(Qt.resolvedUrl("route.qml"))
-//            backTool.visible=true
         }
     }
-    Rectangle{  // lines page icon
-        color: config.bgColor;
+    Item {  // lines page icon
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         anchors.topMargin: 10

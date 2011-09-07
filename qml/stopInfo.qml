@@ -28,16 +28,8 @@ Page {
     InfoBanner {
         id: errorBanner
         text: "Error description here"
-        anchors.top: parent.top
-        anchors.topMargin: 8
-        anchors.left: parent.left
-        anchors.right: parent.right
-        height: 50
-//        opacity: 80
-        enabled: true
-        visible: true
-        timerShowTime: 1000
-        timerEnabled: true
+        timerShowTime: 5000
+        z: 10
     }
     Rectangle {     // dark background
         color: config.bgColor;
@@ -494,9 +486,8 @@ Page {
         dataRect.visible = true
         addFavoriteTool.visible = true
     }
-    function showError(text) {  // show popup splash window with error
-     //   errorBanner.text = text
-        console.log("show error 2")
+    function showError(errorText) {  // show popup splash window with error
+        errorBanner.text = errorText
         errorBanner.show()
     }
     function getSchedule() {    // Use Api v1.0 to get just schedule - less data traffic, more departures in one reply
@@ -504,7 +495,7 @@ Page {
         doc.onreadystatechange = function() {
             if (doc.readyState == XMLHttpRequest.DONE) {
                 if (doc.responseText.slice(0,5) == "Error") {
-                    showError("Error. Wrong stop ID ?")
+                    showError("Error. Wrong stop ID ? Stop ID is 4 digit or 1 letter & 4 digits. Example: E3127")
                     return
                 } else {
                     parseResponse(doc.responseText)
@@ -573,7 +564,7 @@ Page {
     }
     function buttonClicked() {  // SearchBox actioncommander keen
         if (stopId.text == "" || stopId.text.length > 7 || stopId.text.length < 4) {
-            showError("Wrong stop ID format")
+            showError("Wrong stop ID\nStop ID is 4 digit or 1 letter & 4 digits. Example: E3127")
             return;
         }
         infoModel.clear()

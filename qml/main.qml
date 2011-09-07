@@ -139,7 +139,13 @@ PageStackWindow {
                 }
             }
             MenuItem { text: "Offline Mode" }
-            MenuItem { text: "Options" }
+            MenuItem {
+                text: "Options"
+                onClicked:  {
+                    pageStack.push(Qt.resolvedUrl("settings.qml"))
+                    backTool.visible=true
+                }
+            }
         }
     }
     Menu {

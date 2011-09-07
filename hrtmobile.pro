@@ -41,7 +41,8 @@ OTHER_FILES += \
     qml/stopInfo.qml \
     qml/lineInfo.qml \
     qml/lineInfo.js \
-    qml/route.qml
+    qml/route.qml \
+    qml/settings.qml
 
 RESOURCES += \
     res.qrc

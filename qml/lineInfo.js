@@ -7,12 +7,22 @@ var currentSchedule=-1
 function __db(){
     return openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
 }
-function setTheme() {
+function setTheme(themeName) {
     var currentTheme = getCurrent("currentTheme")
     console.log("got current theme: " + currentTheme)
-
     __db().transaction(
         function(tx) {
+            if (themeName != currentTheme && themeName != "") {
+                try{
+                    tx.executeSql("DELETE FROM Current WHERE option=?", ["theme"])
+                    tx.executeSql("INSERT INTO Current VALUES(?, ?)",["theme",themeName])
+                }
+                catch (e) {
+                    console.log("exception: "+e)
+                }
+                currentTheme = themeName
+                console.log("changing theme to new: " + themeName)
+            }
             try {
                 var rs = tx.executeSql('SELECT * FROM Config WHERE theme=?',[currentTheme]);
             } catch (e) {
@@ -46,7 +56,7 @@ function initDB() {
 	}
     )
     createDefaultConfig()
-    setTheme()
+    setTheme("")
 }
 function cleanAll() {
     __db().transaction(
@@ -73,6 +83,12 @@ function createDefaultConfig() {
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'highlightColor', '#00ee10', "black"]);
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'highlightColorBg', '#666666', "black"]);
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'bgImage', '', "black"]);
+//                tx.executeSql("INSERT INTO Current VALUES(?, ?)",["currentTheme","fallout"])
+                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'bgColor', '#000000' , "fallout"]);
+                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'textColor', '#00ee10', "fallout"]);
+                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'highlightColor', '#00ff50', "fallout"]);
+                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'highlightColorBg', '#66aa66', "fallout"]);
+                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'bgImage', ':/images/background3.jpg', "fallout"]);
             } catch(e) {
                 console.log("Exception: " + e)
             }
