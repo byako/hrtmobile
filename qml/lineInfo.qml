@@ -230,8 +230,8 @@ Page {
                 anchors.verticalCenter: parent.verticalCenter
                 height: parent.height
                 spacing: 15
-                Text{ text: stopName == "" ? stopIdLong:stopName; font.pixelSize: 30; color: config.textColor}
-                Text{ text: reachTime; font.pixelSize: 30; color: config.textColor}
+                Text{ text: stopName == "" ? stopIdLong:stopName; font.pixelSize: 30; color: config.textColor; anchors.verticalCenter : parent.verticalCenter}
+                Text{ text: reachTime; font.pixelSize: 30; color: config.textColor; anchors.verticalCenter : parent.verticalCenter}
             }
             MouseArea {
                 anchors.fill:  parent

@@ -83,12 +83,11 @@ function createDefaultConfig() {
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'highlightColor', '#00ee10', "black"]);
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'highlightColorBg', '#666666', "black"]);
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'bgImage', '', "black"]);
-//                tx.executeSql("INSERT INTO Current VALUES(?, ?)",["currentTheme","fallout"])
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'bgColor', '#000000' , "fallout"]);
-                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'textColor', '#00ee10', "fallout"]);
-                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'highlightColor', '#00ff50', "fallout"]);
-                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'highlightColorBg', '#66aa66', "fallout"]);
-                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'bgImage', ':/images/background3.jpg', "fallout"]);
+                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'textColor', '#00aa10', "fallout"]);
+                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'highlightColor', '#ffff50', "fallout"]);
+                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'highlightColorBg', '#000000', "fallout"]);
+                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'bgImage', ':/images/background4.jpg', "fallout"]);
             } catch(e) {
                 console.log("Exception: " + e)
             }

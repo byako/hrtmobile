@@ -407,8 +407,6 @@ Page {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-//        color: config.bgColor
-//        radius: 10
         GridView {  // stopSchedule grid
             id: grid
             anchors.fill:  parent
@@ -424,6 +422,7 @@ Page {
             currentIndex: 0
             clip: true
             visible: false
+            flow: GridView.TopToBottom
         }
         ListView {  // stop info list
             id: list

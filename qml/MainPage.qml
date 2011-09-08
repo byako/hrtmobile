@@ -28,6 +28,7 @@ Page {
     Label {
         id: label
         anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter:  parent.verticalCenter
         anchors.top: parent.top
         anchors.topMargin: 100
         font.pixelSize: 36
@@ -37,6 +38,7 @@ Page {
     }
     Button{
         id: lineInfoButton
+        visible: false
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: label.bottom
         anchors.topMargin: 50
@@ -48,10 +50,12 @@ Page {
     }
     Button{
         id:stopInfoButton
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: lineInfoButton.bottom
-        anchors.topMargin: 10
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.left: parent.left
+        anchors.leftMargin: 10
         text: qsTr("Stop info")
+        height: 100
+        width: 120
         onClicked: {
             pageStack.push(Qt.resolvedUrl("stopInfo.qml"))
             backTool.visible=true
@@ -60,9 +64,10 @@ Page {
     Button{
         id:routeButton
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: stopInfoButton.bottom
+        anchors.top: parent.top
         anchors.topMargin: 10
         text: qsTr("Map")
+        height: 100
         onClicked: {
             pageStack.push(Qt.resolvedUrl("route.qml"))
             backTool.visible=true
@@ -71,18 +76,27 @@ Page {
     Button{
         id:realtimeButton
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: routeButton.bottom
-        anchors.topMargin: 10
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 10
         text: qsTr("Realtime schedule")
+        height: 100
         onClicked: {
         }
     }
     Item {  // lines page icon
         anchors.right: parent.right
+        anchors.rightMargin: 10
         anchors.verticalCenter: parent.verticalCenter
         anchors.topMargin: 10
         height: 274
         width: 80
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                pageStack.push(Qt.resolvedUrl("lineInfo.qml"))
+                backTool.visible=true
+            }
+        }
         Image { source: ":/images/icon_transport.png"; fillMode: Image.Center; anchors.fill: parent; opacity: 50 }
     }
 }
