@@ -27,17 +27,44 @@ Page {
         height:  parent.height
         Image { source: config.bgImage ; fillMode: Image.Center; anchors.fill: parent; }
     }
+
+
     Button {
+        id: themeButton
         text: "Theme"
         anchors.top: parent.top
         anchors.topMargin: 20
         anchors.left: parent.left
+        anchors.leftMargin: 20
         onClicked: {
             themesModel.clear()
             loadThemesNames()
             themeDialog.open()
         }
     }
+    Row {
+        id: offlineRow
+        spacing: 10
+        anchors.top : themeButton.bottom
+        anchors.topMargin: 10
+        anchors.left: parent.left
+        anchors.leftMargin: 20
+
+        Switch {
+            id: switchComponent
+        }
+
+        Text {
+            width: rowRow.width - rowRow.spacing - switchComponent.width
+            height: switchComponent.height
+            verticalAlignment: Text.AlignVCenter
+            text: switchComponent.checked ? "Offline" : "Online"
+            font.pixelSize: 35
+            color: config.textColor
+        }
+    }
+
+//----------------------------------------------------------------------------//
     ListModel {
         id: themesModel
         ListElement { name: "" }
@@ -55,7 +82,7 @@ Page {
              }
          }
     }
-
+//----------------------------------------------------------------------------//
     function loadThemesNames() {
         JS.__db().transaction(
             function(tx) {

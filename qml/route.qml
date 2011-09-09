@@ -1,4 +1,4 @@
-import QtQuick 1.0
+import QtQuick 1.1
 import com.meego 1.0
 import HRTMConfig 1.0
 import QtMobility.location 1.2
@@ -10,7 +10,7 @@ Page {
     anchors.fill: parent
     tools: commonTools
     orientationLock: PageOrientation.LockPortrait
-    Component.onCompleted: { setCurrent(); setLineShape(); }
+    Component.onCompleted: { setLineShape(); setCurrent(); }
     Coordinate {
         id: temp
     }
@@ -52,6 +52,38 @@ Page {
                 }
             }
         }
+/*        MouseArea {
+            id: mousearea
+            property bool __isPanning: false
+            property int __lastX: -1
+            property int __lastY: -1
+
+            anchors.fill : parent
+
+            onPressed: {
+                __isPanning = true
+                __lastX = mouse.x
+                __lastY = mouse.y
+            }
+
+            onReleased: {
+                __isPanning = false
+            }
+
+            onPositionChanged: {
+                if (__isPanning) {
+                    var dx = mouse.x - __lastX
+                    var dy = mouse.y - __lastY
+                    map.pan(-dx, -dy)
+                    __lastX = mouse.x
+                    __lastY = mouse.y
+                }
+            }
+
+            onCanceled: {
+                __isPanning = false;
+            }
+        } */
         MapMouseArea {
             property int lastX : -1
             property int lastY : -1
@@ -81,6 +113,25 @@ Page {
                 lastY = -1
             }
         }
+/*        PinchArea {
+           id: pincharea
+           property double __oldZoom
+           anchors.fill: parent
+
+           function calcZoomDelta(zoom, percent) {
+              return zoom + Math.log(percent)/Math.log(2)
+           }
+           onPinchStarted: {
+              __oldZoom = map.zoomLevel
+           }
+           onPinchUpdated: {
+              map.zoomLevel = calcZoomDelta(__oldZoom, pinch.scale)
+           }
+           onPinchFinished: {
+              map.zoomLevel = calcZoomDelta(__oldZoom, pinch.scale)
+           }
+        }*/
+
         MapPolyline {
             id: lineShape
             border { color: "#ff0000"; width: 4; }
@@ -144,6 +195,11 @@ Page {
                     }
                     tx.executeSql("DELETE FROM Current WHERE option=?", ["setLineShape"])
                     tx.executeSql("DELETE FROM Current WHERE option=?", ["lineShape"])
+                    lonlat = coords[0].split(",")
+                    map.center.longitude = lonlat[0]
+                    map.center.latitude = lonlat[1]
+                    circle.center.longitude = lonlat[0]
+                    circle.center.latitude = lonlat[1]
                 } else {
                     console.log("Didn't find setLineShape in DB")
                 }

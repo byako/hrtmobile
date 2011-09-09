@@ -122,12 +122,12 @@ function addLine(string) {
 // TODO : this function
 }
 function addStop(string) {
-    console.log("Add stop: " + string)
-    var fields = new Array;
-    fields = string.split(";");
+    var returnVal = 0
+    var fields = new Array
+    fields = string.split(";")
     if (fields.length < 7) {
-        console.log("Wrong stopAddString format");
-        return;
+        returnVal = -1
+        return returnVal
     }
     var db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
     db.transaction(
@@ -135,16 +135,16 @@ function addStop(string) {
             console.log ("checking if there is already a stop info in DB [" + fields[0] + "]: ")
             var rs = tx.executeSql('SELECT * FROM Stops WHERE stopIdLong=?', [fields[0]]);
             if (rs.rows.length > 0) {
-                console.log("found :")
                 for (var ii=0; ii<rs.rows.length; ++ii) {
                     console.log("" + rs.rows.item(ii).stopIdLong +";"+ rs.rows.item(ii).stopName)
                 }
             } else {
-                console.log("not found. adding")
+                returnVal = 1
                 rs = tx.executeSql('INSERT INTO Stops VALUES(?,?,?,?,?,?,?)', [fields[0], fields[1], fields[2], fields[3], fields[4], fields[5], fields[6]])
             }
 	}
-    );
+    )
+    return returnVal
 }
 function getCurrent(string) {
     var return_v=""

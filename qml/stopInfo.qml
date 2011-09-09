@@ -24,10 +24,13 @@ Page {
     Component.onCompleted: { JS.loadConfig(config); infoModel.clear(); trafficModel.clear(); fillModel(); setCurrent(); }
 
     InfoBanner {
-        id: errorBanner
-        text: "Error description here"
-        timerShowTime: 5000
+        id: infoBanner
+        text: "info description here"
         z: 10
+        opacity: 1.0
+    }
+    ContextMenu {
+
     }
     Rectangle {     // dark background
         color: config.bgColor;
@@ -73,7 +76,7 @@ Page {
             anchors.left: parent.left
             width: 240
             height: parent.height
-            color: "#7090AA"
+            color: config.highlightColorBg
             radius: 15
             TextInput{
                 id: stopId
@@ -274,6 +277,7 @@ Page {
             height: 70
             radius: 20
             color: "#333333"
+            opacity: 0.8
             Column {
                 height: parent.height
                 width: parent.width
@@ -286,6 +290,7 @@ Page {
                         text: stopName
                         font.pixelSize: 35
                         color: config.textColor
+                        width: 340
                     }
                     Text{
                         text: stopIdShort
@@ -299,12 +304,13 @@ Page {
                     anchors.left: parent.left
                     spacing: 20
                     Text{
-                        text: stopCity
+                        text: stopAddress
                         font.pixelSize: 20
                         color: config.textColor
+                        width: 340
                     }
                     Text{
-                        text: stopAddress
+                        text: stopCity
                         font.pixelSize: 20
                         color: config.textColor
                     }
@@ -359,6 +365,7 @@ Page {
                     grid.focus = true;
                     grid.currentIndex = index;
                 }
+                onPressAndHold: { lineContext.open() }
             }
         }
     }
@@ -397,6 +404,20 @@ Page {
             }
         }
     }
+    ContextMenu {
+        id: lineContext
+        MenuLayout {
+            MenuItem {
+                text: "Info"
+                onClicked : {
+
+                }
+            }
+            MenuItem {
+                text: "Map"
+            }
+        }
+    }
 
     Item {     // grid rect
         id: infoRect
@@ -408,7 +429,6 @@ Page {
         GridView {  // stopSchedule grid
             id: grid
             anchors.fill:  parent
-            anchors.leftMargin:10
             anchors.topMargin: 10
             delegate: trafficDelegate
             model: trafficModel
@@ -439,8 +459,6 @@ Page {
             spacing: 10
             anchors.fill: parent
             anchors.topMargin: 10
-            anchors.leftMargin: 10
-            anchors.rightMargin: 10
             delegate:  recentDelegate
             model: recentModel
             highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
@@ -512,13 +530,6 @@ Page {
         console.log(""+a)
         infoModel.clear()
         for (var ii = 0; ii < a.childNodes.length; ++ii) {
-//            switch(a.childNodes[ii].childNodes[2].firstChild.nodeValue) {
-/*            lineInfoModel.append({"" : "" + a.childNodes[ii].childNodes[0].firstChild.nodeValue,
-                                "lineShortCode" : ""+a.childNodes[ii].childNodes[1].firstChild.nodeValue,
-                                 "direction" : "" + a.childNodes[ii].childNodes[3].firstChild.nodeValue + " -> " + a.childNodes[ii].childNodes[4].firstChild.nodeValue,
-                                 "type" : ""+lineType,
-                                 "typeCode" : "" + a.childNodes[ii].childNodes[2].firstChild.nodeValue
-                                 });*/
             stopAddString += a.childNodes[ii].childNodes[0].firstChild.nodeValue
             stopAddString += ";"
             stopAddString += a.childNodes[ii].childNodes[1].firstChild.nodeValue
@@ -541,8 +552,17 @@ Page {
             latit = lonlat[1]
             console.log("longit: "+lonlat[0]+"; atitit: "+lonlat[1])
             showMapButtonButton.visible = true
-            JS.addStop(stopAddString)
+            coords = JS.addStop(stopAddString)
             stopAddString = ""
+            if (coords == 1) {
+                infoBanner.text = "Added stop " + stopName.text
+                infoBanner.show()
+            } else if (coords == -1) {
+                infoBanner.text = "ERROR. Stop is not added. Sorry"
+                infoBanner.show()
+            }
+
+            fillModel()
         }
     }
     function getInfo() {        // Use Api v2.0 - more informative about the stop itself, conditions, coordinates
@@ -577,8 +597,9 @@ Page {
         tabRect.checkedButton = stopSchedule
     }
     function fillModel() {      // checkout recent stops from database
-             JS.__db().transaction(
-                 function(tx) {
+        recentModel.clear();
+        JS.__db().transaction(
+            function(tx) {
                      var rs = tx.executeSql("SELECT * FROM Stops ORDER BY stopName ASC");
                      recentModel.clear();
                      if (rs.rows.length > 0) {
@@ -587,8 +608,8 @@ Page {
                          }
                      }
                  }
-             )
-         }
+        )
+    }
     function pushCoordinates() {
         JS.__db().transaction(
             function(tx) {

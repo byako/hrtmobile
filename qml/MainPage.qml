@@ -18,7 +18,7 @@ Page {
         property string highlightColorBg: ""
     }
     Component.onCompleted: { JS.loadConfig(config)}
-    Rectangle{
+    Rectangle{    // dark background
         color: config.bgColor;
         anchors.fill: parent
         width: parent.width

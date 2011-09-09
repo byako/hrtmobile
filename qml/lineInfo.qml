@@ -15,6 +15,13 @@ Page {
         property string bgImage: ""
         property string highlightColorBg: ""
     }
+    InfoBanner {// info banner
+        id: infoBanner
+        text: "info description here"
+        z: 10
+        opacity: 1.0
+    }
+
     objectName: "lineInfoPage"
     orientationLock: PageOrientation.LockPortrait
 
@@ -27,22 +34,6 @@ Page {
         width: parent.width
         height:  parent.height
         Image { source: config.bgImage; fillMode: Image.Center; anchors.fill: parent; }
-    }
-    Label{      // error label
-        Rectangle{
-            color: "#606060"
-            radius: 10
-            anchors.fill: parent
-            width: parent.width
-            height:  parent.height
-        }
-        id: errorLabel;
-        text: qsTr("Error. Wrong line ID ?")
-        anchors.bottomMargin: 100
-        anchors.centerIn: parent
-        visible : false
-        font.pixelSize: 30
-        color: config.textColor
     }
     Item {      // search box
         id: searchBox
@@ -60,7 +51,7 @@ Page {
             anchors.left: parent.left
             width: 240
             height: 35
-            color: "#205080"
+            color: config.highlightColorBg
             radius: 15
             TextInput{
                 id: lineId
@@ -263,7 +254,8 @@ Page {
             width: list.width;
             height: 70
             radius: 20
-            color: "#333333"
+            color: config.highlightColorBg
+            opacity: 0.8
             Column {
                 spacing: 5
                 anchors.fill: parent
@@ -283,13 +275,6 @@ Page {
             }
             MouseArea {
                 anchors.fill:  parent
-                onPressedChanged: {
-                    if (pressed == true) {
-                        parent.color = config.highlightColorBg
-                    } else {
-                        parent.color = "#333333"
-                    }
-                }
                 onClicked: {
                     list.visible = false
                     grid.visible = true
@@ -509,10 +494,10 @@ Page {
             if (JS.doc.readyState == XMLHttpRequest.HEADERS_RECEIVED) {
             } else if (JS.doc.readyState == XMLHttpRequest.DONE) {
                 if (JS.doc.responseXML == null) {
-                    errorLabel.visible = true
-                    errorLabel.text = "No lines found"
+                    infoBanner.text = "No lines found"
                     list.visible=false
                     grid.visible=false
+                    infoBanner.show()
                     return
                 } else {
                     showRequestInfo("OK, got " + JS.doc.responseXML.documentElement.childNodes.length+ " lines")
@@ -521,8 +506,8 @@ Page {
                 }
             } else if (JS.doc.readyState == XMLHttpRequest.ERROR) {
                 showRequestInfo("ERROR")
-                errorLabel.visible = true
-                errorLabel.text = "ERROR"
+                infoBanner.text = "ERROR"
+                infoBanner.show()
                 list.visible=false
                 grid.visible=false
             }
@@ -652,8 +637,8 @@ Page {
                     schedule.visible = true
             } else if (scheduleHtmlReply.readyState == XMLHttpRequest.ERROR) {
                 showRequestInfo("ERROR")
-                errorLabel.visible = true
-                errorLabel.text = "ERROR"
+                infoBanner.text = "ERROR"
+                infoBanner.show()
                 list.visible=false
                 grid.visible=false
                 schedule.visible=false
@@ -707,7 +692,6 @@ Page {
     function buttonClicked() {
         stopReachModel.clear()
         lineInfoModel.clear()
-        errorLabel.visible = false
         searchButton.focus = true
         getXML()
     }

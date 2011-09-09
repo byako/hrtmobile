@@ -17,7 +17,7 @@ Page {
     }
     objectName: "stopInfoPage"
     property string stopId: ""
-    property string linesCount: "20"
+    property string linesCount: "10"
     orientationLock: PageOrientation.LockPortrait
 
     Component.onCompleted: { JS.loadConfig(config); fillModel(); }
@@ -27,6 +27,14 @@ Page {
         text: "Error description here"
         timerShowTime: 5000
         z: 10
+    }
+    Timer {
+        id: refreshTimer
+        repeat: true
+        onTriggered: {
+            scheduleModel.clear()
+            getSchedule()
+        }
     }
     Rectangle {     // dark background
         color: config.bgColor;
@@ -42,7 +50,51 @@ Page {
         }
     }
 
-    Button{
+    Item {          // back to recent
+        id: backToRecent
+        visible: false
+        anchors.top: parent.top
+        anchors.topMargin: 10
+        anchors.left: parent.left
+        anchors.leftMargin: 10
+        height: 60
+        width: 60
+        Rectangle {
+            anchors.fill: parent
+            radius: 15
+            color: config.highlightColorBg
+        }
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+            text: "<"
+            color: config.textColor
+            font.pixelSize: 50
+        }
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                recentList.visible = true
+                list.visible = false
+                backToRecent.visible = false
+                refresh.visible = false
+                refreshTimer.stop()
+                stopNameLabel.visible = false
+                searchButton.visible = true
+            }
+        }
+    }
+    Label {         // stop Name label
+        id: stopNameLabel
+        anchors.top: parent.top
+        anchors.topMargin: 20
+        anchors.horizontalCenter: parent.horizontalCenter
+        visible: false
+        text: "StopName"
+        font.pixelSize: 35
+        color: config.textColor
+    }
+    Button{         // search stop button
         id: searchButton
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
@@ -53,59 +105,126 @@ Page {
             pageStack.push(Qt.resolvedUrl("stopInfo.qml"))
         }
     }
-/*
+    Item {          // refresh time
+        id: refresh
+        visible: false
+        anchors.top: parent.top
+        anchors.topMargin: 10
+        anchors.right: parent.right
+        anchors.rightMargin: 10
+        height: 60
+        width: 60
+        Rectangle {
+            anchors.fill: parent
+            radius: 15
+            color: config.highlightColorBg
+        }
+        Text {
+            id: refreshText
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+            text: "0"
+            color: config.textColor
+            font.pixelSize: 40
+        }
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                refreshDialog.open()
+            }
+        }
+    }
+
+    SelectionDialog {  // refreshDialog
+         id: refreshDialog
+         titleText: "Refresh timeout"
+         selectedIndex: 0
+         model: refreshModel
+         onSelectedIndexChanged: {
+             if (selectedIndex != 0) {
+                 refreshTimer.interval = 1000 * refreshModel.get(selectedIndex).name
+                 refreshTimer.start()
+                 refreshText.text = refreshModel.get(selectedIndex).name
+             } else {
+                 refreshTimer.stop()
+                 refreshText.text = "0"
+             }
+         }
+    }
+
+    ListModel {     // refresh model
+        id: refreshModel
+        ListElement { name: "0" }
+        ListElement { name: "10" }
+        ListElement { name: "30" }
+        ListElement { name: "60" }
+    }
     ListModel {     // stopSchedule
         id: scheduleModel
         ListElement {
-            time: ""
-            line: ""
-            dest: ""
+            depTime: ""
+            depLine: ""
+            depDest: ""
         }
     }
-    Component {     // recent stops delegate
+    Component {     // stopSchedule delegate
         id: scheduleDelegate
         Item {
             width: recentList.width
-            height: 70
+            height: 40
             Row {
                 anchors.left: parent.left
                 anchors.leftMargin: 10
                 spacing: 20
                 Text{
-                    text: time
+                    text: depTime
                     font.pixelSize: 35
                     color: config.textColor
+                    width: 85
                 }
                 Text{
-                    text: line
+                    text: depLine
                     font.pixelSize: 35
                     color: config.textColor
+                    width: 100
                 }
                 Text{
-                    text: dest
+                    text: depDest
                     font.pixelSize: 35
                     color: config.textColor
                 }
             }
         }
-            MouseArea {
-                anchors.fill:  parent
-                onClicked: {
-                    recentList.focus = true
-                    recentList.currentIndex = index
-                    scheduleModel.clear()
-                    updateSchedule()
+    }
+    Component {     // schedule Header
+        id: scheduleHeader
+        Item {
+            width: recentList.width
+            height: 40
+            Row {
+                anchors.left: parent.left
+                anchors.leftMargin: 10
+                spacing: 20
+                Text{  // time
+                    text: "Time"
+                    font.pixelSize: 35
+                    color: config.textColor
+                    width: 85
                 }
-                onPressedChanged: {
-                    if (pressed == true) {
-                        parent.color = "#205080"
-                    } else {
-                        parent.color = "#333333"
-                    }
+                Text{  // line
+                    text: "Line"
+                    font.pixelSize: 35
+                    color: config.textColor
+                    width: 100
+                }
+                Text{  // destination
+                    text: "Destination"
+                    font.pixelSize: 35
+                    color: config.textColor
                 }
             }
+        }
     }
-*/
     ListModel {     // recent stops list
         id: recentModel
         ListElement {
@@ -124,7 +243,8 @@ Page {
             width: recentList.width
             height: 70
             radius: 20
-            color: "#006610"
+            color: config.bgColor
+            opacity: 0.8
             Column {
                 height: parent.height
                 width: parent.width
@@ -137,6 +257,7 @@ Page {
                         text: stopName
                         font.pixelSize: 35
                         color: config.textColor
+                        width: 340
                     }
                     Text{
                         text: stopIdShort
@@ -150,12 +271,13 @@ Page {
                     anchors.left: parent.left
                     spacing: 20
                     Text{
-                        text: stopCity
+                        text: stopAddress
                         font.pixelSize: 20
                         color: config.textColor
+                        width: 340
                     }
                     Text{
-                        text: stopAddress
+                        text: stopCity
                         font.pixelSize: 20
                         color: config.textColor
                     }
@@ -164,17 +286,22 @@ Page {
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
-                    recentList.focus = true
-                    recentList.currentIndex = index
-//                    scheduleModel.clear()
                     stopId = stopIdLong
                     getSchedule()
+                    recentList.visible = false
+                    list.visible = true
+                    backToRecent.visible = true
+                    refresh.visible = true
+                    stopNameLabel.visible = true
+                    stopNameLabel.text = recentModel.get(index).stopName
+                    searchButton.visible = false
+                    if (refreshText.text != "0") refreshTimer.start()
                 }
                 onPressedChanged: {
                     if (pressed == true) {
-                        parent.color = "#205080"
+                        parent.color = config.highlightColorBg
                     } else {
-                        parent.color = "#006610"
+                        parent.color = config.bgColor
                     }
                 }
             }
@@ -195,6 +322,7 @@ Page {
             anchors.topMargin: 10
             delegate:  scheduleDelegate
             model: scheduleModel
+            header: scheduleHeader
             highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
             currentIndex: 0
             clip: true
@@ -205,11 +333,8 @@ Page {
             spacing: 10
             anchors.fill: parent
             anchors.topMargin: 10
-            anchors.leftMargin: 10
-            anchors.rightMargin: 10
             delegate:  recentDelegate
             model: recentModel
-            highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
             currentIndex: 0
             clip: true
         }
@@ -235,36 +360,24 @@ Page {
         scheduleHtmlReply.send()
     }
     function parseHttp(text_) {
-        var tables = new Array;
-        var lines = new Array;
         var text = new String;
+        var lines = new Array;
         var times = new Array;
-        var one = new Array;
-        var two = new Array;
-        var three = new Array;
-        var cur=0;
+        var td = new Array;
+        scheduleModel.clear()
         text = text_;
         lines = text.split("\n");
         for (var ii=0; ii < lines.length; ++ii) {
-            if (lines[ii].search("class=\"title\"") != -1 || lines[ii].search("id=\"departures\"") != -1) {
-                console.log("line " + ii + " : " + lines[ii]);
+            if (lines[ii].search("id=\"departures\"") != -1) {
+                times = lines[ii].split("<tr class='")
             }
         }
-
-/*        for (var ii=0; ii<tables.length; ++ii) {
-            cur = tables[ii];
-            while (lines[cur-1].search("</table>") == -1) {
-                if (lines[cur].search("time") != -1) {
-                    times = lines[cur].split("<");
-                    one.push(times[1].slice(times[1].length-5));
-                    two.push(times[2].slice(times[2].length-5));
-                    if (times[3].slice(times[3].length-1) != ";") {
-                        three.push(times[3].slice(times[3].length-5));
-                    }
-                }
-                cur++;
-            }
-        }*/
+        for (var ii=1; ii<times.length; ++ii) {
+            td = times[ii].split("<td class='");
+            scheduleModel.append({"depTime":td[1].slice(td[1].search(">")+1,td[1].search("</td>")),
+                                  "depLine":td[2].slice(td[2].search(">")+1,td[2].search("</td>")),
+                                  "depDest":td[3].slice(td[3].search(">")+1,td[3].search("</td>"))})
+        }
     }
     function fillModel() {      // checkout recent stops from database
              JS.__db().transaction(
