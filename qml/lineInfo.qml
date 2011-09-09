@@ -549,17 +549,14 @@ Page {
                 console.log("line " + ii + " : " + lines[ii]);
             }
         }
-        text.slice
+
         for (var ii=0; ii<tables.length; ++ii) {
             cur = tables[ii];
             while (lines[cur-1].search("</table>") == -1) {
                 if (lines[cur].search("time") != -1) {
                     times = lines[cur].split("<");
-//                    console.log("time: " + times[1].slice(times[1].length-5));
                     one.push(times[1].slice(times[1].length-5));
-//                    console.log("time: " + times[2].slice(times[2].length-5));
                     two.push(times[2].slice(times[2].length-5));
-//                    console.log("time: " + times[3].slice(times[3].length-5));
                     if (times[3].slice(times[3].length-1) != ";") {
                         three.push(times[3].slice(times[3].length-5));
                     }

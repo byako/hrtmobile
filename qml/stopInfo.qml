@@ -4,8 +4,6 @@ import HRTMConfig 1.0
 import "lineInfo.js" as JS
 import com.nokia.extras 1.0
 
-
-
 Page {
     id: stopInfoPage
     tools: commonTools

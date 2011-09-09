@@ -11,5 +11,6 @@
         <file>images/background4.jpg</file>
         <file>images/icon_transport.png</file>
         <file>qml/settings.qml</file>
+        <file>qml/realtimeSchedule.qml</file>
     </qresource>
 </RCC>

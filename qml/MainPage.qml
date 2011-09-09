@@ -81,6 +81,8 @@ Page {
         text: qsTr("Realtime schedule")
         height: 100
         onClicked: {
+            pageStack.push(Qt.resolvedUrl("realtimeSchedule.qml"))
+            backTool.visible=true
         }
     }
     Item {  // lines page icon
