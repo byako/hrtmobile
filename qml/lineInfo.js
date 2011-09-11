@@ -162,3 +162,37 @@ function getCurrent(string) {
     )
     return return_v
 }
+function getCurrent(string) {
+    var return_v=""
+    __db().transaction(
+        function(tx) {
+            try {
+                var rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", [string])
+            } catch(e) {
+                console.log("EXCEPTION: " + e)
+            }
+            if (rs.rows.length > 0) {
+                return_v = rs.rows.item(0).value
+            }
+        }
+    )
+    return return_v
+}
+
+function setCurrent(option_,value_) {
+    var return_v = 0
+    __db().transaction(
+        function(tx) {
+            try {
+                tx.executeSql("DELETE FROM Current WHERE option=?", [option_])
+                tx.executeSql("INSERT INTO Current VALUES(?, ?)",[option_, value_])
+            } catch(e) {
+                console.log("EXCEPTION: " + e)
+                return_v = 1
+            }
+        }
+    )
+    return return_v
+}
+
+

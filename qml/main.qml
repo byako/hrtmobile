@@ -123,7 +123,9 @@ PageStackWindow {
              platformIconId: "toolbar-view-menu";
              anchors.right: parent===undefined ? undefined : parent.right
              onClicked: {
-                 (myMenu.status == DialogStatus.Closed) ? myMenu.open() : myMenu.close()
+                 pageStack.push(Qt.resolvedUrl("settings.qml"))
+                 backTool.visible=true
+//                 (myMenu.status == DialogStatus.Closed) ? myMenu.open() : myMenu.close()
              }
         }
     }
@@ -131,14 +133,14 @@ PageStackWindow {
     Menu {
         id: myMenu
         MenuLayout {
-            MenuItem {
+/*            MenuItem {
                 text: "Clean DB"
                 onClicked: {
                     JS.cleanAll()
                     JS.initDB()
                 }
             }
-            MenuItem { text: "Offline Mode" }
+            MenuItem { text: "Offline Mode" } */
             MenuItem {
                 text: "Options"
                 onClicked:  {

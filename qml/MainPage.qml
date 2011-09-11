@@ -28,8 +28,7 @@ Page {
     Label {
         id: label
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter:  parent.verticalCenter
-        anchors.top: parent.top
+        anchors.top:  parent.top
         anchors.topMargin: 100
         font.pixelSize: 36
         text: qsTr("Helsinki Regional Transport")
@@ -38,9 +37,9 @@ Page {
     }
     Button{
         id: lineInfoButton
-        visible: false
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: label.bottom
+        height: 100
         anchors.topMargin: 50
         text: qsTr("Line info")
         onClicked: {
@@ -50,12 +49,11 @@ Page {
     }
     Button{
         id:stopInfoButton
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.left: parent.left
-        anchors.leftMargin: 10
+        anchors.horizontalCenter : parent.horizontalCenter
+        anchors.top : lineInfoButton.bottom
+        anchors.topMargin: 10
         text: qsTr("Stop info")
         height: 100
-        width: 120
         onClicked: {
             pageStack.push(Qt.resolvedUrl("stopInfo.qml"))
             backTool.visible=true
@@ -64,7 +62,7 @@ Page {
     Button{
         id:routeButton
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: parent.top
+        anchors.top: stopInfoButton.bottom
         anchors.topMargin: 10
         text: qsTr("Map")
         height: 100
@@ -76,8 +74,8 @@ Page {
     Button{
         id:realtimeButton
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 10
+        anchors.top: routeButton.bottom
+        anchors.topMargin: 10
         text: qsTr("Realtime schedule")
         height: 100
         onClicked: {
@@ -92,6 +90,7 @@ Page {
         anchors.topMargin: 10
         height: 274
         width: 80
+        visible: false
         MouseArea {
             anchors.fill: parent
             onClicked: {

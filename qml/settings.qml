@@ -42,28 +42,52 @@ Page {
             themeDialog.open()
         }
     }
+
     Row {
         id: offlineRow
-        spacing: 10
+        width: parent.width
         anchors.top : themeButton.bottom
-        anchors.topMargin: 10
+        spacing: 20
+        anchors.topMargin: 20
         anchors.left: parent.left
         anchors.leftMargin: 20
 
-        Switch {
-            id: switchComponent
-        }
-
         Text {
-            width: rowRow.width - rowRow.spacing - switchComponent.width
+            width: offlineRow.width - offlineRow.spacing - switchComponent.width -50
             height: switchComponent.height
             verticalAlignment: Text.AlignVCenter
             text: switchComponent.checked ? "Offline" : "Online"
             font.pixelSize: 35
             color: config.textColor
         }
+
+        Switch {
+            id: switchComponent
+            onCheckedChanged: {
+                if (checked) {
+                    console.log("offline")
+                    JS.setCurrent("offline", "true")
+                } else {
+                    console.log("online")
+                    JS.setCurrent("offline", "false")
+                }
+            }
+        }
     }
 
+    Button {
+        id: resetButton
+        text: "Reset all"
+        anchors.top: offlineRow.bottom
+        anchors.topMargin: 20
+        anchors.left: parent.left
+        anchors.leftMargin: 20
+        onClicked: {
+            JS.cleanAll()
+            JS.initDB()
+            JS.loadConfig(config)
+        }
+    }
 //----------------------------------------------------------------------------//
     ListModel {
         id: themesModel
@@ -95,15 +119,19 @@ Page {
                 if (rs.rows.length > 0) {
                     for (var i=0;i<rs.rows.length;++i) {
                         console.log("found " + rs.rows.item(i).theme)
+                        themesModel.append({"name" : rs.rows.item(i).theme})
                         if (rs.rows.item(i).theme == currentTheme) {
                             themeDialog.selectedIndex = i
                         }
-                        themesModel.append({"name" : rs.rows.item(i).theme})
                     }
                 }
             }
         )
     }
-
-
+    function offlineSwitchInit() {
+        var offlineSwitchState = JS.getCurrent("offline")
+        if (offlineSwitchState == "true") {
+            switchComponent.checked = true
+        }
+    }
 }

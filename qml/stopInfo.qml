@@ -502,8 +502,8 @@ Page {
         addFavoriteTool.visible = true
     }
     function showError(errorText) {  // show popup splash window with error
-        errorBanner.text = errorText
-        errorBanner.show()
+        infoBanner.text = errorText
+        infoBanner.show()
     }
     function getSchedule() {    // Use Api v1.0 to get just schedule - less data traffic, more departures in one reply
         var doc = new XMLHttpRequest()
@@ -526,8 +526,6 @@ Page {
     function parseInfo(a) {     //
         var lonlat = Array;
         var coords = String
-        console.log("parseInfo invoked")
-        console.log(""+a)
         infoModel.clear()
         for (var ii = 0; ii < a.childNodes.length; ++ii) {
             stopAddString += a.childNodes[ii].childNodes[0].firstChild.nodeValue
@@ -546,11 +544,20 @@ Page {
             stopAddString += lonlat[0]
             stopAddString += ";"
             infoModel.append({"propName" : "latitude" , "propValue" : lonlat[0]})
+            for (var oo=0;oo<a.childNodes[ii].childNodes[9].childNodes.length;++oo) {
+                try{
+                    infoModel.append({"propName" : a.childNodes[ii].childNodes[9].childNodes[oo].nodeName,
+                                     "propValue" :a.childNodes[ii].childNodes[9].childNodes[oo].firstChild.nodeValue})
+                }
+                catch(e) {
+                    console.log("some exception happened")
+                }
+            }
+
             stopAddString += lonlat[1]
             stopAddString += ";"
             longit = lonlat[0]
             latit = lonlat[1]
-            console.log("longit: "+lonlat[0]+"; atitit: "+lonlat[1])
             showMapButtonButton.visible = true
             coords = JS.addStop(stopAddString)
             stopAddString = ""
@@ -566,7 +573,6 @@ Page {
         }
     }
     function getInfo() {        // Use Api v2.0 - more informative about the stop itself, conditions, coordinates
-        console.log("getInfo invoked")
         var doc = new XMLHttpRequest()
         doc.onreadystatechange = function() {
             if (doc.readyState == XMLHttpRequest.DONE) {
