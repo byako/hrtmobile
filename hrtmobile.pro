@@ -43,7 +43,8 @@ OTHER_FILES += \
     qml/lineInfo.js \
     qml/route.qml \
     qml/settings.qml \
-    qml/realtimeSchedule.qml
+    qml/realtimeSchedule.qml \
+    qml/MyQueryDialog.qml
 
 RESOURCES += \
     res.qrc

@@ -19,7 +19,7 @@ Page {
         property string highlightColorBg: ""
     }
 
-    Component.onCompleted: { JS.loadConfig(config); currentTheme =  JS.getCurrent("theme") }
+    Component.onCompleted: { JS.loadConfig(config); currentTheme =  JS.getCurrent("theme"); offlineSwitchInit() }
     Rectangle {     // dark background
         color: config.bgColor;
         anchors.fill: parent
@@ -131,7 +131,8 @@ Page {
     function offlineSwitchInit() {
         var offlineSwitchState = JS.getCurrent("offline")
         if (offlineSwitchState == "true") {
+            console.log("offline: " + offlineSwitchState)
             switchComponent.checked = true
-        }
+        } else console.log("online: " + offlineSwitchState)
     }
 }

@@ -129,8 +129,8 @@ function addStop(string) {
         returnVal = -1
         return returnVal
     }
-    var db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
-    db.transaction(
+
+    __db().transaction(
         function(tx) {
             console.log ("checking if there is already a stop info in DB [" + fields[0] + "]: ")
             var rs = tx.executeSql('SELECT * FROM Stops WHERE stopIdLong=?', [fields[0]]);
@@ -146,21 +146,21 @@ function addStop(string) {
     )
     return returnVal
 }
-function getCurrent(string) {
-    var return_v=""
+function deleteStop(string) {
+    var retVal = 0;
     __db().transaction(
         function(tx) {
+            console.log ("deleting stop from table: " + string)
             try {
-                var rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", [string])
-            } catch(e) {
-                console.log("EXCEPTION: " + e)
+                tx.executeSql('DELETE from Stops WHERE stopIdLong=?', [string]);
             }
-            if (rs.rows.length > 0) {
-                return_v = rs.rows.item(0).value
+            catch(e) {
+                console.log("delete stop from table exception occured. string = "+ string)
+                retval = 1
             }
         }
     )
-    return return_v
+    return retVal
 }
 function getCurrent(string) {
     var return_v=""
@@ -178,7 +178,22 @@ function getCurrent(string) {
     )
     return return_v
 }
-
+function getCurrent(string) {
+    var return_v=""
+    __db().transaction(
+        function(tx) {
+            try {
+                var rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", [string])
+            } catch(e) {
+                console.log("EXCEPTION: " + e)
+            }
+            if (rs.rows.length > 0) {
+                return_v = rs.rows.item(0).value
+            }
+        }
+    )
+    return return_v
+}
 function setCurrent(option_,value_) {
     var return_v = 0
     __db().transaction(

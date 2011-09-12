@@ -12,5 +12,6 @@
         <file>images/icon_transport.png</file>
         <file>qml/settings.qml</file>
         <file>qml/realtimeSchedule.qml</file>
+        <file>qml/MyQueryDialog.qml</file>
     </qresource>
 </RCC>

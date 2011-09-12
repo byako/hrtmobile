@@ -7,6 +7,9 @@ import com.nokia.extras 1.0
 Page {
     id: stopInfoPage
     tools: commonTools
+    MyQueryDialog {
+        id: offlineModeOff
+    }
     Item {
         id: config
         property string bgColor: ""
@@ -30,6 +33,25 @@ Page {
         opacity: 1.0
     }
     ContextMenu {
+        id: recentStopsContextMenu
+        MenuLayout {
+            MenuItem {
+                text: "Delete"
+                onClicked: {
+                    if (JS.deleteStop(recentModel.get(recentList.currentIndex).stopIdLong) == 0) {
+                        fillModel();
+                    }
+                }
+            }
+            MenuItem {
+                text: "Delete all"
+                onClicked: {
+                    if (JS.deleteStop("*") == 0) {
+                        fillModel();
+                    }
+                }
+            }
+        }
 
     }
     Rectangle {     // dark background
@@ -330,10 +352,12 @@ Page {
                 }
                 onPressedChanged: {
                     if (pressed == true) {
-                        parent.color = "#205080"
-                    } else {
-                        parent.color = "#333333"
+                        recentList.focus = true
+                        recentList.currentIndex = index
                     }
+                }
+                onPressAndHold: {
+                    recentStopsContextMenu.open()
                 }
             }
         }
@@ -510,7 +534,7 @@ Page {
         doc.onreadystatechange = function() {
             if (doc.readyState == XMLHttpRequest.DONE) {
                 if (doc.responseText.slice(0,5) == "Error") {
-                    showError("Error. Wrong stop ID ? Stop ID is 4 digit or 1 letter & 4 digits. Example: E3127")
+                    showError("Schedule ERROR. Server returned error for Stop ID:"+stopId.text)
                     return
                 } else {
                     parseResponse(doc.responseText)
@@ -547,10 +571,10 @@ Page {
             for (var oo=0;oo<a.childNodes[ii].childNodes[9].childNodes.length;++oo) {
                 try{
                     infoModel.append({"propName" : a.childNodes[ii].childNodes[9].childNodes[oo].nodeName,
-                                     "propValue" :a.childNodes[ii].childNodes[9].childNodes[oo].firstChild.nodeValue})
+                                     "propValue" : a.childNodes[ii].childNodes[9].childNodes[oo].firstChild.nodeValue})
                 }
                 catch(e) {
-                    console.log("some exception happened")
+                    console.log("stopInfo: infoModel.append exception happened")
                 }
             }
 
@@ -582,12 +606,17 @@ Page {
             }
         }
 //              API 2.0 (XML) : slower
+        if (JS.getCurrent("offline") == "true") {
+            offlineModeOff.open();
+            console.log("some shit happened")
+            return
+        }
         doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=stop&code=" + stopId.text + "&user=byako&pass=gfccdjhl&format=xml")
         doc.send();
     }
     function buttonClicked() {  // SearchBox actioncommander keen
         if (stopId.text == "" || stopId.text.length > 7 || stopId.text.length < 4) {
-            showError("Wrong stop ID\nStop ID is 4 digit or 1 letter & 4 digits. Example: E3127")
+            showError("Wrong stop ID:"+stopId.text+".\nStop ID is 4 digit or 1 letter & 4 digits. Example: E3127")
             return;
         }
         infoModel.clear()
