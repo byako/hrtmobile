@@ -32,7 +32,7 @@ Page {
         z: 10
         opacity: 1.0
     }
-    ContextMenu {
+    ContextMenu {   // recent stops context menu
         id: recentStopsContextMenu
         MenuLayout {
             MenuItem {
@@ -386,10 +386,15 @@ Page {
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
-                    grid.focus = true;
                     grid.currentIndex = index;
+                    grid.focus = true;
                 }
                 onPressAndHold: { lineContext.open() }
+                onPressedChanged: {
+                    if (pressed == true) {
+                        grid.currentIndex = index;
+                    }
+                }
             }
         }
     }
@@ -434,7 +439,7 @@ Page {
             MenuItem {
                 text: "Info"
                 onClicked : {
-
+                    pageStack.push(Qt.resolvedUrl("lineInfo.qml"),{"loadLine":trafficModel.get(grid.currentIndex).departLine});
                 }
             }
             MenuItem {

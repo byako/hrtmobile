@@ -24,9 +24,11 @@ Page {
 
     objectName: "lineInfoPage"
     orientationLock: PageOrientation.LockPortrait
+    property string loadLine: ""
 
     Component.onCompleted: { // load configand recent lines
         JS.loadConfig(config)
+        checkLineLoadRequest()
     }
     Rectangle{  // dark background
         color: config.bgColor
@@ -453,6 +455,10 @@ Page {
         visible: false;
     }
 /*<-------------------------------------------------------------------------->*/
+    function showError(errorText) {  // show popup splash window with error
+        infoBanner.text = errorText
+        infoBanner.show()
+    }
     function showRequestInfo(text) {
         console.log(text)
     }
@@ -690,6 +696,10 @@ Page {
         }
     }
     function buttonClicked() {
+        if (lineId.text == "Enter LineID") {
+            showError("Enter LineID number first (line number)")
+            return
+        }
         stopReachModel.clear()
         lineInfoModel.clear()
         searchButton.focus = true
@@ -734,5 +744,12 @@ Page {
             }
         )
     }
+    function checkLineLoadRequest() {
+        if (loadLine != "") {
+            lineId.text = loadLine
+            buttonClicked()
+        }
+    }
+
 /*<----------------------------------------------------------------------->*/
 }

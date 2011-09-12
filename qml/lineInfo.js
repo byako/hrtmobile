@@ -9,7 +9,6 @@ function __db(){
 }
 function setTheme(themeName) {
     var currentTheme = getCurrent("currentTheme")
-    console.log("got current theme: " + currentTheme)
     __db().transaction(
         function(tx) {
             if (themeName != currentTheme && themeName != "") {
@@ -21,7 +20,6 @@ function setTheme(themeName) {
                     console.log("exception: "+e)
                 }
                 currentTheme = themeName
-                console.log("changing theme to new: " + themeName)
             }
             try {
                 var rs = tx.executeSql('SELECT * FROM Config WHERE theme=?',[currentTheme]);
@@ -150,13 +148,16 @@ function deleteStop(string) {
     var retVal = 0;
     __db().transaction(
         function(tx) {
-            console.log ("deleting stop from table: " + string)
             try {
-                tx.executeSql('DELETE from Stops WHERE stopIdLong=?', [string]);
+                if (string == "*") {
+                    tx.executeSql('DELETE from Stops');
+                } else {
+                    tx.executeSql('DELETE from Stops WHERE stopIdLong=?', [string]);
+                }
             }
             catch(e) {
                 console.log("delete stop from table exception occured. string = "+ string)
-                retval = 1
+                retVal = 1
             }
         }
     )
