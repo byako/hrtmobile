@@ -22,8 +22,7 @@ symbian:TARGET.CAPABILITY += NetworkServices
 # MOBILITY +=
 
 # The .cpp file which was generated for your project. Feel free to hack it.
-SOURCES += main.cpp \
-    hrtm_config.cpp
+SOURCES += main.cpp
 
 
 OTHER_FILES += \
@@ -58,12 +57,10 @@ CONFIG += qdeclarative-boostable
 QMAKE_CXXFLAGS += -fPIC -fvisibility=hidden -fvisibility-inlines-hidden
 QMAKE_LFLAGS += -pie -rdynamic
 
-HEADERS += \
-    hrtm_config.h
+HEADERS +=
 
 contains(MEEGO_EDITION,harmattan) {
     icon.files = hrtmobile.png
     icon.path = /usr/share/icons/hicolor/80x80/apps
     INSTALLS += icon
 }
-

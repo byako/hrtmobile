@@ -1,27 +1,26 @@
 import QtQuick 1.1
 import com.meego 1.0
-import HRTMConfig 1.0
 import QtMobility.location 1.2
 import "lineInfo.js" as JS
 
 Page {
     id: routePage
-    HrtmConfig { id: config }
     anchors.fill: parent
     tools: commonTools
     orientationLock: PageOrientation.LockPortrait
+
     Component.onCompleted: { setLineShape(); setCurrent(); }
     Coordinate {
         id: temp
     }
 
-    Rectangle {
+/*    Rectangle {
         id: background
         anchors.fill: parent
         width: parent.width
         height:  parent.height
         color: config.bgColor
-    }
+    }*/
     Map {
         id: map
         z : 1
@@ -183,7 +182,13 @@ Page {
                     console.log("EXCEPTION: " + e)
                 }
                 if (rs.rows.length > 0) {
-                    rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", ["lineShape"])
+                    try {
+                        rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", ["lineShape"])
+                    }
+                    catch(e) {
+                        console.log("route: setLineShape exception")
+                    }
+
                     var coords = new Array
                     var lonlat = new Array
                     coords = rs.rows.item(0).value.split("|")

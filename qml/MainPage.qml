@@ -1,6 +1,5 @@
 import QtQuick 1.1
 import com.meego 1.0
-import HRTMConfig 1.0
 import "lineInfo.js" as JS
 
 Page {

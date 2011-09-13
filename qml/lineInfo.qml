@@ -1,6 +1,5 @@
 import QtQuick 1.1
 import com.meego 1.0
-import HRTMConfig 1.0
 import "lineInfo.js" as JS
 import com.nokia.extras 1.0
 
@@ -25,6 +24,7 @@ Page {
     objectName: "lineInfoPage"
     orientationLock: PageOrientation.LockPortrait
     property string loadLine: ""
+    property string loadLineMap: ""
 
     Component.onCompleted: { // load configand recent lines
         JS.loadConfig(config)
@@ -94,7 +94,7 @@ Page {
         height:  2
         color: config.textColor
     }
-    Item{  // data rect: info labels
+    Item{       // data rect: info labels
         id: dataRect
         anchors.left: parent.left
         anchors.leftMargin: 10
@@ -105,6 +105,25 @@ Page {
         visible: false
         height: 90
         width: parent.width
+        Rectangle { // showMapButton
+                id: showMapButton
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.right: parent.right
+                anchors.rightMargin: 20
+                color: "#777777"
+                height: 60
+                width: 60
+                radius: 10
+                Button {
+                    id: showMapButtonButton
+                    anchors.fill: parent
+                    text: "M"
+                    visible: false
+                    onClicked: {
+                        showMap()
+                    }
+                }
+        }
         Label {
             id: lineType;
             anchors.left: parent.left;
@@ -185,21 +204,10 @@ Page {
                         list.visible = false
                         grid.visible = false
                         schedule.visible = true
+                        scheduleButtons.visible = true
                         if (JS.scheduleLoaded == 0 && lineId.text != "") {
                             getSchedule(list.currentIndex)
                         }
-                        scheduleButtons.visible = true
-                    }
-                }
-            }
-            Button {
-                id: showMap
-                text: "Map"
-                onClicked: {
-                    if (list.currentIndex >= 0) {
-                        console.log("pushing line shape")
-                        pushLineShape(list.currentIndex)
-                        pageStack.push(Qt.resolvedUrl("route.qml"))
                     }
                 }
             }
@@ -283,6 +291,7 @@ Page {
                     dataRect.visible = true
                     if (list.currentIndex != index) {
                         list.currentIndex = index
+                        showMapButtonButton.visible = true
                         JS.scheduleLoaded = 0
                         scheduleClear()
                         stopReachModel.clear()
@@ -358,7 +367,8 @@ Page {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        ListView {  // list
+        visible: false;
+        ListView {  // Lines list
             id: list
             anchors.fill:  parent
             anchors.leftMargin:10
@@ -370,7 +380,7 @@ Page {
             highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
             currentIndex: -1
             clip: true
-            visible: false
+            visible: true
             onVisibleChanged: {
                 if (visible == true) {
                     tabRect.checkedButton = linesButton;
@@ -452,7 +462,6 @@ Page {
                 }
             }
         }
-        visible: false;
     }
 /*<-------------------------------------------------------------------------->*/
     function showError(errorText) {  // show popup splash window with error
@@ -494,28 +503,24 @@ Page {
                                  "typeCode" : "" + a.childNodes[ii].childNodes[2].firstChild.nodeValue
                                  });
         }
+        if (loadLineMap != "") {
+            list.currentIndex = loadLineMap.slice(loadLineMap.length-2) - 1
+            showMap()
+        }
     }
     function getXML() {
         JS.doc.onreadystatechange = function() {
             if (JS.doc.readyState == XMLHttpRequest.HEADERS_RECEIVED) {
             } else if (JS.doc.readyState == XMLHttpRequest.DONE) {
                 if (JS.doc.responseXML == null) {
-                    infoBanner.text = "No lines found"
-                    list.visible=false
-                    grid.visible=false
-                    infoBanner.show()
+                    showRequestInfo("No lines found")
                     return
                 } else {
                     showRequestInfo("OK, got " + JS.doc.responseXML.documentElement.childNodes.length+ " lines")
                     parseXML(JS.doc.responseXML.documentElement);
-                    list.visible = true
                 }
             } else if (JS.doc.readyState == XMLHttpRequest.ERROR) {
                 showRequestInfo("ERROR")
-                infoBanner.text = "ERROR"
-                infoBanner.show()
-                list.visible=false
-                grid.visible=false
             }
         }
     JS.doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&epsg_out=wgs84&query="+lineId.text); // for line info request
@@ -645,9 +650,6 @@ Page {
                 showRequestInfo("ERROR")
                 infoBanner.text = "ERROR"
                 infoBanner.show()
-                list.visible=false
-                grid.visible=false
-                schedule.visible=false
             }
         }
         scheduleHtmlReply.open("GET",JS.doc.responseXML.documentElement.childNodes[a].childNodes[6].firstChild.nodeValue)
@@ -708,10 +710,8 @@ Page {
     function pushStopId(stopIdLongSet) {
         JS.__db().transaction(
             function(tx) {
-                var option = "setCurrentStop"
-                tx.executeSql("INSERT INTO Current VALUES(?,?)",[option,"true"])
-                option = "stopIdLong"
-                tx.executeSql("INSERT INTO Current VALUES(?,?)",[option,stopIdLongSet])
+                tx.executeSql("INSERT INTO Current VALUES(?,?)",["setCurrentStop","true"]);
+                tx.executeSql("INSERT INTO Current VALUES(?,?)",["stopIdLong",stopIdLongSet]);
             }
         )
     }
@@ -736,13 +736,29 @@ Page {
         )
         return return_v
     }
-    function pushLineShape(a) {
-        JS.__db().transaction(
-            function(tx) {
-                tx.executeSql("INSERT INTO Current VALUES(?,?)",["setLineShape","true"])
-                tx.executeSql("INSERT INTO Current VALUES(?,?)",["lineShape",JS.doc.responseXML.documentElement.childNodes[a].childNodes[7].firstChild.nodeValue])
+    function showMap() {
+        var ok=0
+        if (list.currentIndex >= 0) {
+            JS.__db().transaction(
+                function(tx) {
+                    try {
+                        tx.executeSql("INSERT INTO Current VALUES(?,?)",["setLineShape","true"])
+                        tx.executeSql("INSERT INTO Current VALUES(?,?)",["lineShape",JS.doc.responseXML.documentElement.childNodes[list.currentIndex].childNodes[7].firstChild.nodeValue])
+                    }
+                    catch(e) {
+                        console.log("lineInfo: Exception: couldn't load map from responseXML")
+                        ok=1
+                    }
+                }
+            )
+            if (ok ==0) {
+                if (loadLineMap != "") {
+                    pageStack.replace(Qt.resolvedUrl("route.qml"))
+                } else {
+                    pageStack.push(Qt.resolvedUrl("route.qml"))
+                }
             }
-        )
+        }
     }
     function checkLineLoadRequest() {
         if (loadLine != "") {

@@ -1,6 +1,5 @@
 import QtQuick 1.1
 import com.meego 1.0
-import HRTMConfig 1.0
 import "lineInfo.js" as JS
 import com.nokia.extras 1.0
 
@@ -10,13 +9,19 @@ Page {
     orientationLock: PageOrientation.LockPortrait
     property string currentTheme: ""
 
-    Item {
+    Item {  // config
         id: config
         property string bgColor: ""
         property string textColor: ""
         property string highlightColor: ""
         property string bgImage: ""
         property string highlightColorBg: ""
+    }
+    InfoBanner {// info banner
+        id: infoBanner
+        text: "info description here"
+        z: 10
+        opacity: 1.0
     }
 
     Component.onCompleted: { JS.loadConfig(config); currentTheme =  JS.getCurrent("theme"); offlineSwitchInit() }
@@ -77,7 +82,7 @@ Page {
 
     Button {
         id: resetButton
-        text: "Reset all"
+        text: "Reset database"
         anchors.top: offlineRow.bottom
         anchors.topMargin: 20
         anchors.left: parent.left
@@ -86,6 +91,7 @@ Page {
             JS.cleanAll()
             JS.initDB()
             JS.loadConfig(config)
+            showError("Database cleaned")
         }
     }
 //----------------------------------------------------------------------------//
@@ -107,6 +113,11 @@ Page {
          }
     }
 //----------------------------------------------------------------------------//
+    function showError(errorText) {  // show popup splash window with error
+        infoBanner.text = errorText
+        infoBanner.show()
+    }
+
     function loadThemesNames() {
         JS.__db().transaction(
             function(tx) {

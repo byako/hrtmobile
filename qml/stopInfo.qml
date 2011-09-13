@@ -1,12 +1,11 @@
 import QtQuick 1.1
 import com.meego 1.0
-import HRTMConfig 1.0
 import "lineInfo.js" as JS
 import com.nokia.extras 1.0
 
 Page {
     id: stopInfoPage
-    tools: commonTools
+//    tools: commonTools
     MyQueryDialog {
         id: offlineModeOff
     }
@@ -53,6 +52,23 @@ Page {
             }
         }
 
+    }
+    ContextMenu {   // depart line context menu
+        id: lineContext
+        MenuLayout {
+            MenuItem {
+                text: "Line Info"
+                onClicked : {
+                    pageStack.push(Qt.resolvedUrl("lineInfo.qml"),{"loadLine":trafficModel.get(grid.currentIndex).departLine});
+                }
+            }
+            MenuItem {
+                text: "Line Map"
+                onClicked : {
+                    pageStack.push(Qt.resolvedUrl("lineInfo.qml"),{"loadLine":trafficModel.get(grid.currentIndex).departLine,"loadLineMap":trafficModel.get(grid.currentIndex).departCode});
+                }
+            }
+        }
     }
     Rectangle {     // dark background
         color: config.bgColor;
@@ -280,6 +296,7 @@ Page {
                 }
             }
     }
+/*<----------------------------------------------------------------------->*/
     ListModel {     // recent stops list
         id: recentModel
         ListElement {
@@ -367,6 +384,8 @@ Page {
         ListElement {
             departTime: "Time"
             departLine: "Line"
+            departDest: "Destination"
+            departCode: "JORE code"
         }
     }
     Component {     // traffic delegate
@@ -379,22 +398,26 @@ Page {
                 Text{
                     text: departTime
                     font.pixelSize: 25
+//                    color: trafficModel.get(grid.currentIndex).departDest == departDest ? "#aaaa00" : config.textColor
                     color: trafficModel.get(grid.currentIndex).departLine == departLine ? config.highlightColor : config.textColor
                 }
-                Text{ text: departLine; font.pixelSize: 25; color: config.textColor}
+                Text{
+                    text: departLine
+                    font.pixelSize: 25
+                    color: trafficModel.get(grid.currentIndex).departLine == departLine ? config.highlightColor : config.textColor
+                }
             }
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
                     grid.currentIndex = index;
                     grid.focus = true;
+                    showError("Destination :  " + departDest)
                 }
-                onPressAndHold: { lineContext.open() }
-                onPressedChanged: {
-                    if (pressed == true) {
-                        grid.currentIndex = index;
-                    }
-                }
+                onPressAndHold: {
+		    grid.currentIndex = index
+		    lineContext.open()
+		}
             }
         }
     }
@@ -433,20 +456,6 @@ Page {
             }
         }
     }
-    ContextMenu {
-        id: lineContext
-        MenuLayout {
-            MenuItem {
-                text: "Info"
-                onClicked : {
-                    pageStack.push(Qt.resolvedUrl("lineInfo.qml"),{"loadLine":trafficModel.get(grid.currentIndex).departLine});
-                }
-            }
-            MenuItem {
-                text: "Map"
-            }
-        }
-    }
 
     Item {     // grid rect
         id: infoRect
@@ -454,7 +463,7 @@ Page {
         anchors.topMargin: 10
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.bottom: parent.bottom
+        anchors.bottom: footer.top
         GridView {  // stopSchedule grid
             id: grid
             anchors.fill:  parent
@@ -495,10 +504,40 @@ Page {
             clip: true
         }
     }
-
+    Item {
+        id: footer
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 50
+        Button {
+            width: 100
+            height: parent.height
+            text: "<-"
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+            onClicked: {
+                pageStack.pop()
+            }
+        }
+        Button {
+            width: 100
+            height: parent.height
+            text: "Config"
+            anchors.bottom: parent.bottom
+            anchors.right: parent.right
+            onClicked: {
+                pageStack.push(Qt.resolvedUrl("settings.qml"))
+            }
+        }
+    }
 /*<----------------------------------------------------------------------->*/
     function checkFavorites() { // database API use here TODO
         removeFavoriteTool.visible = true;
+    }
+    function showError(errorText) {  // show popup splash window with error
+        infoBanner.text = errorText
+        infoBanner.show()
     }
     function parseResponse(a) { // parsing plaintext table | fetching schedule
         var schedText = new String;
@@ -521,7 +560,7 @@ Page {
             time_[0] = lines[0].slice(0,lines[0].length -2)
             time_[1] = lines[0].slice(lines[0].length-2,lines[0].length)
             if (time_[0] > 23) time_[0]-=24
-            trafficModel.append({ "departTime" : ""+time_[0]+":"+time_[1], "departLine" : "" + lines[1] })
+            trafficModel.append({ "departTime" : ""+time_[0]+":"+time_[1], "departLine" : "" + lines[1], "departDest" : lines[2], "departCode" : lines[3] })
         }
         grid.focus = true
         grid.visible = true
@@ -529,10 +568,6 @@ Page {
         recentList.visible = false
         dataRect.visible = true
         addFavoriteTool.visible = true
-    }
-    function showError(errorText) {  // show popup splash window with error
-        infoBanner.text = errorText
-        infoBanner.show()
     }
     function getSchedule() {    // Use Api v1.0 to get just schedule - less data traffic, more departures in one reply
         var doc = new XMLHttpRequest()
