@@ -149,6 +149,7 @@ Page {
             }
         }
     }
+//----------------------------------------------------------------------------//
     function setCurrent() {
         JS.__db().transaction(
             function(tx) {
@@ -177,36 +178,35 @@ Page {
         JS.__db().transaction(
             function(tx) {
                 try {
-                    var rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", ["setLineShape"])
+                    var rs = tx.executeSql("SELECT value FROM Current WHERE option=?", ["setLineShape"])
                 } catch(e) {
                     console.log("EXCEPTION: " + e)
                 }
                 if (rs.rows.length > 0) {
+                    var lineIdLong_ = rs.rows.item(0).value
                     try {
-                        rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", ["lineShape"])
+                        rs = tx.executeSql("SELECT lineShape FROM Lines WHERE lineIdLong=?", [lineIdLong_])
                     }
                     catch(e) {
-                        console.log("route: setLineShape exception")
+                        console.log("EXCEPTION " + e)
                     }
-
-                    var coords = new Array
-                    var lonlat = new Array
-                    coords = rs.rows.item(0).value.split("|")
-                    for (var ii=0;ii<coords.length;++ii) {
-                        lonlat = coords[ii].split(",")
-                        temp.longitude = lonlat[0]
-                        temp.latitude = lonlat[1]
-                        lineShape.addCoordinate(temp)
+                    if (rs.rows.length > 0) {
+                        var coords = new Array
+                        var lonlat = new Array
+                        coords = rs.rows.item(0).lineShape.split("|")
+                        for (var ii=0;ii<coords.length;++ii) {
+                            lonlat = coords[ii].split(",")
+                            temp.longitude = lonlat[0]
+                            temp.latitude = lonlat[1]
+                            lineShape.addCoordinate(temp)
+                        }
+                        tx.executeSql("DELETE FROM Current WHERE option=?", ["setLineShape"])
+                        lonlat = coords[0].split(",")
+                        map.center.longitude = lonlat[0]
+                        map.center.latitude = lonlat[1]
+                        circle.center.longitude = lonlat[0]
+                        circle.center.latitude = lonlat[1]
                     }
-                    tx.executeSql("DELETE FROM Current WHERE option=?", ["setLineShape"])
-                    tx.executeSql("DELETE FROM Current WHERE option=?", ["lineShape"])
-                    lonlat = coords[0].split(",")
-                    map.center.longitude = lonlat[0]
-                    map.center.latitude = lonlat[1]
-                    circle.center.longitude = lonlat[0]
-                    circle.center.latitude = lonlat[1]
-                } else {
-                    console.log("Didn't find setLineShape in DB")
                 }
             }
         )

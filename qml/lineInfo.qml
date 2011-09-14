@@ -25,6 +25,7 @@ Page {
     orientationLock: PageOrientation.LockPortrait
     property string loadLine: ""
     property string loadLineMap: ""
+    property string lineAddString : ""
 
     Component.onCompleted: { // load configand recent lines
         JS.loadConfig(config)
@@ -249,7 +250,6 @@ Page {
     }
     ListModel{  // lineInfo list model
         id:lineInfoModel
-
         ListElement{
             lineLongCode: "lineId"
             lineShortCode: "Name"
@@ -291,14 +291,7 @@ Page {
                     dataRect.visible = true
                     if (list.currentIndex != index) {
                         list.currentIndex = index
-                        showMapButtonButton.visible = true
-                        JS.scheduleLoaded = 0
-                        scheduleClear()
-                        stopReachModel.clear()
-                        getStops(list.currentIndex)
-                        lineShortCodeName.text = lineInfoModel.get(list.currentIndex).lineShortCode
-                        lineDirection.text = lineInfoModel.get(list.currentIndex).direction
-                        lineType.text = lineInfoModel.get(list.currentIndex).type
+                        showLineInfo()
                     }
                 }
             }
@@ -404,7 +397,7 @@ Page {
                 }
             }
         }
-        ButtonRow {  // scheduleButtons week period choose
+        ButtonRow { // scheduleButtons week period choose
             id: scheduleButtons
             anchors.top: parent.top
             anchors.topMargin: 10
@@ -468,14 +461,11 @@ Page {
         infoBanner.text = errorText
         infoBanner.show()
     }
-    function showRequestInfo(text) {
-        console.log(text)
-    }
     function getStops(a){
         var stops,stopName_;
-        stops = JS.doc.responseXML.documentElement.childNodes[a].childNodes[8];
+        stops = JS.doc.responseXML.documentElement.childNodes[list.currentIndex].childNodes[8];
         for (var aa = 0; aa < stops.childNodes.length; ++aa) {
-            stopName_ = getStopName(stops.childNodes[aa].childNodes[0].firstChild.nodeValue)
+            stopName_ = JS.getStopName(stops.childNodes[aa].childNodes[0].firstChild.nodeValue)
             stopReachModel.append({"stopIdLong" : stops.childNodes[aa].childNodes[0].firstChild.nodeValue,
                                   "stopName" : stopName_,
                                   "reachTime" : stops.childNodes[aa].childNodes[1].firstChild.nodeValue });
@@ -483,29 +473,38 @@ Page {
     }
     function parseXML(a){
         infoRect.visible = true;
-        var lineType;
+        var lineType
         for (var ii = 0; ii < a.childNodes.length; ++ii) {
-            switch(a.childNodes[ii].childNodes[2].firstChild.nodeValue) {
-                case "1": { lineType = "Helsinki bus"; break; }
-                case "2": { lineType = "Tram"; break; }
-                case "3": { lineType = "Espoo bus"; break; }
-                case "4": { lineType = "Vantaa bus"; break; }
-                case "5": { lineType = "Regional bus"; break; }
-                case "6": { lineType = "Metro"; break; }
-                case "7": { lineType = "Ferry"; break; }
-                case "8": { lineType = "U-line"; break; }
-                default: { lineType = "unknown"; break; }
-            }
+            lineAddString = ""
+            lineType = JS.getLineType(a.childNodes[ii].childNodes[2].firstChild.nodeValue)
             lineInfoModel.append({"lineLongCode" : "" + a.childNodes[ii].childNodes[0].firstChild.nodeValue,
                                  "lineShortCode" : ""+a.childNodes[ii].childNodes[1].firstChild.nodeValue,
                                  "direction" : "" + a.childNodes[ii].childNodes[3].firstChild.nodeValue + " -> " + a.childNodes[ii].childNodes[4].firstChild.nodeValue,
                                  "type" : ""+lineType,
                                  "typeCode" : "" + a.childNodes[ii].childNodes[2].firstChild.nodeValue
                                  });
+            if ( JS.addLine(""+ a.childNodes[ii].childNodes[0].firstChild.nodeValue +
+                            ";"+ a.childNodes[ii].childNodes[1].firstChild.nodeValue +
+                            ";"+ a.childNodes[ii].childNodes[5].firstChild.nodeValue +
+                            ";" + a.childNodes[ii].childNodes[2].firstChild.nodeValue +
+                            ";" + a.childNodes[ii].childNodes[3].firstChild.nodeValue +
+                            ";" + a.childNodes[ii].childNodes[4].firstChild.nodeValue +
+                            ";" + a.childNodes[ii].childNodes[8].firstChild.firstChild.firstChild.nodeValue +
+                            ";" + a.childNodes[ii].childNodes[8].lastChild.firstChild.firstChild.nodeValue +
+                            ";" + a.childNodes[ii].childNodes[7].firstChild.nodeValue) == 0 ) {
+                showError("Saved new line: " + a.childNodes[ii].childNodes[1].firstChild.nodeValue)
+            }
         }
         if (loadLineMap != "") {
-            list.currentIndex = loadLineMap.slice(loadLineMap.length-2) - 1
+            list.currentIndex = 0
             showMap()
+        }
+        if (lineInfoModel.count == 1) {
+            list.visible = false
+            grid.visible = true
+            dataRect.visible = true
+            list.currentIndex = 0
+            showLineInfo()
         }
     }
     function getXML() {
@@ -513,14 +512,14 @@ Page {
             if (JS.doc.readyState == XMLHttpRequest.HEADERS_RECEIVED) {
             } else if (JS.doc.readyState == XMLHttpRequest.DONE) {
                 if (JS.doc.responseXML == null) {
-                    showRequestInfo("No lines found")
+                    showError("No lines found")
                     return
                 } else {
-                    showRequestInfo("OK, got " + JS.doc.responseXML.documentElement.childNodes.length+ " lines")
+                    console.log("OK, got " + JS.doc.responseXML.documentElement.childNodes.length+ " lines")
                     parseXML(JS.doc.responseXML.documentElement);
                 }
             } else if (JS.doc.readyState == XMLHttpRequest.ERROR) {
-                showRequestInfo("ERROR")
+                showError("ERROR returned from server")
             }
         }
     JS.doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&epsg_out=wgs84&query="+lineId.text); // for line info request
@@ -647,9 +646,8 @@ Page {
                     parseHttp(scheduleHtmlReply.responseText)
                     schedule.visible = true
             } else if (scheduleHtmlReply.readyState == XMLHttpRequest.ERROR) {
-                showRequestInfo("ERROR")
-                infoBanner.text = "ERROR"
-                infoBanner.show()
+                console.log("ERROR")
+                showError("ERROR")
             }
         }
         scheduleHtmlReply.open("GET",JS.doc.responseXML.documentElement.childNodes[a].childNodes[6].firstChild.nodeValue)
@@ -705,6 +703,7 @@ Page {
         stopReachModel.clear()
         lineInfoModel.clear()
         searchButton.focus = true
+        if (checkOffline() != 0)
         getXML()
     }
     function pushStopId(stopIdLongSet) {
@@ -717,24 +716,8 @@ Page {
     }
     function updateStopReachModel() {
         for (var ii=0;ii<stopReachModel.count;++ii) {
-            stopReachModel.set(ii,{"stopName" : getStopName(stopReachModel.get(ii).stopIdLong)});
+            stopReachModel.set(ii,{"stopName" : JS.getStopName(stopReachModel.get(ii).stopIdLong)});
         }
-    }
-    function getStopName(stopIdLong) {
-        var return_v = ""
-        JS.__db().transaction(
-            function(tx) {
-               try {
-                    var rs = tx.executeSql("SELECT * FROM Stops WHERE stopIdLong=?", [stopIdLong])
-               } catch(e) {
-                    console.log("EXCEPTION: " + e)
-               }
-               if (rs.rows.length > 0) {
-                   return_v = rs.rows.item(0).stopName
-               }
-            }
-        )
-        return return_v
     }
     function showMap() {
         var ok=0
@@ -742,8 +725,8 @@ Page {
             JS.__db().transaction(
                 function(tx) {
                     try {
-                        tx.executeSql("INSERT INTO Current VALUES(?,?)",["setLineShape","true"])
-                        tx.executeSql("INSERT INTO Current VALUES(?,?)",["lineShape",JS.doc.responseXML.documentElement.childNodes[list.currentIndex].childNodes[7].firstChild.nodeValue])
+                        console.log("pushing line ID: " + lineInfoModel.get(list.currentIndex).lineLongCode)
+                        tx.executeSql("INSERT INTO Current VALUES(?,?)",["setLineShape", lineInfoModel.get(list.currentIndex).lineLongCode])
                     }
                     catch(e) {
                         console.log("lineInfo: Exception: couldn't load map from responseXML")
@@ -765,6 +748,30 @@ Page {
             lineId.text = loadLine
             buttonClicked()
         }
+    }
+    function checkOffline(lineIdLong_) {
+        JS.__db().transaction(
+            function(tx) {
+               try {
+                    var rs = tx.executeSql("SELECT * FROM Stops WHERE stopIdLong=?", [lineIdLong_])
+               } catch(e) {
+                    console.log("EXCEPTION: " + e)
+               }
+               if (rs.rows.length > 0) {
+                   return_v = rs.rows.item(0).stopName
+               }
+            }
+        )
+    }
+    function showLineInfo() {
+        showMapButtonButton.visible = true
+        JS.scheduleLoaded = 0
+        scheduleClear()
+        stopReachModel.clear()
+        getStops()
+        lineShortCodeName.text = lineInfoModel.get(list.currentIndex).lineShortCode
+        lineDirection.text = lineInfoModel.get(list.currentIndex).direction
+        lineType.text = lineInfoModel.get(list.currentIndex).type
     }
 
 /*<----------------------------------------------------------------------->*/

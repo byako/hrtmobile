@@ -32,8 +32,6 @@ Page {
         height:  parent.height
         Image { source: config.bgImage ; fillMode: Image.Center; anchors.fill: parent; }
     }
-
-
     Button {
         id: themeButton
         text: "Theme"
@@ -47,7 +45,6 @@ Page {
             themeDialog.open()
         }
     }
-
     Row {
         id: offlineRow
         width: parent.width
@@ -79,7 +76,6 @@ Page {
             }
         }
     }
-
     Button {
         id: resetButton
         text: "Reset database"
@@ -142,8 +138,7 @@ Page {
     function offlineSwitchInit() {
         var offlineSwitchState = JS.getCurrent("offline")
         if (offlineSwitchState == "true") {
-            console.log("offline: " + offlineSwitchState)
             switchComponent.checked = true
-        } else console.log("online: " + offlineSwitchState)
+        }
     }
 }

@@ -59,13 +59,13 @@ Page {
             MenuItem {
                 text: "Line Info"
                 onClicked : {
-                    pageStack.push(Qt.resolvedUrl("lineInfo.qml"),{"loadLine":trafficModel.get(grid.currentIndex).departLine});
+                    pageStack.push(Qt.resolvedUrl("lineInfo.qml"),{"loadLine":trafficModel.get(grid.currentIndex).departCode});
                 }
             }
             MenuItem {
                 text: "Line Map"
                 onClicked : {
-                    pageStack.push(Qt.resolvedUrl("lineInfo.qml"),{"loadLine":trafficModel.get(grid.currentIndex).departLine,"loadLineMap":trafficModel.get(grid.currentIndex).departCode});
+                    switchToMap()
                 }
             }
         }
@@ -504,7 +504,7 @@ Page {
             clip: true
         }
     }
-    Item {
+    Item {     // footer
         id: footer
         anchors.bottom: parent.bottom
         anchors.left: parent.left
@@ -608,6 +608,20 @@ Page {
             stopAddString += lonlat[0]
             stopAddString += ";"
             infoModel.append({"propName" : "latitude" , "propValue" : lonlat[0]})
+            JS.__db().transaction(
+                function(tx) {
+                    for (var cc=0;cc<a.childNodes[ii].childNodes[6].childNodes.length;++cc) {
+                       try {
+                           tx.executeSql("INSERT INTO stopLines VALUES(?,?)", [a.childNodes[ii].childNodes[0].firstChild.nodeValue,
+                                             a.childNodes[ii].childNodes[6].childNodes[cc].firstChild.nodeValue.slice(0,a.childNodes[ii].childNodes[6].childNodes[cc].firstChild.nodeValue.search(":"))])
+                        }
+                        catch(e) {
+                            console.log("stopInfo: Exception during pushing stopLines: CC = " + cc)
+                        }
+                    }
+                }
+            )
+
             for (var oo=0;oo<a.childNodes[ii].childNodes[9].childNodes.length;++oo) {
                 try{
                     infoModel.append({"propName" : a.childNodes[ii].childNodes[9].childNodes[oo].nodeName,
@@ -626,14 +640,11 @@ Page {
             coords = JS.addStop(stopAddString)
             stopAddString = ""
             if (coords == 1) {
-                infoBanner.text = "Added stop " + stopName.text
-                infoBanner.show()
+                showError("Added stop " + stopName.text)
+                fillModel()
             } else if (coords == -1) {
-                infoBanner.text = "ERROR. Stop is not added. Sorry"
-                infoBanner.show()
+                showError("ERROR. Stop is not added. Sorry")
             }
-
-            fillModel()
         }
     }
     function getInfo() {        // Use Api v2.0 - more informative about the stop itself, conditions, coordinates
@@ -730,5 +741,31 @@ Page {
                  }
              )
     }
+    function switchToMap() {
+        var retVal = 0
+        pushCoordinates()
+        JS.__db().transaction(
+            function(tx) {
+                try {
+                    var rs = tx.executeSql("SELECT lineIdLong FROM Lines where lineIdLong=?",[trafficModel.get(grid.currentIndex).departCode])
+                    if (rs.rows.length > 0) {
+                        tx.executeSql("INSERT INTO Current VALUES(?,?)",["setLineShape",trafficModel.get(grid.currentIndex).departCode])
+                        showError("Loading line info...")
+                    } else {
+                        retVal = 1
+                    }
+                }
+                catch(e) {
+                    console.log("stopInfo: " + e)
+                }
+            }
+        )
+        if (retVal != 0) { // get new line info
+            pageStack.push(Qt.resolvedUrl("lineInfo.qml"),{"loadLineMap":trafficModel.get(grid.currentIndex).departCode});
+        } else { // just open map
+            pageStack.push(Qt.resolvedUrl("route.qml"));
+        }
+    }
+
 /*<----------------------------------------------------------------------->*/
 }

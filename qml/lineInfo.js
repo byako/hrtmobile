@@ -44,13 +44,19 @@ function initDB() {
     console.log("initializing Database ")
     __db().transaction(
         function(tx) {
-            tx.executeSql('CREATE TABLE IF NOT EXISTS Config(option TEXT, value TEXT, theme TEXT)')
-            tx.executeSql('CREATE TABLE IF NOT EXISTS Stops(stopIdLong TEXT, stopIdShort TEXT, stopName TEXT, stopAddress TEXT, stopCity TEXT, stopLongitude TEXT, stopLatitude TEXT)')
-            tx.executeSql('CREATE TABLE IF NOT EXISTS Lines(lineId TEXT, lineType TEXT, lineName TEXT, startstopIdLong TEXT, rndStopId TEXT)')
-            tx.executeSql('CREATE TABLE IF NOT EXISTS StopSchedule(stopIdLong TEXT, weekTime TEXT, departTime TEXT, lineId)')
-            tx.executeSql('CREATE TABLE IF NOT EXISTS LineStops(lineId TEXT, stopIdLong TEXT)')
-            tx.executeSql('CREATE TABLE IF NOT EXISTS LineCoords(option TEXT, value TEXT)')
-            tx.executeSql('CREATE TABLE IF NOT EXISTS Current(option TEXT, value TEXT)')
+            try {
+                tx.executeSql('CREATE TABLE IF NOT EXISTS Config(option TEXT, value TEXT, theme TEXT)')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS Stops(stopIdLong TEXT, stopIdShort TEXT, stopName TEXT, stopAddress TEXT, stopCity TEXT, stopLongitude TEXT, stopLatitude TEXT)')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS Lines(lineIdLong TEXT, lineIdShort TEXT, lineName TEXT, lineType TEXT, lineStart TEXT, lineEnd TEXT, startStopIdLong TEXT, endStopIdLong TEXT, lineShape TEXT)')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS StopSchedule(stopIdLong TEXT, weekTime TEXT, departTime TEXT, lineId TEXT)')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS LineStops(lineId TEXT, stopIdLong TEXT, stopReachTime TEXT)')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS Current(option TEXT, value TEXT)')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS LineTypes(lineType TEXT, lineTypeName TEXT)')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS StopLines(stopIdLong TEXT, lineIdLong TEXT)')
+            }
+            catch (e) {
+                console.log("EXCEPTION" + e)
+            }
 	}
     )
     createDefaultConfig()
@@ -66,6 +72,7 @@ function cleanAll() {
             tx.executeSql("DROP TABLE IF EXISTS LineStops");
             tx.executeSql("DROP TABLE IF EXISTS LineCoords");
             tx.executeSql('DROP TABLE IF EXISTS Current');
+            tx.executeSql('DROP TABLE IF EXISTS LineTypes');
         }
     )
 }
@@ -86,6 +93,24 @@ function createDefaultConfig() {
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'highlightColor', '#ffff50', "fallout"]);
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'highlightColorBg', '#000000', "fallout"]);
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'bgImage', ':/images/background4.jpg', "fallout"]);
+                tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '1', 'Helsinki Bus']);
+                tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '2', 'Tram']);
+                tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '3', 'Espoo Bus']);
+                tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '4', 'Vantaa Bus']);
+                tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '5', 'Regional Bus']);
+                tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '6', 'Metro']);
+                tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '7', 'Ferry']);
+                tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '8', 'U-Line']);
+                tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '9', 'Other local traffic']);
+                tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '10', 'Long-distance traffic']);
+                tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '11', 'Express']);
+                tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '12', 'VR local traffic']);
+                tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '13', 'VR long-distance traffic']);
+                tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '21', 'Helsinki service line']);
+                tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '22', 'Helsinki night traffic']);
+                tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '23', 'Espoo service line']);
+                tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '24', 'Vantaa service line']);
+                tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '25', 'Regional night traffic']);
             } catch(e) {
                 console.log("Exception: " + e)
             }
@@ -117,7 +142,34 @@ function showDB() {
     )
 }
 function addLine(string) {
-// TODO : this function
+    var returnVal = 0
+    var fields = new Array
+    fields = string.split(";")
+    if (fields.length < 9) {
+        returnVal = -1
+    } else {
+        __db().transaction(
+            function(tx) {
+                try {
+                    var rs = tx.executeSql('SELECT * FROM Lines WHERE lineIdLong=?', [fields[0]]);
+                }
+                catch(e) {
+                    console.log("addLine: Exception while selecting line from DB")
+                    returnVal = -1
+                    return
+                }
+                if (rs.rows.length > 0) {
+                    for (var ii=0; ii<rs.rows.length; ++ii) {
+                        console.log("Add line: found: " + rs.rows.item(ii).lineIdLong +" : "+ rs.rows.item(ii).lineName)
+                        returnVal = 1
+                    }
+                } else {
+                    rs = tx.executeSql('INSERT INTO Lines VALUES(?,?,?,?,?,?,?,?,?)', [fields[0], fields[1], fields[2], fields[3], fields[4], fields[5], fields[6], fields[7], fields[8]])
+                }
+            }
+        )
+    }
+    return returnVal
 }
 function addStop(string) {
     var returnVal = 0
@@ -179,22 +231,6 @@ function getCurrent(string) {
     )
     return return_v
 }
-function getCurrent(string) {
-    var return_v=""
-    __db().transaction(
-        function(tx) {
-            try {
-                var rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", [string])
-            } catch(e) {
-                console.log("EXCEPTION: " + e)
-            }
-            if (rs.rows.length > 0) {
-                return_v = rs.rows.item(0).value
-            }
-        }
-    )
-    return return_v
-}
 function setCurrent(option_,value_) {
     var return_v = 0
     __db().transaction(
@@ -210,5 +246,35 @@ function setCurrent(option_,value_) {
     )
     return return_v
 }
-
-
+function getLineType(string) {
+    var return_v="unknown"
+    __db().transaction(
+        function(tx) {
+            try {
+                var rs = tx.executeSql("SELECT * FROM LineTypes WHERE lineType=?",[string])
+            } catch(e) {
+                console.log("EXCEPTION: " + e)
+            }
+            if (rs.rows.length > 0) {
+                return_v = rs.rows.item(0).lineTypeName
+            }
+        }
+    )
+    return return_v
+}
+function getStopName(stopIdLong) {
+    var return_v = ""
+    __db().transaction(
+        function(tx) {
+           try {
+                var rs = tx.executeSql("SELECT * FROM Stops WHERE stopIdLong=?", [stopIdLong])
+           } catch(e) {
+                console.log("EXCEPTION: " + e)
+           }
+           if (rs.rows.length > 0) {
+               return_v = rs.rows.item(0).stopName
+           }
+        }
+    )
+    return return_v
+}

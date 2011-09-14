@@ -1,0 +1,15 @@
+* fix showLine map action in context of stopInfo
+* lineInfo: saved lines show
+* deletions of saved lines (with confirmation)
+* when searching line from stopInfo -> check DB first
+* make sure offline mode loads all needed info for lineInfo (limit responseXML usage, remove it)
+* after lookup of stop ID from line stops list - update stops list
+* find tool on toolbar (small redesign), remove search button from header
+* add confirmation on delete all stops action
+* koolah
+* pinch anction on map
+* ленивая загрузка
+
+Done:
+* stopInfo -> lineInfo now uses JORE code => only 1 request result => no need to show list of aquired lines
+* stop tossing lineShape to current table, push only lineIdLong
