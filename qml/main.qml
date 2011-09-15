@@ -15,7 +15,6 @@ PageStackWindow {
         message: "Add this to the favorites?"
         titleText: "Favorites"
         onAccepted: {
-            removeFavoriteTool.visible = true
             console.log("Adding to the favorites")
         }
         onRejected: {
@@ -32,12 +31,6 @@ PageStackWindow {
              onClicked: {
                  pageStack.pop()
                  backTool.visible = pageStack.currentPage==mainPage ? false : true
-                 if (addFavoriteTool.visible == true) {
-                     addFavoriteTool.visible = false
-                 }
-                 if (removeFavoriteTool.visible == true) {
-                     removeFavoriteTool.visible = false
-                 }
              }
              visible: false
         }

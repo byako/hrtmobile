@@ -567,7 +567,6 @@ Page {
         list.visible = false
         recentList.visible = false
         dataRect.visible = true
-        addFavoriteTool.visible = true
     }
     function getSchedule() {    // Use Api v1.0 to get just schedule - less data traffic, more departures in one reply
         var doc = new XMLHttpRequest()

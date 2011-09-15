@@ -26,6 +26,8 @@ Page {
     property string loadLine: ""
     property string loadLineMap: ""
     property string lineAddString : ""
+    property int scheduleLoaded : 0
+    property int currentSchedule : -1
 
     Component.onCompleted: { // load configand recent lines
         JS.loadConfig(config)
@@ -206,8 +208,8 @@ Page {
                         grid.visible = false
                         schedule.visible = true
                         scheduleButtons.visible = true
-                        if (JS.scheduleLoaded == 0 && lineId.text != "") {
-                            getSchedule(list.currentIndex)
+                        if (scheduleLoaded == 0 && list.currentIndex != -1) {
+                            getSchedule()
                         }
                     }
                 }
@@ -411,7 +413,7 @@ Page {
                 id: scheduleButton0
                 text: "Mon-Fri"
                 onClicked: {
-                    JS.currentSchedule = 0
+                    currentSchedule = 0
                     scheduleShow();
                 }
             }
@@ -419,7 +421,7 @@ Page {
                 id: scheduleButton1
                 text: "Sat"
                 onClicked: {
-                    JS.currentSchedule = 1
+                    currentSchedule = 1
                     scheduleShow();
                 }
             }
@@ -427,7 +429,7 @@ Page {
                 id: scheduleButton2
                 text: "Sun"
                 onClicked: {
-                    JS.currentSchedule = 2
+                    currentSchedule = 2
                     scheduleShow();
                 }
             }
@@ -461,26 +463,25 @@ Page {
         infoBanner.text = errorText
         infoBanner.show()
     }
-    function getStops(a){
-        var stops,stopName_;
-        stops = JS.doc.responseXML.documentElement.childNodes[list.currentIndex].childNodes[8];
-        for (var aa = 0; aa < stops.childNodes.length; ++aa) {
-            stopName_ = JS.getStopName(stops.childNodes[aa].childNodes[0].firstChild.nodeValue)
-            stopReachModel.append({"stopIdLong" : stops.childNodes[aa].childNodes[0].firstChild.nodeValue,
-                                  "stopName" : stopName_,
-                                  "reachTime" : stops.childNodes[aa].childNodes[1].firstChild.nodeValue });
-        }
+    function getStops(){             // parse stops from dox.responseXML
+        JS.__db().transaction(
+            function(tx) {
+                var rs = tx.executeSql('SELECT * FROM LineStops WHERE lineIdLong=?', [lineInfoModel.get(list.currentIndex).lineLongCode]);
+                for (var ii=0; ii<rs.rows.length; ++ii) {
+                    stopReachModel.append({"stopIdLong" : rs.rows.item(ii).stopIdLong,
+                                  "stopName" : JS.getStopName(rs.rows.item(ii).stopIdLong),
+                                  "reachTime" : rs.rows.item(ii).stopReachTime });
+                }
+            }
+        )
     }
-    function parseXML(a){
-        infoRect.visible = true;
-        var lineType
+    function parseXML(a){            // parse lines description, map
         for (var ii = 0; ii < a.childNodes.length; ++ii) {
             lineAddString = ""
-            lineType = JS.getLineType(a.childNodes[ii].childNodes[2].firstChild.nodeValue)
             lineInfoModel.append({"lineLongCode" : "" + a.childNodes[ii].childNodes[0].firstChild.nodeValue,
                                  "lineShortCode" : ""+a.childNodes[ii].childNodes[1].firstChild.nodeValue,
                                  "direction" : "" + a.childNodes[ii].childNodes[3].firstChild.nodeValue + " -> " + a.childNodes[ii].childNodes[4].firstChild.nodeValue,
-                                 "type" : ""+lineType,
+                                 "type" : "" + JS.getLineType(a.childNodes[ii].childNodes[2].firstChild.nodeValue),
                                  "typeCode" : "" + a.childNodes[ii].childNodes[2].firstChild.nodeValue
                                  });
             if ( JS.addLine(""+ a.childNodes[ii].childNodes[0].firstChild.nodeValue +
@@ -491,42 +492,44 @@ Page {
                             ";" + a.childNodes[ii].childNodes[4].firstChild.nodeValue +
                             ";" + a.childNodes[ii].childNodes[8].firstChild.firstChild.firstChild.nodeValue +
                             ";" + a.childNodes[ii].childNodes[8].lastChild.firstChild.firstChild.nodeValue +
-                            ";" + a.childNodes[ii].childNodes[7].firstChild.nodeValue) == 0 ) {
+                            ";" + a.childNodes[ii].childNodes[7].firstChild.nodeValue +
+                            ";" + a.childNodes[ii].childNodes[6].firstChild.nodeValue) == 0 ) {
                 showError("Saved new line: " + a.childNodes[ii].childNodes[1].firstChild.nodeValue)
             }
+            JS.__db().transaction(
+                function(tx) {
+                    for (var cc = 0; cc < a.childNodes[ii].childNodes[8].childNodes.length; ++cc) {
+                        try { tx.executeSql('INSERT INTO LineStops VALUES(?,?,?)', [a.childNodes[ii].childNodes[0].firstChild.nodeValue,
+                             a.childNodes[ii].childNodes[8].childNodes[cc].firstChild.firstChild.nodeValue,
+                             a.childNodes[ii].childNodes[8].childNodes[cc].lastChild.firstChild.nodeValue]); }
+                        catch(e) { console.log("EXCEPTION: " + e) }
+                    }
+                }
+            )
         }
-        if (loadLineMap != "") {
-            list.currentIndex = 0
-            showMap()
-        }
-        if (lineInfoModel.count == 1) {
-            list.visible = false
-            grid.visible = true
-            dataRect.visible = true
-            list.currentIndex = 0
-            showLineInfo()
-        }
+        gotLinesInfo()
     }
-    function getXML() {
-        JS.doc.onreadystatechange = function() {
-            if (JS.doc.readyState == XMLHttpRequest.HEADERS_RECEIVED) {
-            } else if (JS.doc.readyState == XMLHttpRequest.DONE) {
-                if (JS.doc.responseXML == null) {
+    function getXML() {              // xml http request                 : TODO : switch to use local var instead of JS.doc
+        var doc = new XMLHttpRequest()
+        doc.onreadystatechange = function() {
+            if (doc.readyState == XMLHttpRequest.HEADERS_RECEIVED) {
+            } else if (doc.readyState == XMLHttpRequest.DONE) {
+                if (doc.responseXML == null) {
                     showError("No lines found")
                     return
                 } else {
-                    console.log("OK, got " + JS.doc.responseXML.documentElement.childNodes.length+ " lines")
-                    parseXML(JS.doc.responseXML.documentElement);
+                    console.log("OK, got " + doc.responseXML.documentElement.childNodes.length+ " lines")
+                    parseXML(doc.responseXML.documentElement);
                 }
-            } else if (JS.doc.readyState == XMLHttpRequest.ERROR) {
+            } else if (doc.readyState == XMLHttpRequest.ERROR) {
                 showError("ERROR returned from server")
             }
         }
-    JS.doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&epsg_out=wgs84&query="+lineId.text); // for line info request
+    doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&epsg_out=wgs84&query="+lineId.text); // for line info request
 //             http://api.reittiopas.fi/public-ytv/fi/api/?key="+stopId.text+"&user=byako&pass=gfccdjhl");
-    JS.doc.send();
+    doc.send();
     }
-    function parseHttp(text_) {
+    function parseHttp(text_) {      // parse schedule reittiopas http page  : TODO: switch to use local vars
         scheduleClear();
         var tables = new Array;
         var lines = new Array;
@@ -629,17 +632,12 @@ Page {
                 break;
             }
         }
-        JS.scheduleLoaded = 1;
-        JS.currentSchedule = 0;
+        scheduleLoaded = 1;
+        currentSchedule = 0;
     }
-    function getSchedule(a) {
+    function getSchedule() {         // xml http request : schedule reittiopas page
+        var scheduleURL = ""
         var scheduleHtmlReply = new XMLHttpRequest()
-        if (a==-1) {
-            a=1
-            if (list.count==0) {
-                return;
-            }
-        }
         scheduleHtmlReply.onreadystatechange = function() {
             if (scheduleHtmlReply.readyState == XMLHttpRequest.HEADERS_RECEIVED) {
             } else if (scheduleHtmlReply.readyState == XMLHttpRequest.DONE) {
@@ -650,7 +648,19 @@ Page {
                 showError("ERROR")
             }
         }
-        scheduleHtmlReply.open("GET",JS.doc.responseXML.documentElement.childNodes[a].childNodes[6].firstChild.nodeValue)
+        JS.__db().transaction(
+            function(tx) {
+                        try { var rs = tx.executeSql("SELECT lineSchedule FROM Lines WHERE lineIdLong=?", [lineInfoModel.get(list.currentIndex).lineLongCode]) }
+                catch(e) { console.log("EXCEPTION: " + e) }
+                if (rs.rows.length > 0) {
+                    scheduleURL = rs.rows.item(0).lineSchedule
+                }
+            }
+        )
+        if (scheduleURL == "") {
+            return
+        }
+        scheduleHtmlReply.open("GET",scheduleURL)
         scheduleHtmlReply.send()
     }
     function scheduleClear() {
@@ -664,7 +674,7 @@ Page {
     function scheduleShow() {
         grid.visible = false;
         list.visible = false;
-        switch(JS.currentSchedule) {
+        switch(currentSchedule) {
             case 0:
                 schedule.model = scheduleModelDir1MonFri;
                 schedule.visible = true;
@@ -697,14 +707,17 @@ Page {
     }
     function buttonClicked() {
         if (lineId.text == "Enter LineID") {
-            showError("Enter LineID number first (line number)")
+            showError("Enter search criteria\nline number/line code/Key place\ni.e. 156A or Tapiola or 2132  2")
             return
         }
         stopReachModel.clear()
         lineInfoModel.clear()
         searchButton.focus = true
-        if (checkOffline() != 0)
-        getXML()
+        if (checkOffline() != 0) {
+            getXML()
+        } else {
+            gotLinesInfo()
+        }
     }
     function pushStopId(stopIdLongSet) {
         JS.__db().transaction(
@@ -749,29 +762,51 @@ Page {
             buttonClicked()
         }
     }
-    function checkOffline(lineIdLong_) {
+    function checkOffline() {
+        var retVal = 0
         JS.__db().transaction(
             function(tx) {
-               try {
-                    var rs = tx.executeSql("SELECT * FROM Stops WHERE stopIdLong=?", [lineIdLong_])
-               } catch(e) {
-                    console.log("EXCEPTION: " + e)
-               }
+               try { var rs = tx.executeSql("SELECT * FROM Lines WHERE lineIdLong=? OR lineIdShort=?", [lineId.text, lineId.text]) }
+               catch(e) { console.log("EXCEPTION in checkOffline: " + e) }
                if (rs.rows.length > 0) {
-                   return_v = rs.rows.item(0).stopName
+                   for (var ii=0; ii < rs.rows.length; ++ii) {
+                       lineInfoModel.append({"lineLongCode" : rs.rows.item(ii).lineIdLong,
+                                            "lineShortCode" : rs.rows.item(ii).lineIdShort,
+                                            "direction" : rs.rows.item(ii).lineStart + " -> " + rs.rows.item(ii).lineEnd,
+                                            "type" : JS.getLineType(rs.rows.item(ii).lineType),
+                                            "typeCode" : rs.rows.item(ii).lineType
+                                            });
+                   }
+               } else {
+                   retVal = -1
                }
             }
         )
+        return retVal
     }
     function showLineInfo() {
         showMapButtonButton.visible = true
-        JS.scheduleLoaded = 0
+        scheduleLoaded = 0
         scheduleClear()
         stopReachModel.clear()
         getStops()
         lineShortCodeName.text = lineInfoModel.get(list.currentIndex).lineShortCode
         lineDirection.text = lineInfoModel.get(list.currentIndex).direction
         lineType.text = lineInfoModel.get(list.currentIndex).type
+    }
+    function gotLinesInfo() {
+        infoRect.visible = true;
+        if (loadLineMap != "") {
+            list.currentIndex = 0
+            showMap()
+        }
+        if (lineInfoModel.count == 1) {
+            list.visible = false
+            grid.visible = true
+            dataRect.visible = true
+            list.currentIndex = 0
+            showLineInfo()
+        }
     }
 
 /*<----------------------------------------------------------------------->*/

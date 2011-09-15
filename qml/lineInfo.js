@@ -1,9 +1,5 @@
 .pragma library
 
-var doc = new XMLHttpRequest
-var scheduleLoaded=0
-var currentSchedule=-1
-
 function __db(){
     return openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
 }
@@ -47,9 +43,9 @@ function initDB() {
             try {
                 tx.executeSql('CREATE TABLE IF NOT EXISTS Config(option TEXT, value TEXT, theme TEXT)')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS Stops(stopIdLong TEXT, stopIdShort TEXT, stopName TEXT, stopAddress TEXT, stopCity TEXT, stopLongitude TEXT, stopLatitude TEXT)')
-                tx.executeSql('CREATE TABLE IF NOT EXISTS Lines(lineIdLong TEXT, lineIdShort TEXT, lineName TEXT, lineType TEXT, lineStart TEXT, lineEnd TEXT, startStopIdLong TEXT, endStopIdLong TEXT, lineShape TEXT)')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS Lines(lineIdLong TEXT, lineIdShort TEXT, lineName TEXT, lineType TEXT, lineStart TEXT, lineEnd TEXT, startStopIdLong TEXT, endStopIdLong TEXT, lineShape TEXT, lineSchedule TEXT)')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS StopSchedule(stopIdLong TEXT, weekTime TEXT, departTime TEXT, lineId TEXT)')
-                tx.executeSql('CREATE TABLE IF NOT EXISTS LineStops(lineId TEXT, stopIdLong TEXT, stopReachTime TEXT)')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS LineStops(lineIdLong TEXT, stopIdLong TEXT, stopReachTime TEXT)')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS Current(option TEXT, value TEXT)')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS LineTypes(lineType TEXT, lineTypeName TEXT)')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS StopLines(stopIdLong TEXT, lineIdLong TEXT)')
@@ -73,6 +69,7 @@ function cleanAll() {
             tx.executeSql("DROP TABLE IF EXISTS LineCoords");
             tx.executeSql('DROP TABLE IF EXISTS Current');
             tx.executeSql('DROP TABLE IF EXISTS LineTypes');
+            tx.executeSql('DROP TABLE IF EXISTS StopLines');
         }
     )
 }
@@ -119,8 +116,7 @@ function createDefaultConfig() {
 }
 function showDB() {
     console.log("DEBUG: showDatabase invoked: ");
-    var db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
-    db.transaction(
+    __db().transaction(
         function(tx) {
             var rs, ii;
             if (tx.executeSql("SELECT * FROM CONFIG")) {
@@ -145,7 +141,7 @@ function addLine(string) {
     var returnVal = 0
     var fields = new Array
     fields = string.split(";")
-    if (fields.length < 9) {
+    if (fields.length < 10) {
         returnVal = -1
     } else {
         __db().transaction(
@@ -164,7 +160,7 @@ function addLine(string) {
                         returnVal = 1
                     }
                 } else {
-                    rs = tx.executeSql('INSERT INTO Lines VALUES(?,?,?,?,?,?,?,?,?)', [fields[0], fields[1], fields[2], fields[3], fields[4], fields[5], fields[6], fields[7], fields[8]])
+                    rs = tx.executeSql('INSERT INTO Lines VALUES(?,?,?,?,?,?,?,?,?,?)', [fields[0], fields[1], fields[2], fields[3], fields[4], fields[5], fields[6], fields[7], fields[8], fields[9]])
                 }
             }
         )
@@ -190,9 +186,26 @@ function addStop(string) {
                 }
             } else {
                 returnVal = 1
-                rs = tx.executeSql('INSERT INTO Stops VALUES(?,?,?,?,?,?,?)', [fields[0], fields[1], fields[2], fields[3], fields[4], fields[5], fields[6]])
+                try { rs = tx.executeSql('INSERT INTO Stops VALUES(?,?,?,?,?,?,?)', [fields[0], fields[1], fields[2], fields[3], fields[4], fields[5], fields[6]]) }
+                catch(e) { console.log("EXCEPTION: " + e) }
             }
 	}
+    )
+    return returnVal
+}
+function addLineStop(string) {
+    var returnVal = 0
+    var fields = new Array
+    fields = string.split(";")
+    if (fields.length < 3) {
+        returnVal = -1
+        return returnVal
+    }
+    __db().transaction(
+        function(tx) {
+                try { var rs = tx.executeSql('INSERT INTO LineStops VALUES(?,?,?)', [fields[0], fields[1], fields[2]]); }
+                catch(e) { console.log("EXCEPTION: " + e); returnVal = 1 }
+        }
     )
     return returnVal
 }
