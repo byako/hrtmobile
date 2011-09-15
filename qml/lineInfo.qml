@@ -39,6 +39,10 @@ Page {
         width: parent.width
         height:  parent.height
         Image { source: config.bgImage; fillMode: Image.Center; anchors.fill: parent; }
+        MouseArea {
+            anchors.fill: parent
+            onClicked: focus = true
+        }
     }
     Item {      // search box
         id: searchBox
@@ -183,6 +187,7 @@ Page {
                         grid.visible = false
                         schedule.visible = false
                         scheduleButtons.visible = false
+                        fucus = true
                     }
                 }
             }
@@ -196,6 +201,7 @@ Page {
                         grid.visible = true
                         schedule.visible = false
                         scheduleButtons.visible = false
+                        fucus = true
                     }
                 }
             }
@@ -211,6 +217,7 @@ Page {
                         if (scheduleLoaded == 0 && list.currentIndex != -1) {
                             getSchedule()
                         }
+                        fucus = true
                     }
                 }
             }
@@ -244,8 +251,7 @@ Page {
                     grid.currentIndex = index;
                 }
                 onPressAndHold: {
-                    pushStopId(stopIdLong);
-                    pageStack.push(Qt.resolvedUrl("stopInfo.qml"));
+                    pageStack.push(Qt.resolvedUrl("stopInfo.qml"),{"loadStop":stopIdLong});
                 }
             }
         }
@@ -476,6 +482,8 @@ Page {
         )
     }
     function parseXML(a){            // parse lines description, map
+        lineInfoModel.clear()
+        stopReachModel.clear()
         for (var ii = 0; ii < a.childNodes.length; ++ii) {
             lineAddString = ""
             lineInfoModel.append({"lineLongCode" : "" + a.childNodes[ii].childNodes[0].firstChild.nodeValue,
@@ -710,22 +718,14 @@ Page {
             showError("Enter search criteria\nline number/line code/Key place\ni.e. 156A or Tapiola or 2132  2")
             return
         }
-        stopReachModel.clear()
-        lineInfoModel.clear()
+//        stopReachModel.clear()
+//        lineInfoModel.clear()
         searchButton.focus = true
         if (checkOffline() != 0) {
             getXML()
         } else {
             gotLinesInfo()
         }
-    }
-    function pushStopId(stopIdLongSet) {
-        JS.__db().transaction(
-            function(tx) {
-                tx.executeSql("INSERT INTO Current VALUES(?,?)",["setCurrentStop","true"]);
-                tx.executeSql("INSERT INTO Current VALUES(?,?)",["stopIdLong",stopIdLongSet]);
-            }
-        )
     }
     function updateStopReachModel() {
         for (var ii=0;ii<stopReachModel.count;++ii) {
@@ -769,6 +769,8 @@ Page {
                try { var rs = tx.executeSql("SELECT * FROM Lines WHERE lineIdLong=? OR lineIdShort=?", [lineId.text, lineId.text]) }
                catch(e) { console.log("EXCEPTION in checkOffline: " + e) }
                if (rs.rows.length > 0) {
+                   lineInfoModel.clear()
+                   stopReachModel.clear()
                    for (var ii=0; ii < rs.rows.length; ++ii) {
                        lineInfoModel.append({"lineLongCode" : rs.rows.item(ii).lineIdLong,
                                             "lineShortCode" : rs.rows.item(ii).lineIdShort,

@@ -21,6 +21,7 @@ Page {
     property string longit: ""
     property string latit: ""
     property string stopAddString: ""
+    property string loadStop: ""
     orientationLock: PageOrientation.LockPortrait
 
     Component.onCompleted: { JS.loadConfig(config); infoModel.clear(); trafficModel.clear(); fillModel(); setCurrent(); }
@@ -704,22 +705,12 @@ Page {
             }
         )
     }
-    function setCurrent() {
+    function setCurrent() {  // stop info request from lineInfo:stopReach  TODO: remove stopIdLong use from DB, use local instead
+        if (loadStop != "") {
              JS.__db().transaction(
                  function(tx) {
-                    try {
-                        var rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", ["setCurrentStop"])
-                    } catch(e) {
-                         console.log("EXCEPTION: " + e)
-                    }
-                    if (rs.rows.length > 0) {
-                        rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", ["stopIdLong"])
-                        var option = rs.rows.item(0).value  // this stopId we need to show
-                        try {
-                            rs = tx.executeSql("SELECT * FROM Stops WHERE stopIdLong=?", [option])
-                        } catch(e) {
-                            console.log("exception : "+e)
-                        }
+                        try { var rs = tx.executeSql("SELECT * FROM Stops WHERE stopIdLong=?", [loadStop]) }
+                        catch(e) { console.log("exception : "+e) }
                         if (rs.rows.length > 0) {
                             stopId.text = rs.rows.item(0).stopIdShort
                             latit = rs.rows.item(0).stopLatitude
@@ -732,13 +723,9 @@ Page {
                             searchButton.focus = true
                             buttonClicked()
                         }
-                        tx.executeSql("DELETE FROM Current WHERE option=?", ["setCurrentStop"])
-                        tx.executeSql("DELETE FROM Current WHERE option=?", ["stopIdLong"])
-                    } else {
-                        console.log("Didn't find setCurrentStop in DB")
-                    }
                  }
              )
+        }
     }
     function switchToMap() {
         var retVal = 0
