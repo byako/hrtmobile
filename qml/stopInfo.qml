@@ -5,7 +5,7 @@ import com.nokia.extras 1.0
 
 Page {
     id: stopInfoPage
-//    tools: commonTools
+    tools: commonTools
     MyQueryDialog {
         id: offlineModeOff
     }
@@ -18,10 +18,9 @@ Page {
         property string highlightColorBg: ""
     }
     objectName: "stopInfoPage"
-    property string longit: ""
-    property string latit: ""
     property string stopAddString: ""
     property string loadStop: ""
+    property string searchString: ""
     orientationLock: PageOrientation.LockPortrait
 
     Component.onCompleted: { JS.loadConfig(config); infoModel.clear(); trafficModel.clear(); fillModel(); setCurrent(); }
@@ -84,80 +83,10 @@ Page {
             }
         }
     }
-    Label {         // error label
-        Rectangle{
-            color: "#606060"
-            radius: 10
-            anchors.fill: parent
-            width: parent.width
-            height:  parent.height
-        }
-        id: errorLabel;
-        text: qsTr("Error. Wrong stop ID ?")
-        anchors.bottomMargin: 100
-        anchors.centerIn: parent
-        visible : false
-        font.pixelSize: 30
-        color: config.textColor
-    }
-    Item {          // Search box
-        id: searchBox
-        width: 240
-        height: 35
-        anchors.top: parent.top
-        anchors.topMargin: 5
-        anchors.left: parent.left
-        anchors.leftMargin: 5
-        anchors.right: parent.right
-        anchors.rightMargin: 5
-        Rectangle{
-            anchors.top: parent.top
-            anchors.left: parent.left
-            width: 240
-            height: parent.height
-            color: config.highlightColorBg
-            radius: 15
-            TextInput{
-                id: stopId
-                anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 10
-                width: parent.width
-                height: parent.height
-                maximumLength: 16
-                onFocusChanged: {
-                    focus == true ? openSoftwareInputPanel() : closeSoftwareInputPanel()
-                    focus == true ? text = qsTr("") : null
-                }
-                onAccepted: buttonClicked()
-                font.pixelSize: 30
-                color: config.textColor
-                text: "Enter StopID"
-            }
-        }
-       Button{
-            id: searchButton
-            anchors.right: parent.right
-            anchors.top: parent.top
-            text: qsTr("Show info")
-            width: 200
-            height: parent.height
-            onClicked: buttonClicked()
-        }
-    }
-    Rectangle {     // HR separator
-        id: hrLineSeparator
-        anchors.left: parent.left
-        anchors.top: searchBox.bottom
-        anchors.topMargin: 5
-        width: parent.width
-        height:  2
-        color: config.textColor
-    }
     Item {          // Data
         id: dataRect
         anchors.left: parent.left
-        anchors.top:  searchBox.bottom
+        anchors.top:  parent.top
         anchors.topMargin: 10
         anchors.right: parent.right
         height: 120
@@ -181,10 +110,7 @@ Page {
                     text: "M"
                     visible: false
                     onClicked: {
-                        console.log("Here comes da map:")
-                        console.log("long: " + longit + "; lat: " + latit)
-                        pushCoordinates()
-                        pageStack.push(Qt.resolvedUrl("route.qml"))
+                        pageStack.push(Qt.resolvedUrl("route.qml"),{"loadStop":searchString})
                     }
                 }
             }
@@ -361,11 +287,9 @@ Page {
                 onClicked: {
                     recentList.focus = true
                     recentList.currentIndex = index
-                    stopId.text = recentModel.get(recentList.currentIndex).stopIdShort
-                    latit = stopLatitude
-                    longit = stopLongitude
+                    searchString = recentModel.get(recentList.currentIndex).stopIdShort
                     showMapButtonButton.visible = true
-                    infoModel.clear()
+                    fillInfoModel()
                     updateSchedule()
                 }
                 onPressedChanged: {
@@ -464,7 +388,7 @@ Page {
         anchors.topMargin: 10
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.bottom: footer.top
+        anchors.bottom: parent.bottom
         GridView {  // stopSchedule grid
             id: grid
             anchors.fill:  parent
@@ -501,35 +425,8 @@ Page {
             delegate:  recentDelegate
             model: recentModel
             highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
-            currentIndex: 0
+            currentIndex: -1
             clip: true
-        }
-    }
-    Item {     // footer
-        id: footer
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        height: 50
-        Button {
-            width: 100
-            height: parent.height
-            text: "<-"
-            anchors.left: parent.left
-            anchors.bottom: parent.bottom
-            onClicked: {
-                pageStack.pop()
-            }
-        }
-        Button {
-            width: 100
-            height: parent.height
-            text: "Config"
-            anchors.bottom: parent.bottom
-            anchors.right: parent.right
-            onClicked: {
-                pageStack.push(Qt.resolvedUrl("settings.qml"))
-            }
         }
     }
 /*<----------------------------------------------------------------------->*/
@@ -574,7 +471,7 @@ Page {
         doc.onreadystatechange = function() {
             if (doc.readyState == XMLHttpRequest.DONE) {
                 if (doc.responseText.slice(0,5) == "Error") {
-                    showError("Schedule ERROR. Server returned error for Stop ID:"+stopId.text)
+                    showError("Schedule ERROR. Server returned error for Stop ID:"+searchString)
                     return
                 } else {
                     parseResponse(doc.responseText)
@@ -584,10 +481,10 @@ Page {
             }
         }
         //              API 1.0 (plaintext) : faster, more informative
-        doc.open("GET", "http://api.reittiopas.fi/public-ytv/fi/api/?stop="+ stopId.text +"&user=byako&pass=gfccdjhl");
+        doc.open("GET", "http://api.reittiopas.fi/public-ytv/fi/api/?stop="+ searchString+"&user=byako&pass=gfccdjhl");
         doc.send();
     }
-    function parseInfo(a) {     //
+    function parseInfo(a) {     // Stop info parsing
         var lonlat = Array;
         var coords = String
         infoModel.clear()
@@ -621,21 +518,23 @@ Page {
                     }
                 }
             )
-
-            for (var oo=0;oo<a.childNodes[ii].childNodes[9].childNodes.length;++oo) {
-                try{
-                    infoModel.append({"propName" : a.childNodes[ii].childNodes[9].childNodes[oo].nodeName,
-                                     "propValue" : a.childNodes[ii].childNodes[9].childNodes[oo].firstChild.nodeValue})
-                }
-                catch(e) {
-                    console.log("stopInfo: infoModel.append exception happened")
-                }
-            }
-
+            JS.__db().transaction(
+                function(tx) {
+                    for (var oo=0;oo<a.childNodes[ii].childNodes[9].childNodes.length;++oo) {
+                        try{
+                            infoModel.append({"propName" : a.childNodes[ii].childNodes[9].childNodes[oo].nodeName,
+                                         "propValue" : a.childNodes[ii].childNodes[9].childNodes[oo].firstChild.nodeValue})
+                            tx.executeSql("INSERT INTO stopInfo VALUES(?,?,?)", [a.childNodes[ii].childNodes[0].firstChild.nodeValue,
+                                                                                 a.childNodes[ii].childNodes[9].childNodes[oo].nodeName,
+                                                                                 a.childNodes[ii].childNodes[9].childNodes[oo].firstChild.nodeValue])
+                        }
+                        catch(e) { console.log("stopInfo: parsing stop info : " + e) }
+                    }
+                 }
+            )
             stopAddString += lonlat[1]
             stopAddString += ";"
-            longit = lonlat[0]
-            latit = lonlat[1]
+            searchString = a.childNodes[ii].childNodes[0].firstChild.nodeValue
             showMapButtonButton.visible = true
             coords = JS.addStop(stopAddString)
             stopAddString = ""
@@ -662,12 +561,12 @@ Page {
             console.log("some shit happened")
             return
         }
-        doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=stop&code=" + stopId.text + "&user=byako&pass=gfccdjhl&format=xml")
+        doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=stop&code=" + searchString + "&user=byako&pass=gfccdjhl&format=xml")
         doc.send();
     }
     function buttonClicked() {  // SearchBox actioncommander keen
-        if (stopId.text == "" || stopId.text.length > 7 || stopId.text.length < 4) {
-            showError("Wrong stop ID:"+stopId.text+".\nStop ID is 4 digit or 1 letter & 4 digits. Example: E3127")
+        if (searchString == "" || searchString.length > 7 || searchString.length < 4) {
+            showError("Wrong stop ID:"+searchString+".\nStop ID is 4 digit or 1 letter & 4 digits. Example: E3127")
             return;
         }
         infoModel.clear()
@@ -678,7 +577,6 @@ Page {
     }
     function updateSchedule() { // update only schedule
         trafficModel.clear()
-        searchButton.focus = true
         getSchedule()
         tabRect.checkedButton = stopSchedule
     }
@@ -696,46 +594,45 @@ Page {
                  }
         )
     }
-    function pushCoordinates() {
+    function fillInfoModel() {  // checkout stop info from database
         JS.__db().transaction(
             function(tx) {
-                tx.executeSql("INSERT INTO Current VALUES(?,?)",["setCurrentPosition","true"])
-                tx.executeSql("INSERT INTO Current VALUES(?,?)",["longitude",longit])
-                tx.executeSql("INSERT INTO Current VALUES(?,?)",["latitude",latit])
+                try { var rs = tx.executeSql("SELECT option,value FROM StopInfo WHERE stopIdLong=?",[recentModel.get(recentList.currentIndex).stopIdLong]); }
+                catch(e) { console.log("FillInfoModel EXCEPTION: " + e) }
+                infoModel.clear();
+                for (var i=0; i<rs.rows.length; ++i) {
+                    infoModel.append({"propName" : rs.rows.item(i).option,
+                                      "propValue" : rs.rows.item(i).value})
+                }
             }
         )
     }
-    function setCurrent() {  // stop info request from lineInfo:stopReach  TODO: remove stopIdLong use from DB, use local instead
+    function setCurrent() {     // stop info request from lineInfo:stopReach
         if (loadStop != "") {
              JS.__db().transaction(
                  function(tx) {
                         try { var rs = tx.executeSql("SELECT * FROM Stops WHERE stopIdLong=?", [loadStop]) }
                         catch(e) { console.log("exception : "+e) }
                         if (rs.rows.length > 0) {
-                            stopId.text = rs.rows.item(0).stopIdShort
-                            latit = rs.rows.item(0).stopLatitude
-                            longit = rs.rows.item(0).stopLongitude
+                            searchString = rs.rows.item(0).stopIdShort
                             showMapButtonButton.visible = true
                             infoModel.clear()
                             updateSchedule()
                         } else {
-                            stopId.text = option
-                            searchButton.focus = true
+                            searchString = loadStop
                             buttonClicked()
                         }
                  }
              )
         }
     }
-    function switchToMap() {
+    function switchToMap() {    // ContextMenu map item action
         var retVal = 0
-        pushCoordinates()
         JS.__db().transaction(
             function(tx) {
                 try {
                     var rs = tx.executeSql("SELECT lineIdLong FROM Lines where lineIdLong=?",[trafficModel.get(grid.currentIndex).departCode])
                     if (rs.rows.length > 0) {
-                        tx.executeSql("INSERT INTO Current VALUES(?,?)",["setLineShape",trafficModel.get(grid.currentIndex).departCode])
                         showError("Loading line info...")
                     } else {
                         retVal = 1
@@ -749,7 +646,7 @@ Page {
         if (retVal != 0) { // get new line info
             pageStack.push(Qt.resolvedUrl("lineInfo.qml"),{"loadLineMap":trafficModel.get(grid.currentIndex).departCode});
         } else { // just open map
-            pageStack.push(Qt.resolvedUrl("route.qml"));
+            pageStack.push(Qt.resolvedUrl("route.qml"),{"loadLine":trafficModel.get(grid.currentIndex).departCode});
         }
     }
 

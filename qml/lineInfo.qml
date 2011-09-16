@@ -28,6 +28,7 @@ Page {
     property string lineAddString : ""
     property int scheduleLoaded : 0
     property int currentSchedule : -1
+    property string searchString: ""
 
     Component.onCompleted: { // load configand recent lines
         JS.loadConfig(config)
@@ -44,68 +45,11 @@ Page {
             onClicked: focus = true
         }
     }
-    Item {      // search box
-        id: searchBox
-        width: 240
-        height: 40
-        anchors.top: parent.top
-        anchors.topMargin: 5
-        anchors.left: parent.left
-        anchors.leftMargin: 10
-        anchors.right: parent.right
-        anchors.rightMargin: 10
-        Rectangle{
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 2
-            anchors.left: parent.left
-            width: 240
-            height: 35
-            color: config.highlightColorBg
-            radius: 15
-            TextInput{
-                id: lineId
-                anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 10
-                width: parent.width
-                height: parent.height
-                maximumLength: 16
-                onFocusChanged: {
-                    focus == true ? openSoftwareInputPanel() : closeSoftwareInputPanel()
-                    focus == true ? text = qsTr("") : null
-                }
-                onAccepted: buttonClicked()
-                font.pixelSize: 30
-                color: config.textColor
-                text: "Enter LineID"
-            }
-        }
-       Button{
-            id: searchButton
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            text: qsTr("Show info")
-            width: 200
-            height: parent.height
-            onClicked: {
-                buttonClicked()
-            }
-       }
-    }
-    Rectangle { // decorative horizontal line
-        id: hrLineSeparator
-        anchors.left: parent.left
-        anchors.top: searchBox.bottom
-        anchors.topMargin: 5
-        width: parent.width
-        height:  2
-        color: config.textColor
-    }
     Item{       // data rect: info labels
         id: dataRect
         anchors.left: parent.left
         anchors.leftMargin: 10
-        anchors.top:  searchBox.bottom
+        anchors.top:  parent.top
         anchors.topMargin: 10
         anchors.right: parent.right
         anchors.rightMargin: 10
@@ -187,7 +131,7 @@ Page {
                         grid.visible = false
                         schedule.visible = false
                         scheduleButtons.visible = false
-                        fucus = true
+                        focus = true
                     }
                 }
             }
@@ -201,7 +145,7 @@ Page {
                         grid.visible = true
                         schedule.visible = false
                         scheduleButtons.visible = false
-                        fucus = true
+                        focus = true
                     }
                 }
             }
@@ -217,7 +161,7 @@ Page {
                         if (scheduleLoaded == 0 && list.currentIndex != -1) {
                             getSchedule()
                         }
-                        fucus = true
+                        focus = true
                     }
                 }
             }
@@ -533,7 +477,7 @@ Page {
                 showError("ERROR returned from server")
             }
         }
-    doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&epsg_out=wgs84&query="+lineId.text); // for line info request
+    doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&epsg_out=wgs84&query="+searchString); // for line info request
 //             http://api.reittiopas.fi/public-ytv/fi/api/?key="+stopId.text+"&user=byako&pass=gfccdjhl");
     doc.send();
     }
@@ -714,13 +658,12 @@ Page {
         }
     }
     function buttonClicked() {
-        if (lineId.text == "Enter LineID") {
+        if (searchString == "Enter LineID" || searchString == "") {
             showError("Enter search criteria\nline number/line code/Key place\ni.e. 156A or Tapiola or 2132  2")
             return
         }
 //        stopReachModel.clear()
 //        lineInfoModel.clear()
-        searchButton.focus = true
         if (checkOffline() != 0) {
             getXML()
         } else {
@@ -733,32 +676,17 @@ Page {
         }
     }
     function showMap() {
-        var ok=0
         if (list.currentIndex >= 0) {
-            JS.__db().transaction(
-                function(tx) {
-                    try {
-                        console.log("pushing line ID: " + lineInfoModel.get(list.currentIndex).lineLongCode)
-                        tx.executeSql("INSERT INTO Current VALUES(?,?)",["setLineShape", lineInfoModel.get(list.currentIndex).lineLongCode])
-                    }
-                    catch(e) {
-                        console.log("lineInfo: Exception: couldn't load map from responseXML")
-                        ok=1
-                    }
-                }
-            )
-            if (ok ==0) {
-                if (loadLineMap != "") {
-                    pageStack.replace(Qt.resolvedUrl("route.qml"))
-                } else {
-                    pageStack.push(Qt.resolvedUrl("route.qml"))
-                }
+            if (loadLineMap != "") {
+                pageStack.replace(Qt.resolvedUrl("route.qml"),{"loadLine":lineInfoModel.get(list.currentIndex).lineLongCode})
+            } else {
+                pageStack.push(Qt.resolvedUrl("route.qml"),{"loadLine":lineInfoModel.get(list.currentIndex).lineLongCode})
             }
         }
     }
     function checkLineLoadRequest() {
         if (loadLine != "") {
-            lineId.text = loadLine
+            searchString = loadLine
             buttonClicked()
         }
     }
@@ -766,7 +694,7 @@ Page {
         var retVal = 0
         JS.__db().transaction(
             function(tx) {
-               try { var rs = tx.executeSql("SELECT * FROM Lines WHERE lineIdLong=? OR lineIdShort=?", [lineId.text, lineId.text]) }
+               try { var rs = tx.executeSql("SELECT * FROM Lines WHERE lineIdLong=? OR lineIdShort=?", [searchString, searchString]) }
                catch(e) { console.log("EXCEPTION in checkOffline: " + e) }
                if (rs.rows.length > 0) {
                    lineInfoModel.clear()

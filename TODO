@@ -1,22 +1,37 @@
+general:
 * fix showLine map action in context of stopInfo
 * after lookup of stop ID from line stops list - update stops list
-* find tool on toolbar (small redesign), remove search button from header
 * koolah
 * pinch anction on map
 * ленивая загрузка
+* use NetworkInfo API to check if online\offline http://doc.qt.nokia.com/qtmobility-1.2/qml-networkinfo.html
+* use landmarks from Location API on route page
+* check if the page is in stack before pushing so we can prevent loops
+* improve speed of line shape creation
+* make sure after search lines\stops list has currentIndex of new stop, it will be used in route/map page
 
 lineInfo: 
 * add possibility to search online even when offline data found
-* lineInfo: saved lines show
+* saved lines show
 * deletions of saved lines (with confirmation)
 
 stopInfo:
-* make sure offline mode has everything needed in DB
-* load info from database when loading saved stop
 * add confirmation on delete all stops action
+* save schedule in DB
+* add passing lines list
+* show nearest available stops based on GPS data
+
+settings:
+* add networking mode variants:
+ - full offline
+ - full online
+ - info offline\schedule online
+
 
 Done:
-* fixed focus clear in lineInfo to hide keyboard
-* fix dataRect visibility after new search when dataRect already visible or don't clean list & grid before new data is recieved
-* stop pushing stopIdLong to DB, push directly to page : pushStopId()
+* find tool on toolbar (small redesign), remove search button from header
+* put stop info in DB
+* load info from database when loading saved stop
+* stop pushing stop coords to the map, push stop ID only
+* make sure offline mode has everything needed in DB
 

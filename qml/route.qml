@@ -13,6 +13,8 @@ Page {
     Coordinate {
         id: temp
     }
+    property string loadStop: ""
+    property string loadLine: ""
 
 /*    Rectangle {
         id: background
@@ -51,6 +53,16 @@ Page {
                 }
             }
         }
+        Landmark {
+            id: busStop
+            name: "Bus Stop 1"
+            description: "Bus Stop 2"
+            coordinate: Coordinate {
+                latitude: 60.1636
+                longitude: 24.9167
+            }
+        }
+
 /*        MouseArea {
             id: mousearea
             property bool __isPanning: false
@@ -151,45 +163,27 @@ Page {
     }
 //----------------------------------------------------------------------------//
     function setCurrent() {
-        JS.__db().transaction(
-            function(tx) {
-                try {
-                    var rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", ["setCurrentPosition"])
-                } catch(e) {
-                    console.log("EXCEPTION: " + e)
+        if (loadStop != "") {
+            JS.__db().transaction(
+                function(tx) {
+                    try {var rs = tx.executeSql("SELECT stopLongitude,stopLatitude FROM Stops WHERE stopIdLong=?", [loadStop]) }
+                    catch (e) { console.log("route: setCurrent EXCEPTION: "+ e) }
+                    if (rs.rows.length > 0) {
+                        map.center.longitude = rs.rows.item(0).stopLongitude
+                        circle.center.longitude = rs.rows.item(0).stopLongitude
+                        map.center.latitude = rs.rows.item(0).stopLatitude
+                        circle.center.latitude = rs.rows.item(0).stopLatitude
+                    }
                 }
-                if (rs.rows.length > 0) {
-                    rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", ["longitude"])
-                    map.center.longitude = rs.rows.item(0).value
-                    circle.center.longitude = rs.rows.item(0).value
-                    rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", ["latitude"])
-                    map.center.latitude = rs.rows.item(0).value
-                    circle.center.latitude = rs.rows.item(0).value
-                    tx.executeSql("DELETE FROM Current WHERE option=?", ["latitude"])
-                    tx.executeSql("DELETE FROM Current WHERE option=?", ["longitude"])
-                    tx.executeSql("DELETE FROM Current WHERE option=?", ["setCurrentPosition"])
-                } else {
-                    console.log("Didn't find setCurrentPosition in DB")
-                }
-            }
-        )
+            )
+        }
     }
     function setLineShape() {
-        JS.__db().transaction(
-            function(tx) {
-                try {
-                    var rs = tx.executeSql("SELECT value FROM Current WHERE option=?", ["setLineShape"])
-                } catch(e) {
-                    console.log("EXCEPTION: " + e)
-                }
-                if (rs.rows.length > 0) {
-                    var lineIdLong_ = rs.rows.item(0).value
-                    try {
-                        rs = tx.executeSql("SELECT lineShape FROM Lines WHERE lineIdLong=?", [lineIdLong_])
-                    }
-                    catch(e) {
-                        console.log("EXCEPTION " + e)
-                    }
+        if (loadLine != "") {
+            JS.__db().transaction(
+                function(tx) {
+                    try { var rs = tx.executeSql("SELECT lineShape FROM Lines WHERE lineIdLong=?", [loadLine]) }
+                    catch(e) { console.log("EXCEPTION " + e) }
                     if (rs.rows.length > 0) {
                         var coords = new Array
                         var lonlat = new Array
@@ -200,7 +194,6 @@ Page {
                             temp.latitude = lonlat[1]
                             lineShape.addCoordinate(temp)
                         }
-                        tx.executeSql("DELETE FROM Current WHERE option=?", ["setLineShape"])
                         lonlat = coords[0].split(",")
                         map.center.longitude = lonlat[0]
                         map.center.latitude = lonlat[1]
@@ -208,7 +201,7 @@ Page {
                         circle.center.latitude = lonlat[1]
                     }
                 }
-            }
-        )
+            )
+        }
     }
 }

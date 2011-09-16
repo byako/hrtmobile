@@ -49,6 +49,7 @@ function initDB() {
                 tx.executeSql('CREATE TABLE IF NOT EXISTS Current(option TEXT, value TEXT)')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS LineTypes(lineType TEXT, lineTypeName TEXT)')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS StopLines(stopIdLong TEXT, lineIdLong TEXT)')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS StopInfo(stopIdLong TEXT, option TEXT, value TEXT)')
             }
             catch (e) {
                 console.log("EXCEPTION" + e)
@@ -70,6 +71,7 @@ function cleanAll() {
             tx.executeSql('DROP TABLE IF EXISTS Current');
             tx.executeSql('DROP TABLE IF EXISTS LineTypes');
             tx.executeSql('DROP TABLE IF EXISTS StopLines');
+            tx.executeSql('DROP TABLE IF EXISTS StopInfo');
         }
     )
 }
