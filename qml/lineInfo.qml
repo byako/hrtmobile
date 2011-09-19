@@ -20,7 +20,14 @@ Page {
         z: 10
         opacity: 1.0
     }
-
+    Spinner{
+        id: loading
+        visible: false
+        anchors.fill: parent
+        width: parent.width
+        height: parent.height
+        z: 8
+    }
     objectName: "lineInfoPage"
     orientationLock: PageOrientation.LockPortrait
     property string loadLine: ""
@@ -30,8 +37,50 @@ Page {
     property int currentSchedule : -1
     property string searchString: ""
 
-    Component.onCompleted: { // load configand recent lines
+    ContextMenu {   // recent stops context menu
+        id: linesContextMenu
+        MenuLayout {
+            MenuItem {
+                text: "Delete"
+                onClicked: {
+                    if (JS.deleteLine(lineInfoModel.get(list.currentIndex).lineIdLong) == 0) {
+                        fillModel();
+                    }
+                }
+            }
+            MenuItem {
+                text: "Delete all"
+                onClicked: {
+                    loading.visible = true
+                    if (JS.deleteLine("*") == 0) {
+                        fillModel();
+                    }
+                    loading.visible = false
+                }
+            }
+        }
+    }
+    ContextMenu {   // depart line context menu
+        id: stopContextMenu
+        MenuLayout {
+            MenuItem {
+                text: "Stop Info"
+                onClicked : {
+                    pageStack.push(Qt.resolvedUrl("stopInfo.qml"),{"loadStop":stopReachModel.get(grid.currentIndex).stopIdLong});
+                }
+            }
+            MenuItem {
+                text: "Map"
+                onClicked : {
+//                    switchToMap()
+                }
+            }
+        }
+    }
+
+    Component.onCompleted: { // load config and recent lines
         JS.loadConfig(config)
+        fillModel()
         checkLineLoadRequest()
     }
     Rectangle{  // dark background
@@ -194,8 +243,13 @@ Page {
                     grid.focus = true;
                     grid.currentIndex = index;
                 }
+                onPressedChanged: {
+                    if (pressed == true) {
+                        grid.currentIndex = index;
+                    }
+                }
                 onPressAndHold: {
-                    pageStack.push(Qt.resolvedUrl("stopInfo.qml"),{"loadStop":stopIdLong});
+                    stopContextMenu.open()
                 }
             }
         }
@@ -203,20 +257,27 @@ Page {
     ListModel{  // lineInfo list model
         id:lineInfoModel
         ListElement{
-            lineLongCode: "lineId"
-            lineShortCode: "Name"
-            direction: "Direction"
-            typeCode: "0"
-            type: "type"
+            lineIdLong: "lineId"
+            lineIdShort: "lineCode"
+            lineName: "name"
+            lineStart: "from"
+            lineEnd: "dest"
+            lineType: "0"
+            lineTypeName: "type"
         }
     }
     Component{  // lineInfo delegate
         id:lineInfoDelegate
         Rectangle {
             width: list.width;
-            height: 70
+            height: 75
             radius: 20
             color: config.highlightColorBg
+/*            gradient: Gradient {
+                     GradientStop { position: 0.0; color: "#203060" }
+                     GradientStop { position: 0.5; color: "#305090" }
+                     GradientStop { position: 1.0; color: "#203060" }
+                 }*/
             opacity: 0.8
             Column {
                 spacing: 5
@@ -227,12 +288,12 @@ Page {
                 Row {
                     height: 30
                     spacing: 20
-                    Text{ text: type; font.pixelSize: 25; color: config.textColor}
-                    Text{ text: lineShortCode; font.pixelSize: 25; color: config.textColor}
+                    Text{ text: lineTypeName; font.pixelSize: 25; color: config.textColor}
+                    Text{ text: lineIdShort; font.pixelSize: 25; color: config.textColor}
                 }
                 Row {
                     height: 30
-                    Text{ text: direction; font.pixelSize: 25; color: config.textColor}
+                    Text{ text: lineStart + "->" + lineEnd; font.pixelSize: 25; color: config.textColor}
                 }
             }
             MouseArea {
@@ -241,10 +302,16 @@ Page {
                     list.visible = false
                     grid.visible = true
                     dataRect.visible = true
-                    if (list.currentIndex != index) {
+                    showLineInfo()
+                }
+                onPressedChanged: {
+                    if (pressed == true) {
+                        list.focus = true
                         list.currentIndex = index
-                        showLineInfo()
                     }
+                }
+                onPressAndHold: {
+                    linesContextMenu.open()
                 }
             }
         }
@@ -312,7 +379,7 @@ Page {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        visible: false;
+        visible: true;
         ListView {  // Lines list
             id: list
             anchors.fill:  parent
@@ -384,7 +451,7 @@ Page {
                 }
             }
         }
-        GridView {  // scheduleModel* show
+        GridView {  // scheduleModel
             id: schedule
             anchors.left: parent.left
             anchors.leftMargin:10
@@ -416,7 +483,7 @@ Page {
     function getStops(){             // parse stops from dox.responseXML
         JS.__db().transaction(
             function(tx) {
-                var rs = tx.executeSql('SELECT * FROM LineStops WHERE lineIdLong=?', [lineInfoModel.get(list.currentIndex).lineLongCode]);
+                var rs = tx.executeSql('SELECT * FROM LineStops WHERE lineIdLong=?', [lineInfoModel.get(list.currentIndex).lineIdLong]);
                 for (var ii=0; ii<rs.rows.length; ++ii) {
                     stopReachModel.append({"stopIdLong" : rs.rows.item(ii).stopIdLong,
                                   "stopName" : JS.getStopName(rs.rows.item(ii).stopIdLong),
@@ -426,15 +493,17 @@ Page {
         )
     }
     function parseXML(a){            // parse lines description, map
-        lineInfoModel.clear()
-        stopReachModel.clear()
+        console.log ("spinner visible")
+        loading.visible = true
         for (var ii = 0; ii < a.childNodes.length; ++ii) {
             lineAddString = ""
-            lineInfoModel.append({"lineLongCode" : "" + a.childNodes[ii].childNodes[0].firstChild.nodeValue,
-                                 "lineShortCode" : ""+a.childNodes[ii].childNodes[1].firstChild.nodeValue,
-                                 "direction" : "" + a.childNodes[ii].childNodes[3].firstChild.nodeValue + " -> " + a.childNodes[ii].childNodes[4].firstChild.nodeValue,
-                                 "type" : "" + JS.getLineType(a.childNodes[ii].childNodes[2].firstChild.nodeValue),
-                                 "typeCode" : "" + a.childNodes[ii].childNodes[2].firstChild.nodeValue
+            lineInfoModel.append({"lineIdLong" : "" + a.childNodes[ii].childNodes[0].firstChild.nodeValue,
+                                 "lineIdShort" : ""+ a.childNodes[ii].childNodes[1].firstChild.nodeValue,
+                                 "lineName" : "" + a.childNodes[ii].childNodes[5].firstChild.nodeValue,
+                                 "lineStart" : "" + a.childNodes[ii].childNodes[3].firstChild.nodeValue,
+                                 "lineEnd" : "" + a.childNodes[ii].childNodes[4].firstChild.nodeValue,
+                                 "lineType" : "" + a.childNodes[ii].childNodes[2].firstChild.nodeValue,
+                                 "lineTypeName" : "" + JS.getLineType(a.childNodes[ii].childNodes[2].firstChild.nodeValue)
                                  });
             if ( JS.addLine(""+ a.childNodes[ii].childNodes[0].firstChild.nodeValue +
                             ";"+ a.childNodes[ii].childNodes[1].firstChild.nodeValue +
@@ -459,6 +528,8 @@ Page {
                 }
             )
         }
+        console.log ("spinner invisible")
+        loading.visible = false
         gotLinesInfo()
     }
     function getXML() {              // xml http request                 : TODO : switch to use local var instead of JS.doc
@@ -470,6 +541,7 @@ Page {
                     showError("No lines found")
                     return
                 } else {
+                    showError("Found " + doc.responseXML.documentElement.childNodes.length + "lines. Parsing. Please, wait...")
                     console.log("OK, got " + doc.responseXML.documentElement.childNodes.length+ " lines")
                     parseXML(doc.responseXML.documentElement);
                 }
@@ -479,6 +551,7 @@ Page {
         }
     doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&epsg_out=wgs84&query="+searchString); // for line info request
 //             http://api.reittiopas.fi/public-ytv/fi/api/?key="+stopId.text+"&user=byako&pass=gfccdjhl");
+    loading.visible = true
     doc.send();
     }
     function parseHttp(text_) {      // parse schedule reittiopas http page  : TODO: switch to use local vars
@@ -602,7 +675,7 @@ Page {
         }
         JS.__db().transaction(
             function(tx) {
-                        try { var rs = tx.executeSql("SELECT lineSchedule FROM Lines WHERE lineIdLong=?", [lineInfoModel.get(list.currentIndex).lineLongCode]) }
+                        try { var rs = tx.executeSql("SELECT lineSchedule FROM Lines WHERE lineIdLong=?", [lineInfoModel.get(list.currentIndex).lineIdLong]) }
                 catch(e) { console.log("EXCEPTION: " + e) }
                 if (rs.rows.length > 0) {
                     scheduleURL = rs.rows.item(0).lineSchedule
@@ -662,8 +735,6 @@ Page {
             showError("Enter search criteria\nline number/line code/Key place\ni.e. 156A or Tapiola or 2132  2")
             return
         }
-//        stopReachModel.clear()
-//        lineInfoModel.clear()
         if (checkOffline() != 0) {
             getXML()
         } else {
@@ -678,9 +749,9 @@ Page {
     function showMap() {
         if (list.currentIndex >= 0) {
             if (loadLineMap != "") {
-                pageStack.replace(Qt.resolvedUrl("route.qml"),{"loadLine":lineInfoModel.get(list.currentIndex).lineLongCode})
+                pageStack.replace(Qt.resolvedUrl("route.qml"),{"loadLine":lineInfoModel.get(list.currentIndex).lineIdLong})
             } else {
-                pageStack.push(Qt.resolvedUrl("route.qml"),{"loadLine":lineInfoModel.get(list.currentIndex).lineLongCode})
+                pageStack.push(Qt.resolvedUrl("route.qml"),{"loadLine":lineInfoModel.get(list.currentIndex).lineIdLong})
             }
         }
     }
@@ -694,17 +765,19 @@ Page {
         var retVal = 0
         JS.__db().transaction(
             function(tx) {
-               try { var rs = tx.executeSql("SELECT * FROM Lines WHERE lineIdLong=? OR lineIdShort=?", [searchString, searchString]) }
+               try { var rs = tx.executeSql("SELECT lineIdLong, lineIdshort, lineName, lineType, lineStart, lineEnd FROM Lines WHERE lineIdLong=? OR lineIdShort=?", [searchString, searchString]) }
                catch(e) { console.log("EXCEPTION in checkOffline: " + e) }
                if (rs.rows.length > 0) {
                    lineInfoModel.clear()
                    stopReachModel.clear()
                    for (var ii=0; ii < rs.rows.length; ++ii) {
-                       lineInfoModel.append({"lineLongCode" : rs.rows.item(ii).lineIdLong,
-                                            "lineShortCode" : rs.rows.item(ii).lineIdShort,
-                                            "direction" : rs.rows.item(ii).lineStart + " -> " + rs.rows.item(ii).lineEnd,
-                                            "type" : JS.getLineType(rs.rows.item(ii).lineType),
-                                            "typeCode" : rs.rows.item(ii).lineType
+                       lineInfoModel.append({"lineIdLong" : rs.rows.item(ii).lineIdLong,
+                                            "lineIdshort" : rs.rows.item(ii).lineIdShort,
+                                            "lineName" : rs.rows.item(ii).lineName,
+                                            "lineStart" : rs.rows.item(ii).lineStart,
+                                            "lineEnd" : rs.rows.item(ii).lineEnd,
+                                            "lineType" : rs.rows.item(ii).lineType,
+                                            "lineTypeName" : JS.getLineType(rs.rows.item(ii).lineType)
                                             });
                    }
                } else {
@@ -720,9 +793,12 @@ Page {
         scheduleClear()
         stopReachModel.clear()
         getStops()
-        lineShortCodeName.text = lineInfoModel.get(list.currentIndex).lineShortCode
-        lineDirection.text = lineInfoModel.get(list.currentIndex).direction
-        lineType.text = lineInfoModel.get(list.currentIndex).type
+        console.log("Number: " + lineInfoModel.get(list.currentIndex).lineIdShort)
+        lineShortCodeName.text = lineInfoModel.get(list.currentIndex).lineIdShort
+        console.log("direction: " + lineInfoModel.get(list.currentIndex).lineName)
+        lineDirection.text = lineInfoModel.get(list.currentIndex).lineName
+        console.log("type: " + lineInfoModel.get(list.currentIndex).lineTypeName)
+        lineType.text = lineInfoModel.get(list.currentIndex).lineTypeName
     }
     function gotLinesInfo() {
         infoRect.visible = true;
@@ -737,6 +813,19 @@ Page {
             list.currentIndex = 0
             showLineInfo()
         }
+    }
+    function fillModel() {      // checkout recent stops from database
+        lineInfoModel.clear();
+        JS.__db().transaction(
+            function(tx) {
+                     var rs = tx.executeSql("SELECT lineIdLong, lineIdShort, lineName, lineStart, lineEnd, lineType FROM Lines ORDER BY lineIdShort ASC");
+                     for (var i=0; i<rs.rows.length; ++i) {
+                         lineInfoModel.append({"lineIdLong":rs.rows.item(i).lineIdLong, "lineIdShort":rs.rows.item(i).lineIdShort, "lineName":rs.rows.item(i).lineName,
+                                              "lineStart":rs.rows.item(i).lineStart, "lineEnd":rs.rows.item(i).lineEnd, "lineType":rs.rows.item(i).lineType,
+                                                  "lineTypeName" : JS.getLineType(rs.rows.item(i).lineType)})
+                     }
+                 }
+        )
     }
 
 /*<----------------------------------------------------------------------->*/

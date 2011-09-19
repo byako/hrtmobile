@@ -41,15 +41,17 @@ function initDB() {
     __db().transaction(
         function(tx) {
             try {
-                tx.executeSql('CREATE TABLE IF NOT EXISTS Config(option TEXT, value TEXT, theme TEXT)')
-                tx.executeSql('CREATE TABLE IF NOT EXISTS Stops(stopIdLong TEXT, stopIdShort TEXT, stopName TEXT, stopAddress TEXT, stopCity TEXT, stopLongitude TEXT, stopLatitude TEXT)')
-                tx.executeSql('CREATE TABLE IF NOT EXISTS Lines(lineIdLong TEXT, lineIdShort TEXT, lineName TEXT, lineType TEXT, lineStart TEXT, lineEnd TEXT, startStopIdLong TEXT, endStopIdLong TEXT, lineShape TEXT, lineSchedule TEXT)')
-                tx.executeSql('CREATE TABLE IF NOT EXISTS StopSchedule(stopIdLong TEXT, weekTime TEXT, departTime TEXT, lineId TEXT)')
-                tx.executeSql('CREATE TABLE IF NOT EXISTS LineStops(lineIdLong TEXT, stopIdLong TEXT, stopReachTime TEXT)')
-                tx.executeSql('CREATE TABLE IF NOT EXISTS Current(option TEXT, value TEXT)')
-                tx.executeSql('CREATE TABLE IF NOT EXISTS LineTypes(lineType TEXT, lineTypeName TEXT)')
-                tx.executeSql('CREATE TABLE IF NOT EXISTS StopLines(stopIdLong TEXT, lineIdLong TEXT)')
-                tx.executeSql('CREATE TABLE IF NOT EXISTS StopInfo(stopIdLong TEXT, option TEXT, value TEXT)')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS Config(option TEXT, value TEXT, theme TEXT, PRIMARY KEY(option, theme))')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS Current(option TEXT PRIMARY KEY, value TEXT)')
+
+                tx.executeSql('CREATE TABLE IF NOT EXISTS LineTypes(lineType TEXT, lineTypeName TEXT, PRIMARY KEY(lineType,lineTypeName))')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS Lines(lineIdLong TEXT PRIMARY KEY, lineIdShort TEXT, lineName TEXT, lineType TEXT, lineStart TEXT, lineEnd TEXT, startStopIdLong TEXT, endStopIdLong TEXT, lineShape TEXT, lineSchedule TEXT, FOREIGN KEY(lineType) REFERENCES LineTypes(lineType))')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS LineStops(lineIdLong TEXT, stopIdLong TEXT, stopReachTime TEXT, FOREIGN KEY(lineIdLong) REFERENCES Lines(lineIdLong))')
+
+                tx.executeSql('CREATE TABLE IF NOT EXISTS Stops(stopIdLong TEXT PRIMARY KEY, stopIdShort TEXT, stopName TEXT, stopAddress TEXT, stopCity TEXT, stopLongitude TEXT, stopLatitude TEXT)')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS StopLines(stopIdLong TEXT, lineIdLong TEXT, lineEnd TEXT, PRIMARY KEY(stopIdLong,lineIdLong), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong))')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS StopInfo(stopIdLong TEXT, option TEXT, value TEXT, PRIMARY KEY(stopIdLong,option), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong))')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS StopSchedule(stopIdLong, weekTime TEXT, departTime TEXT, lineId TEXT)')  // not used for now
             }
             catch (e) {
                 console.log("EXCEPTION" + e)
@@ -217,13 +219,40 @@ function deleteStop(string) {
         function(tx) {
             try {
                 if (string == "*") {
+                    tx.executeSql('DELETE from StopSchedule');
+                    tx.executeSql('DELETE from StopInfo');
+                    tx.executeSql('DELETE from StopLines');
                     tx.executeSql('DELETE from Stops');
                 } else {
+                    tx.executeSql('DELETE from StopSchedule WHERE stopIdLong=?',[string]);
+                    tx.executeSql('DELETE from StopInfo WHERE stopIdLong=?',[string]);
+                    tx.executeSql('DELETE from StopLines WHERE stopIdLong=?',[string]);
                     tx.executeSql('DELETE from Stops WHERE stopIdLong=?', [string]);
                 }
             }
             catch(e) {
                 console.log("delete stop from table exception occured. string = "+ string)
+                retVal = 1
+            }
+        }
+    )
+    return retVal
+}
+function deleteLine(string) {
+    var retVal = 0;
+    __db().transaction(
+        function(tx) {
+            try {
+                if (string == "*") {
+                    tx.executeSql('DELETE from LineStops');
+                    tx.executeSql('DELETE from Lines');
+                } else {
+                    tx.executeSql('DELETE from LineStops WHERE lineIdLong=?',[string]);
+                    tx.executeSql('DELETE from Lines WHERE lineIdLong=?', [string]);
+                }
+            }
+            catch(e) {
+                console.log("delete line from table exception occured. string = "+ string)
                 retVal = 1
             }
         }
@@ -272,6 +301,8 @@ function getLineType(string) {
             }
             if (rs.rows.length > 0) {
                 return_v = rs.rows.item(0).lineTypeName
+            } else {
+                console.log("Oops, didn't find line type: " + string)
             }
         }
     )

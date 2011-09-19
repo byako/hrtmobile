@@ -13,5 +13,7 @@
         <file>qml/settings.qml</file>
         <file>qml/realtimeSchedule.qml</file>
         <file>qml/MyQueryDialog.qml</file>
+        <file>images/loading.png</file>
+        <file>qml/Spinner.qml</file>
     </qresource>
 </RCC>

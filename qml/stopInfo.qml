@@ -20,7 +20,7 @@ Page {
     objectName: "stopInfoPage"
     property string stopAddString: ""
     property string loadStop: ""
-    property string searchString: ""
+    property string searchString: ""    // keep stopIdLong here. If stopIdShort supplied (request from lineInfo) -> remove and place stopIdLong
     orientationLock: PageOrientation.LockPortrait
 
     Component.onCompleted: { JS.loadConfig(config); infoModel.clear(); trafficModel.clear(); fillModel(); setCurrent(); }
@@ -186,6 +186,7 @@ Page {
     }
     ButtonRow {     // tabs rect
         id: tabRect
+        width: parent.width
         anchors.top: hrLineSeparator2.bottom
         anchors.topMargin: 5
         anchors.horizontalCenter: parent.horizontalCenter
@@ -194,6 +195,7 @@ Page {
                 text: "Recent"
                 onClicked: {
                     if (recentList.visible == false) {
+                        linesList.visible = false
                         list.visible = false
                         grid.visible = false
                         recentList.visible = true
@@ -205,6 +207,7 @@ Page {
                 text: "Info"
                 onClicked: {
                     if (list.visible == false) {
+                        linesList.visible = false
                         list.visible = true
                         grid.visible = false
                         recentList.visible = false
@@ -216,7 +219,20 @@ Page {
                 text: "Schedule"
                 onClicked: {
                     if (grid.visible == false) {
+                        linesList.visible = false
                         grid.visible = true
+                        list.visible = false
+                        recentList.visible = false
+                    }
+                }
+            }
+            Button {
+                id: stopLines
+                text: "Lines"
+                onClicked: {
+                    if (linesList.visible == false) {
+                        linesList.visible = true
+                        grid.visible = false
                         list.visible = false
                         recentList.visible = false
                     }
@@ -287,9 +303,10 @@ Page {
                 onClicked: {
                     recentList.focus = true
                     recentList.currentIndex = index
-                    searchString = recentModel.get(recentList.currentIndex).stopIdShort
+                    searchString = recentModel.get(index).stopIdShort
                     showMapButtonButton.visible = true
                     fillInfoModel()
+                    fillLinesModel()
                     updateSchedule()
                 }
                 onPressedChanged: {
@@ -346,7 +363,7 @@ Page {
             }
         }
     }
-    ListModel {     // stopInfo
+    ListModel {     // stop info model
         id:infoModel
         ListElement {
             propName: ""
@@ -359,12 +376,14 @@ Page {
             width: list.width
             height: 50
             Row {
-                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
                 spacing: 10
                 Text{
                     text: propName
                     font.pixelSize: 30
                     color: config.textColor
+                    width: 400
                 }
                 Text{
                     text: propValue
@@ -372,16 +391,60 @@ Page {
                     color: config.textColor
                 }
             }
-            MouseArea {
-                anchors.fill:  parent
-                onClicked: {
-                    list.focus = true
-                    list.currentIndex = index
+        }
+    }
+    ListModel {     // lines passing model
+        id: linesModel
+        ListElement {
+            lineNumber: ""
+            lineDest: ""
+        }
+    }
+    Component {     // lines passing delegate
+        id: linesDelegate
+        Item {
+            width: list.width
+            height: 50
+            Row {
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 10
+                Text{
+                    text: lineNumber
+                    font.pixelSize: 30
+                    color: config.textColor
+                    width: 140
+                }
+                Text{
+                    text: lineDest
+                    font.pixelSize: 30
+                    color: config.textColor
                 }
             }
         }
     }
-
+    Component {     // lines passing header Header
+        id: linesHeader
+        Item {
+            width: recentList.width
+            height: 40
+            Row {
+                anchors.left: parent.left
+                spacing: 20
+                Text{  // line
+                    text: "Line"
+                    font.pixelSize: 35
+                    color: config.textColor
+                    width: 140
+                }
+                Text{  // line
+                    text: "Destination"
+                    font.pixelSize: 35
+                    color: config.textColor
+                }
+            }
+        }
+    }
     Item {     // grid rect
         id: infoRect
         anchors.top: tabRect.bottom
@@ -396,9 +459,9 @@ Page {
             delegate: trafficDelegate
             model: trafficModel
             focus: true
-            cellWidth: 155
+            cellWidth: 160
             cellHeight: 30
-            width: 420
+            width: parent.width
             highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
             currentIndex: 0
             clip: true
@@ -413,7 +476,7 @@ Page {
             delegate:  infoDelegate
             model: infoModel
             highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
-            currentIndex: 0
+            currentIndex: -1
             clip: true
         }
         ListView {  // recentList
@@ -424,6 +487,18 @@ Page {
             anchors.topMargin: 10
             delegate:  recentDelegate
             model: recentModel
+            highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
+            currentIndex: -1
+            clip: true
+        }
+        ListView {  // lines passing
+            id: linesList
+            visible: false
+            anchors.fill: parent
+            anchors.topMargin: 10
+            delegate:  linesDelegate
+            model: linesModel
+            header: linesHeader
             highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
             currentIndex: -1
             clip: true
@@ -485,7 +560,7 @@ Page {
         doc.send();
     }
     function parseInfo(a) {     // Stop info parsing
-        var lonlat = Array;
+        var lonlat = Array
         var coords = String
         infoModel.clear()
         for (var ii = 0; ii < a.childNodes.length; ++ii) {
@@ -501,16 +576,19 @@ Page {
             stopAddString += ";"
             coords = a.childNodes[ii].childNodes[8].firstChild.nodeValue
             lonlat = coords.split(",")
-            infoModel.append({"propName" : "longitude" , "propValue" : lonlat[0]})
             stopAddString += lonlat[0]
             stopAddString += ";"
-            infoModel.append({"propName" : "latitude" , "propValue" : lonlat[0]})
-            JS.__db().transaction(
+            stopAddString += lonlat[1]
+            stopAddString += ";"
+            linesModel.clear()
+            JS.__db().transaction(  // stop lines
                 function(tx) {
                     for (var cc=0;cc<a.childNodes[ii].childNodes[6].childNodes.length;++cc) {
                        try {
-                           tx.executeSql("INSERT INTO stopLines VALUES(?,?)", [a.childNodes[ii].childNodes[0].firstChild.nodeValue,
-                                             a.childNodes[ii].childNodes[6].childNodes[cc].firstChild.nodeValue.slice(0,a.childNodes[ii].childNodes[6].childNodes[cc].firstChild.nodeValue.search(":"))])
+                           lonlat = a.childNodes[ii].childNodes[6].childNodes[cc].firstChild.nodeValue.split(":");
+                           tx.executeSql("INSERT INTO stopLines VALUES(?,?,?)", [a.childNodes[ii].childNodes[0].firstChild.nodeValue,
+                                                                                 lonlat[0],lonlat[1]])
+                           linesModel.append({"lineNumber":lonlat[0],"lineDest":lonlat[1]})
                         }
                         catch(e) {
                             console.log("stopInfo: Exception during pushing stopLines: CC = " + cc)
@@ -518,7 +596,7 @@ Page {
                     }
                 }
             )
-            JS.__db().transaction(
+            JS.__db().transaction(  // stop info
                 function(tx) {
                     for (var oo=0;oo<a.childNodes[ii].childNodes[9].childNodes.length;++oo) {
                         try{
@@ -532,8 +610,6 @@ Page {
                     }
                  }
             )
-            stopAddString += lonlat[1]
-            stopAddString += ";"
             searchString = a.childNodes[ii].childNodes[0].firstChild.nodeValue
             showMapButtonButton.visible = true
             coords = JS.addStop(stopAddString)
@@ -603,6 +679,19 @@ Page {
                 for (var i=0; i<rs.rows.length; ++i) {
                     infoModel.append({"propName" : rs.rows.item(i).option,
                                       "propValue" : rs.rows.item(i).value})
+                }
+            }
+        )
+    }
+    function fillLinesModel() {  // checkout stop info from database
+        JS.__db().transaction(
+            function(tx) {  // TODO
+                try { var rs = tx.executeSql("SELECT lineIdLong, lineEnd FROM StopLines WHERE stopIdLong=?",[recentModel.get(recentList.currentIndex).stopIdLong]); }
+                catch(e) { console.log("FillInfoModel EXCEPTION: " + e) }
+                linesModel.clear();
+                for (var i=0; i<rs.rows.length; ++i) {
+                    linesModel.append({"lineNumber" : rs.rows.item(i).lineIdLong,
+                                      "lineDest" : rs.rows.item(i).lineEnd})
                 }
             }
         )

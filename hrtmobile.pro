@@ -43,7 +43,8 @@ OTHER_FILES += \
     qml/route.qml \
     qml/settings.qml \
     qml/realtimeSchedule.qml \
-    qml/MyQueryDialog.qml
+    qml/MyQueryDialog.qml \
+    qml/Spinner.qml
 
 RESOURCES += \
     res.qrc
@@ -64,3 +65,6 @@ contains(MEEGO_EDITION,harmattan) {
     icon.path = /usr/share/icons/hicolor/80x80/apps
     INSTALLS += icon
 }
+
+
+

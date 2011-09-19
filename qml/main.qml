@@ -6,7 +6,6 @@ PageStackWindow {
     id: appWindow
 
     initialPage: mainPage
-
     MainPage{id: mainPage}
     Dialog{
         id: searchDialog
@@ -102,14 +101,6 @@ PageStackWindow {
     Menu {
         id: myMenu
         MenuLayout {
-/*            MenuItem {
-                text: "Clean DB"
-                onClicked: {
-                    JS.cleanAll()
-                    JS.initDB()
-                }
-            }
-            MenuItem { text: "Offline Mode" } */
             MenuItem {
                 text: "Options"
                 onClicked:  {
