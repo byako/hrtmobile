@@ -1,4 +1,7 @@
 general:
+
+* finish networking config in settings and lineInfo - make possible to search online using dialog to ask
+
 * ADD FUCKING PROGRESS INDICATOR. 16 lines parsing takes too long
 * consider not push to DB all found stops\lines but only which user marks as favourite
 * fix showLine map action in context of stopInfo
@@ -16,17 +19,14 @@ general:
 
 lineInfo: 
 * add possibility to search online even when offline data found
-* search result show in another model for query dialog like themes in config page
 * add confirmation on delete all lines action
 * remove exceeding fields in lineInfoModel
-* scroll down and highlight items just saved from search
 
 stopInfo:
 * add confirmation on delete all stops action
 * save schedule in DB
 * show nearest available stops based on GPS data
 * split depart schedule to hours
-* add spinner while searching for data
 
 settings:
 * add networking mode variants:
@@ -39,7 +39,7 @@ realtime:
 * search button gives search to current page. fix
 
 Done:
-* more info in dataRect, split direction info From: To:
-* parsing of 54 lines ("Tapiola" request) takes too long. Need to make a dialog ["Got too many lines.
-   Save all? (will take ~1 minute) or mark lines to save?"] or just page for selecting
-* add banner show "building line shape" while loading map
+* add spinner while searching for data in stopInfo
+* scroll down and highlight items just saved from search
+* search result show in another model for query dialog like themes in config page
+

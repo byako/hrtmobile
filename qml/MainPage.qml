@@ -15,6 +15,7 @@ Page {
         property string highlightColor: ""
         property string bgImage: ""
         property string highlightColorBg: ""
+        property int networking: 5  // default
     }
     Component.onCompleted: { JS.loadConfig(config)}
     Rectangle{    // dark background

@@ -16,6 +16,7 @@ Page {
         property string highlightColor: ""
         property string bgImage: ""
         property string highlightColorBg: ""
+        property int networking: 5  // default
     }
     InfoBanner {// info banner
         id: infoBanner

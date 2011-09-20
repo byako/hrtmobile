@@ -16,6 +16,7 @@ Page {
         property string highlightColor: ""
         property string bgImage: ""
         property string highlightColorBg: ""
+        property int networking: 5  // default
     }
     objectName: "stopInfoPage"
     property string stopAddString: ""
@@ -25,7 +26,15 @@ Page {
 
     Component.onCompleted: { JS.loadConfig(config); infoModel.clear(); trafficModel.clear(); fillModel(); setCurrent(); }
 
-    InfoBanner {
+    Spinner{    // loading spinner
+        id: loading
+        visible: false
+        anchors.fill: parent
+        width: parent.width
+        height: parent.height
+        z: 8
+    }
+    InfoBanner {// info banner
         id: infoBanner
         text: "info description here"
         z: 10
@@ -112,6 +121,14 @@ Page {
                     onClicked: {
                         pageStack.push(Qt.resolvedUrl("route.qml"),{"loadStop":searchString})
                     }
+                }
+                Spinner{    // loading spinner
+                    id: loadingMap
+                    visible: true
+                    anchors.fill: parent
+                    width: parent.width
+                    height: parent.height
+                    z: 8
                 }
             }
         Label {
@@ -535,6 +552,7 @@ Page {
             if (time_[0] > 23) time_[0]-=24
             trafficModel.append({ "departTime" : ""+time_[0]+":"+time_[1], "departLine" : "" + lines[1], "departDest" : lines[2], "departCode" : lines[3] })
         }
+        loading.visible = false
         grid.focus = true
         grid.visible = true
         list.visible = false
@@ -557,6 +575,7 @@ Page {
         }
         //              API 1.0 (plaintext) : faster, more informative
         doc.open("GET", "http://api.reittiopas.fi/public-ytv/fi/api/?stop="+ searchString+"&user=byako&pass=gfccdjhl");
+        loading.visible = true
         doc.send();
     }
     function parseInfo(a) {     // Stop info parsing
@@ -621,6 +640,7 @@ Page {
                 showError("ERROR. Stop is not added. Sorry")
             }
         }
+        loadingMap.visible = false
     }
     function getInfo() {        // Use Api v2.0 - more informative about the stop itself, conditions, coordinates
         var doc = new XMLHttpRequest()

@@ -13,6 +13,7 @@ Page {
         property string highlightColor: ""
         property string bgImage: ""
         property string highlightColorBg: ""
+        property int networking: 5  // default
     }
     InfoBanner {// info banner
         id: infoBanner
@@ -96,9 +97,11 @@ Page {
          titleText: "Lines to save"
          model: searchResultLineInfoModel
          onAccepted: {
+            var tempCount = lineInfoModel.count
             for (var i=0;i<selectedIndexes.length;++i) {
                 saveLine(selectedIndexes[i])
             }
+            if (lineInfoModel.count > tempCount) list.currentIndex = tempCount
          }
          onRejected: {
 
@@ -550,9 +553,11 @@ Page {
     function saveAllLines() {
         console.log ("spinner visible")
         loading.visible = true
+        var tempCount = lineInfoModel.count
         for (var ii = 0; ii < JS.response.childNodes.length; ++ii) {
             saveLine(ii)
         }
+        if (lineInfoModel.count > tempCount) list.currentIndex = tempCount
         console.log ("spinner invisible")
         loading.visible = false
         gotLinesInfo()

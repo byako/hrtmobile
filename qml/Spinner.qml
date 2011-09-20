@@ -11,8 +11,8 @@ Item {
     }
     Image {
         id: loadingImage
-        width: 180
-        height: 180
+        width: parent.width > 180 ? 180 : parent.width
+        height: parent.height > 180 ? 180 : parent.height
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
         source: ":/images/loading.png"

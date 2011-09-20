@@ -13,6 +13,7 @@ Page {
         property string highlightColor: ""
         property string bgImage: ""
         property string highlightColorBg: ""
+        property int networking: 5  // default
     }
     objectName: "stopInfoPage"
     property string stopId: ""
