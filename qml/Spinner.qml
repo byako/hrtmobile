@@ -2,8 +2,8 @@ import QtQuick 1.0
 
 Item {
     Rectangle {
-        width: 80
-        height: 80
+        width: parent.width
+        height: parent.height
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
         color:"#FFFFFF"
@@ -11,8 +11,8 @@ Item {
     }
     Image {
         id: loadingImage
-        width: 80
-        height: 80
+        width: 180
+        height: 180
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
         source: ":/images/loading.png"

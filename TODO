@@ -12,19 +12,21 @@ general:
 * improve speed of line shape creation
 * make sure after search lines\stops list has currentIndex of new stop, it will be used in route/map page
 * fix models names and views names
+* split all data into favorites and just DB
 
 lineInfo: 
 * add possibility to search online even when offline data found
 * search result show in another model for query dialog like themes in config page
 * add confirmation on delete all lines action
-* more info in dataRect, split direction info From: To:
 * remove exceeding fields in lineInfoModel
+* scroll down and highlight items just saved from search
 
 stopInfo:
 * add confirmation on delete all stops action
 * save schedule in DB
 * show nearest available stops based on GPS data
 * split depart schedule to hours
+* add spinner while searching for data
 
 settings:
 * add networking mode variants:
@@ -32,12 +34,12 @@ settings:
  - full online
  - info offline\schedule online
 
+realtime:
+* schedule countdown timer visualize
+* search button gives search to current page. fix
 
 Done:
-* stopInfo cosmetic changes: button rows wider, +1 button, Info alignment : left, width: fixed
-* add passing lines list
-* saved lines show in lineInfoModel
-* make sure deleteStop\deleteLine deletes also data from other tables
-* deletions of saved lines
-* rename fields in lineInfoModel to correspond to DB field names
-
+* more info in dataRect, split direction info From: To:
+* parsing of 54 lines ("Tapiola" request) takes too long. Need to make a dialog ["Got too many lines.
+   Save all? (will take ~1 minute) or mark lines to save?"] or just page for selecting
+* add banner show "building line shape" while loading map

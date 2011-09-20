@@ -20,7 +20,7 @@ Page {
         z: 10
         opacity: 1.0
     }
-    Spinner{
+    Spinner{    // loading spinner
         id: loading
         visible: false
         anchors.fill: parent
@@ -32,7 +32,6 @@ Page {
     orientationLock: PageOrientation.LockPortrait
     property string loadLine: ""
     property string loadLineMap: ""
-    property string lineAddString : ""
     property int scheduleLoaded : 0
     property int currentSchedule : -1
     property string searchString: ""
@@ -77,6 +76,34 @@ Page {
             }
         }
     }
+    QueryDialog {   // many lines save/select dialog
+        id: saveSelectDialog
+        acceptButtonText: "Save all"
+        rejectButtonText: "Select"
+        message: "Found a lot of lines. Saving all can take a while. Still save all or select which lines to save?"
+        titleText: "Save / Select"
+        onAccepted: {
+            saveAllLines()
+        }
+        onRejected: {
+            fillSearchResultInfoModel()
+        }
+    }
+    MultiSelectionDialog {  // save lines select dialog
+         id: chooseLinesDialog
+         acceptButtonText: "Save"
+         rejectButtonText: "Not any"
+         titleText: "Lines to save"
+         model: searchResultLineInfoModel
+         onAccepted: {
+            for (var i=0;i<selectedIndexes.length;++i) {
+                saveLine(selectedIndexes[i])
+            }
+         }
+         onRejected: {
+
+         }
+    }
 
     Component.onCompleted: { // load config and recent lines
         JS.loadConfig(config)
@@ -103,7 +130,7 @@ Page {
         anchors.right: parent.right
         anchors.rightMargin: 10
         visible: false
-        height: 90
+        height: 110
         width: parent.width
         Rectangle { // showMapButton
                 id: showMapButton
@@ -120,6 +147,7 @@ Page {
                     text: "M"
                     visible: false
                     onClicked: {
+                        showError("Building line shape")
                         showMap()
                     }
                 }
@@ -129,7 +157,7 @@ Page {
             anchors.left: parent.left;
             anchors.leftMargin: 10
             anchors.top: parent.top
-            anchors.topMargin: 10
+            anchors.topMargin: 5
             text: qsTr("Line type")
             color: config.textColor
             font.pixelSize: 25
@@ -139,18 +167,28 @@ Page {
             anchors.left: lineType.right
             anchors.leftMargin: 10
             anchors.top: parent.top
-            anchors.topMargin: 10
+            anchors.topMargin: 5
             text: qsTr("line")
             color: config.textColor
             font.pixelSize: 25
         }
         Label {
-            id: lineDirection;
+            id: lineStart
             anchors.top: lineShortCodeName.bottom
-            anchors.topMargin: 15
+            anchors.topMargin: 5
             anchors.left: parent.left
             anchors.leftMargin: 10
-            text: qsTr("Direction")
+            text: qsTr("lineStart")
+            color: config.textColor
+            font.pixelSize: 25
+        }
+        Label {
+            id: lineEnd
+            anchors.top: lineStart.bottom
+            anchors.topMargin: 5
+            anchors.left: parent.left
+            anchors.leftMargin: 10
+            text: qsTr("lineEnd")
             color: config.textColor
             font.pixelSize: 25
         }
@@ -264,6 +302,12 @@ Page {
             lineEnd: "dest"
             lineType: "0"
             lineTypeName: "type"
+        }
+    }
+    ListModel{  // search result lineInfo list model
+        id:searchResultLineInfoModel
+        ListElement{
+            name: "lineId"
         }
     }
     Component{  // lineInfo delegate
@@ -492,48 +536,61 @@ Page {
             }
         )
     }
-    function parseXML(a){            // parse lines description, map
+    function fillSearchResultInfoModel() {
+        var lineInfo;
+        loading.visible = true;
+        searchResultLineInfoModel.clear()
+        for (var ii = 0; ii < JS.response.childNodes.length; ++ii) {
+            lineInfo = "" + JS.response.childNodes[ii].childNodes[1].firstChild.nodeValue + " : " + JS.response.childNodes[ii].childNodes[3].firstChild.nodeValue + " -> " + JS.response.childNodes[ii].childNodes[4].firstChild.nodeValue
+            searchResultLineInfoModel.append({"name" : lineInfo });
+        }
+        loading.visible = false
+        chooseLinesDialog.open()
+    }
+    function saveAllLines() {
         console.log ("spinner visible")
         loading.visible = true
-        for (var ii = 0; ii < a.childNodes.length; ++ii) {
-            lineAddString = ""
-            lineInfoModel.append({"lineIdLong" : "" + a.childNodes[ii].childNodes[0].firstChild.nodeValue,
-                                 "lineIdShort" : ""+ a.childNodes[ii].childNodes[1].firstChild.nodeValue,
-                                 "lineName" : "" + a.childNodes[ii].childNodes[5].firstChild.nodeValue,
-                                 "lineStart" : "" + a.childNodes[ii].childNodes[3].firstChild.nodeValue,
-                                 "lineEnd" : "" + a.childNodes[ii].childNodes[4].firstChild.nodeValue,
-                                 "lineType" : "" + a.childNodes[ii].childNodes[2].firstChild.nodeValue,
-                                 "lineTypeName" : "" + JS.getLineType(a.childNodes[ii].childNodes[2].firstChild.nodeValue)
-                                 });
-            if ( JS.addLine(""+ a.childNodes[ii].childNodes[0].firstChild.nodeValue +
-                            ";"+ a.childNodes[ii].childNodes[1].firstChild.nodeValue +
-                            ";"+ a.childNodes[ii].childNodes[5].firstChild.nodeValue +
-                            ";" + a.childNodes[ii].childNodes[2].firstChild.nodeValue +
-                            ";" + a.childNodes[ii].childNodes[3].firstChild.nodeValue +
-                            ";" + a.childNodes[ii].childNodes[4].firstChild.nodeValue +
-                            ";" + a.childNodes[ii].childNodes[8].firstChild.firstChild.firstChild.nodeValue +
-                            ";" + a.childNodes[ii].childNodes[8].lastChild.firstChild.firstChild.nodeValue +
-                            ";" + a.childNodes[ii].childNodes[7].firstChild.nodeValue +
-                            ";" + a.childNodes[ii].childNodes[6].firstChild.nodeValue) == 0 ) {
-                showError("Saved new line: " + a.childNodes[ii].childNodes[1].firstChild.nodeValue)
-            }
-            JS.__db().transaction(
-                function(tx) {
-                    for (var cc = 0; cc < a.childNodes[ii].childNodes[8].childNodes.length; ++cc) {
-                        try { tx.executeSql('INSERT INTO LineStops VALUES(?,?,?)', [a.childNodes[ii].childNodes[0].firstChild.nodeValue,
-                             a.childNodes[ii].childNodes[8].childNodes[cc].firstChild.firstChild.nodeValue,
-                             a.childNodes[ii].childNodes[8].childNodes[cc].lastChild.firstChild.nodeValue]); }
-                        catch(e) { console.log("EXCEPTION: " + e) }
-                    }
-                }
-            )
+        for (var ii = 0; ii < JS.response.childNodes.length; ++ii) {
+            saveLine(ii)
         }
         console.log ("spinner invisible")
         loading.visible = false
         gotLinesInfo()
     }
+    function saveLine(ii){            // parse lines description, map
+            lineInfoModel.append({"lineIdLong" : "" + JS.response.childNodes[ii].childNodes[0].firstChild.nodeValue,
+                                 "lineIdShort" : ""+ JS.response.childNodes[ii].childNodes[1].firstChild.nodeValue,
+                                 "lineName" : "" + JS.response.childNodes[ii].childNodes[5].firstChild.nodeValue,
+                                 "lineStart" : "" + JS.response.childNodes[ii].childNodes[3].firstChild.nodeValue,
+                                 "lineEnd" : "" + JS.response.childNodes[ii].childNodes[4].firstChild.nodeValue,
+                                 "lineType" : "" + JS.response.childNodes[ii].childNodes[2].firstChild.nodeValue,
+                                 "lineTypeName" : "" + JS.getLineType(JS.response.childNodes[ii].childNodes[2].firstChild.nodeValue)
+                                 });
+            if ( JS.addLine(""+ JS.response.childNodes[ii].childNodes[0].firstChild.nodeValue +
+                            ";"+ JS.response.childNodes[ii].childNodes[1].firstChild.nodeValue +
+                            ";"+ JS.response.childNodes[ii].childNodes[5].firstChild.nodeValue +
+                            ";" + JS.response.childNodes[ii].childNodes[2].firstChild.nodeValue +
+                            ";" + JS.response.childNodes[ii].childNodes[3].firstChild.nodeValue +
+                            ";" + JS.response.childNodes[ii].childNodes[4].firstChild.nodeValue +
+                            ";" + JS.response.childNodes[ii].childNodes[8].firstChild.firstChild.firstChild.nodeValue +
+                            ";" + JS.response.childNodes[ii].childNodes[8].lastChild.firstChild.firstChild.nodeValue +
+                            ";" + JS.response.childNodes[ii].childNodes[7].firstChild.nodeValue +
+                            ";" + JS.response.childNodes[ii].childNodes[6].firstChild.nodeValue) == 0 ) {
+                showError("Saved new line: " + JS.response.childNodes[ii].childNodes[1].firstChild.nodeValue)
+            }
+            JS.__db().transaction(
+                function(tx) {
+                    for (var cc = 0; cc < JS.response.childNodes[ii].childNodes[8].childNodes.length; ++cc) {
+                        try { tx.executeSql('INSERT INTO LineStops VALUES(?,?,?)', [JS.response.childNodes[ii].childNodes[0].firstChild.nodeValue,
+                             JS.response.childNodes[ii].childNodes[8].childNodes[cc].firstChild.firstChild.nodeValue,
+                             JS.response.childNodes[ii].childNodes[8].childNodes[cc].lastChild.firstChild.nodeValue]); }
+                        catch(e) { console.log("EXCEPTION: " + e) }
+                    }
+                }
+            )
+    }
     function getXML() {              // xml http request                 : TODO : switch to use local var instead of JS.doc
-        var doc = new XMLHttpRequest()
+      var doc = new XMLHttpRequest()
         doc.onreadystatechange = function() {
             if (doc.readyState == XMLHttpRequest.HEADERS_RECEIVED) {
             } else if (doc.readyState == XMLHttpRequest.DONE) {
@@ -541,9 +598,13 @@ Page {
                     showError("No lines found")
                     return
                 } else {
-                    showError("Found " + doc.responseXML.documentElement.childNodes.length + "lines. Parsing. Please, wait...")
+                    JS.response = doc.responseXML.documentElement
                     console.log("OK, got " + doc.responseXML.documentElement.childNodes.length+ " lines")
-                    parseXML(doc.responseXML.documentElement);
+                    if (doc.responseXML.documentElement.childNodes.length > 4) {
+                        saveSelectDialog.open()
+                    } else {
+                        saveAllLines()
+                    }
                 }
             } else if (doc.readyState == XMLHttpRequest.ERROR) {
                 showError("ERROR returned from server")
@@ -793,11 +854,9 @@ Page {
         scheduleClear()
         stopReachModel.clear()
         getStops()
-        console.log("Number: " + lineInfoModel.get(list.currentIndex).lineIdShort)
         lineShortCodeName.text = lineInfoModel.get(list.currentIndex).lineIdShort
-        console.log("direction: " + lineInfoModel.get(list.currentIndex).lineName)
-        lineDirection.text = lineInfoModel.get(list.currentIndex).lineName
-        console.log("type: " + lineInfoModel.get(list.currentIndex).lineTypeName)
+        lineStart.text = "From : " + lineInfoModel.get(list.currentIndex).lineStart
+        lineEnd.text = "To : " + lineInfoModel.get(list.currentIndex).lineEnd
         lineType.text = lineInfoModel.get(list.currentIndex).lineTypeName
     }
     function gotLinesInfo() {
