@@ -1,11 +1,7 @@
 general:
 
 * finish networking config in settings and lineInfo - make possible to search online using dialog to ask
-
-* ADD FUCKING PROGRESS INDICATOR. 16 lines parsing takes too long
-* consider not push to DB all found stops\lines but only which user marks as favourite
 * fix showLine map action in context of stopInfo
-* after lookup of stop ID from line stops list - update stops list
 * koolah
 * pinch anction on map
 * ленивая загрузка
@@ -13,16 +9,19 @@ general:
 * use landmarks from Location API on route page
 * check if the page is in stack before pushing so we can prevent loops
 * improve speed of line shape creation
-* make sure after search lines\stops list has currentIndex of new stop, it will be used in route/map page
 * fix models names and views names
 * split all data into favorites and just DB
 
 lineInfo: 
+* add networking config support
 * add possibility to search online even when offline data found
 * add confirmation on delete all lines action
 * remove exceeding fields in lineInfoModel
+* after lookup of stop ID from line stops list - update stops list
+* make sure after search lines\stops list has currentIndex of new stop, it will be used in route/map page: after moving index show line info
 
 stopInfo:
+* add networking config support
 * add confirmation on delete all stops action
 * save schedule in DB
 * show nearest available stops based on GPS data
@@ -39,7 +38,6 @@ realtime:
 * search button gives search to current page. fix
 
 Done:
-* add spinner while searching for data in stopInfo
-* scroll down and highlight items just saved from search
-* search result show in another model for query dialog like themes in config page
+* ADD FUCKING PROGRESS INDICATOR. 16 lines parsing takes too long
+* consider not push to DB all found stops\lines but only which user marks as favourit
 

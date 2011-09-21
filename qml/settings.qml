@@ -46,7 +46,7 @@ Page {
             themeDialog.open()
         }
     }
-    Row {
+/*    Row {
         id: offlineRow
         width: parent.width
         anchors.top : themeButton.bottom
@@ -76,11 +76,11 @@ Page {
                 }
             }
         }
-    }
+    }*/
     Button {
         id: resetButton
         text: "Reset database"
-        anchors.top: offlineRow.bottom
+        anchors.top: themeButton.bottom
         anchors.topMargin: 20
         anchors.left: parent.left
         anchors.leftMargin: 20
@@ -91,6 +91,18 @@ Page {
             showError("Database cleaned")
         }
     }
+    Button {
+        id: networkingButton
+        text: "Networking"
+        anchors.top : resetButton.bottom
+        anchors.topMargin: 20
+        anchors.left: parent.left
+        anchors.leftMargin: 20
+        onClicked: {
+            networkingDialog.open()
+        }
+    }
+
 //----------------------------------------------------------------------------//
     ListModel {
         id: themesModel
@@ -106,6 +118,24 @@ Page {
                 currentTheme = themesModel.get(selectedIndex).name
                 JS.setTheme(currentTheme)
                 JS.loadConfig(config)
+             }
+         }
+    }
+    ListModel {
+        id: networkingModel
+        ListElement { name: "Full offline: don't use network" }
+        ListElement { name: "Partly online: online schedules" }
+        ListElement { name: "Full online: always use network" }
+    }
+    SelectionDialog {
+         id: networkingDialog
+         titleText: "Networking"
+         selectedIndex: JS.getCurrent("networking")
+         model: networkingModel
+         onSelectedIndexChanged: {
+             if (config.networking != selectedIndex) {
+                 JS.setCurrent("networking",selectedIndex)
+                 config.networking = selectedIndex
              }
          }
     }

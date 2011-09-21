@@ -1,7 +1,9 @@
-import QtQuick 1.0
+import QtQuick 1.1
+import com.nokia.extras 1.0
+import com.meego 1.0
 
 Item {
-    Rectangle {
+    Rwectangle {
         width: parent.width
         height: parent.height
         anchors.horizontalCenter: parent.horizontalCenter

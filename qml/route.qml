@@ -164,6 +164,7 @@ Page {
 //----------------------------------------------------------------------------//
     function setCurrent() {
         if (loadStop != "") {
+            console.log("loading stop #" + loadStop)
             JS.__db().transaction(
                 function(tx) {
                     try {var rs = tx.executeSql("SELECT stopLongitude,stopLatitude FROM Stops WHERE stopIdLong=?", [loadStop]) }
@@ -180,6 +181,7 @@ Page {
     }
     function setLineShape() {
         if (loadLine != "") {
+            console.log("loading stop #" + loadLine)
             JS.__db().transaction(
                 function(tx) {
                     try { var rs = tx.executeSql("SELECT lineShape FROM Lines WHERE lineIdLong=?", [loadLine]) }

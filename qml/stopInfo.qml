@@ -6,9 +6,6 @@ import com.nokia.extras 1.0
 Page {
     id: stopInfoPage
     tools: commonTools
-    MyQueryDialog {
-        id: offlineModeOff
-    }
     Item {
         id: config
         property string bgColor: ""
@@ -16,7 +13,7 @@ Page {
         property string highlightColor: ""
         property string bgImage: ""
         property string highlightColorBg: ""
-        property int networking: 5  // default
+        property int networking: 1  // default
     }
     objectName: "stopInfoPage"
     property string stopAddString: ""
@@ -25,7 +22,22 @@ Page {
     orientationLock: PageOrientation.LockPortrait
 
     Component.onCompleted: { JS.loadConfig(config); infoModel.clear(); trafficModel.clear(); fillModel(); setCurrent(); }
-
+    QueryDialog {
+        id: offlineModeOff
+        acceptButtonText: "Go online"
+        rejectButtonText: "Keep offline"
+        message: "Offline mode enabled.\nGo online?\n(Data charges may apply)"
+        titleText: "Offline mode"
+        onAccepted: {
+            JS.setCurrent("networking","1")
+            config.networking = "1"
+            getInfo()
+            updateSchedule()
+        }
+        onRejected: {
+            console.log("User declined to go online")
+        }
+    }
     Spinner{    // loading spinner
         id: loading
         visible: false
@@ -100,8 +112,6 @@ Page {
         anchors.right: parent.right
         height: 120
         width: parent.width
-//        color: config.bgColor
-//        radius: 10
         visible: false
         Rectangle { // showMapButton
                 id: showMapButton
@@ -149,7 +159,6 @@ Page {
             text: qsTr("Name")
             color: config.textColor
             font.pixelSize: 25
-            visible: false
         }
         Label {
             id: stopAddressLabel
@@ -169,7 +178,6 @@ Page {
             text: qsTr("Address")
             color: config.textColor
             font.pixelSize: 25
-            visible: false
         }
         Label {
             id: stopCityLabel;
@@ -189,7 +197,6 @@ Page {
             text: qsTr("City")
             color: config.textColor
             font.pixelSize: 25
-            visible: false
         }
     }
     Rectangle {     // HR separator 2
@@ -220,18 +227,6 @@ Page {
                 }
             }
             Button {
-                id: stopInfo
-                text: "Info"
-                onClicked: {
-                    if (list.visible == false) {
-                        linesList.visible = false
-                        list.visible = true
-                        grid.visible = false
-                        recentList.visible = false
-                    }
-                }
-            }
-            Button {
                 id: stopSchedule
                 text: "Schedule"
                 onClicked: {
@@ -251,6 +246,18 @@ Page {
                         linesList.visible = true
                         grid.visible = false
                         list.visible = false
+                        recentList.visible = false
+                    }
+                }
+            }
+            Button {
+                id: stopInfo
+                text: "Info"
+                onClicked: {
+                    if (list.visible == false) {
+                        linesList.visible = false
+                        list.visible = true
+                        grid.visible = false
                         recentList.visible = false
                     }
                 }
@@ -324,7 +331,18 @@ Page {
                     showMapButtonButton.visible = true
                     fillInfoModel()
                     fillLinesModel()
-                    updateSchedule()
+                    if (config.networking < 1) {
+                        showError("Offline networking mode enabled. Change networking mode in settings.")
+                        console.log("stop: " + recentModel.get(recentList.currentIndex).stopName+ "; id:" + recentList.currentIndex)
+                        stopName.text = recentModel.get(recentList.currentIndex).stopName
+                        stopAddress.text = recentModel.get(recentList.currentIndex).stopAddress
+                        stopCity.text = recentModel.get(recentList.currentIndex).stopCity
+                        dataRect.visible = true
+                        loadingMap.visible = false
+                        showMapButtonButton.visible = true
+                    } else {
+                        updateSchedule()
+                    }
                 }
                 onPressedChanged: {
                     if (pressed == true) {
@@ -540,11 +558,8 @@ Page {
         schedule = schedText.split("\n")
         lines = schedule[0].split("|")
         stopName.text = lines[1]
-        stopName.visible = true
         stopAddress.text = lines[2]
-        stopAddress.visible = true
         stopCity.text = lines[3]
-        stopCity.visible = true
         for (var ii = 1; ii < schedule.length-1; ii++) {
             lines = schedule[ii].split("|")
             time_[0] = lines[0].slice(0,lines[0].length -2)
@@ -652,11 +667,6 @@ Page {
             }
         }
 //              API 2.0 (XML) : slower
-        if (JS.getCurrent("offline") == "true") {
-            offlineModeOff.open();
-            console.log("some shit happened")
-            return
-        }
         doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=stop&code=" + searchString + "&user=byako&pass=gfccdjhl&format=xml")
         doc.send();
     }
@@ -664,6 +674,10 @@ Page {
         if (searchString == "" || searchString.length > 7 || searchString.length < 4) {
             showError("Wrong stop ID:"+searchString+".\nStop ID is 4 digit or 1 letter & 4 digits. Example: E3127")
             return;
+        }
+        if (config.networking < 1) {
+            offlineModeOff.open();
+            return
         }
         infoModel.clear()
         getInfo()

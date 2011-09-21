@@ -84,7 +84,7 @@ function createDefaultConfig() {
     db.transaction(
         function(tx) {
             try {
-                tx.executeSql("INSERT INTO Current VALUES(?, ?)",["networking","5"])
+                tx.executeSql("INSERT INTO Current VALUES(?, ?)",["networking","1"])
                 tx.executeSql("INSERT INTO Current VALUES(?, ?)",["currentTheme","black"])
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'bgColor', '#000000' , "black"]);
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'textColor', '#cdd9ff', "black"]);
