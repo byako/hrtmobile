@@ -19,6 +19,7 @@ lineInfo:
 * remove exceeding fields in lineInfoModel
 * after lookup of stop ID from line stops list - update stops list
 * make sure after search lines\stops list has currentIndex of new stop, it will be used in route/map page: after moving index show line info
+*add checkboxes to multiselectiong dialog lines
 
 stopInfo:
 * add networking config support

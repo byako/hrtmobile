@@ -22,6 +22,28 @@ Page {
     orientationLock: PageOrientation.LockPortrait
 
     Component.onCompleted: { JS.loadConfig(config); infoModel.clear(); trafficModel.clear(); fillModel(); setCurrent(); }
+    Item {
+        id: loading
+        visible: false
+        anchors.fill: parent
+        width: parent.width
+        height: parent.height
+        z: 8
+        Rectangle {
+            width: parent.width
+            height: parent.height
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+            color:"#FFFFFF"
+            opacity: 0.7
+        }
+        BusyIndicator{
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+            platformStyle: BusyIndicatorStyle { size : "large" }
+            running: true
+        }
+    }
     QueryDialog {
         id: offlineModeOff
         acceptButtonText: "Go online"
@@ -37,14 +59,6 @@ Page {
         onRejected: {
             console.log("User declined to go online")
         }
-    }
-    Spinner{    // loading spinner
-        id: loading
-        visible: false
-        anchors.fill: parent
-        width: parent.width
-        height: parent.height
-        z: 8
     }
     InfoBanner {// info banner
         id: infoBanner
@@ -132,12 +146,11 @@ Page {
                         pageStack.push(Qt.resolvedUrl("route.qml"),{"loadStop":searchString})
                     }
                 }
-                Spinner{    // loading spinner
+                BusyIndicator{    // loading spinner
                     id: loadingMap
-                    visible: true
-                    anchors.fill: parent
-                    width: parent.width
-                    height: parent.height
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    running: true
                     z: 8
                 }
             }

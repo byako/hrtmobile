@@ -21,13 +21,27 @@ Page {
         z: 10
         opacity: 1.0
     }
-    Spinner{    // loading spinner
+    Item {
         id: loading
         visible: false
         anchors.fill: parent
         width: parent.width
         height: parent.height
         z: 8
+        Rectangle {
+            width: parent.width
+            height: parent.height
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+            color:"#FFFFFF"
+            opacity: 0.7
+        }
+        BusyIndicator {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+            running: true
+            platformStyle: BusyIndicatorStyle { size: "large" }
+        }
     }
     objectName: "lineInfoPage"
     orientationLock: PageOrientation.LockPortrait
@@ -154,6 +168,13 @@ Page {
                         showMap()
                     }
                 }
+/*                BusyIndicator {
+                    id: loadingMap
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    running: true
+                    z: 8
+                }*/
         }
         Label {
             id: lineType;

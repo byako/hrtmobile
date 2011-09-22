@@ -3,7 +3,7 @@ import com.nokia.extras 1.0
 import com.meego 1.0
 
 Item {
-    Rwectangle {
+    Rectangle {
         width: parent.width
         height: parent.height
         anchors.horizontalCenter: parent.horizontalCenter
