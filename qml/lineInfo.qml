@@ -115,7 +115,10 @@ Page {
             for (var i=0;i<selectedIndexes.length;++i) {
                 saveLine(selectedIndexes[i])
             }
-            if (lineInfoModel.count > tempCount) list.currentIndex = tempCount
+            if (lineInfoModel.count > tempCount) {
+                list.currentIndex = tempCount
+                showLineInfo()
+            }
          }
          onRejected: {
 
@@ -168,13 +171,6 @@ Page {
                         showMap()
                     }
                 }
-/*                BusyIndicator {
-                    id: loadingMap
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.verticalCenter: parent.verticalCenter
-                    running: true
-                    z: 8
-                }*/
         }
         Label {
             id: lineType;
@@ -334,42 +330,41 @@ Page {
             name: "lineId"
         }
     }
+    Component{  // lineInfo section header
+        id:lineInfoSectionHeader
+        Item {
+            width: list.width;
+            height: 35
+            Text{
+                anchors.right: parent.right
+                anchors.rightMargin: 20
+                anchors.verticalCenter: parent.verticalCenter
+                text: section;
+                font.pixelSize: 25;
+                color: config.textColor
+            }
+        }
+    }
     Component{  // lineInfo delegate
         id:lineInfoDelegate
-        Rectangle {
+//        Rectangle {
+        Item {
             width: list.width;
-            height: 75
-            radius: 20
-            color: config.highlightColorBg
-/*            gradient: Gradient {
-                     GradientStop { position: 0.0; color: "#203060" }
-                     GradientStop { position: 0.5; color: "#305090" }
-                     GradientStop { position: 1.0; color: "#203060" }
-                 }*/
-            opacity: 0.8
-            Column {
-                spacing: 5
-                anchors.fill: parent
-                anchors.topMargin: 5
+            height: 45
+//            radius: 15
+//            color: config.highlightColorBg
+//            opacity: 0.8
+            Text{
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.left: parent.left
                 anchors.leftMargin: 10
-                anchors.rightMargin: 10
-                Row {
-                    height: 30
-                    spacing: 20
-                    Text{ text: lineTypeName; font.pixelSize: 25; color: config.textColor}
-                    Text{ text: lineIdShort; font.pixelSize: 25; color: config.textColor}
-                }
-                Row {
-                    height: 30
-                    Text{ text: lineStart + "->" + lineEnd; font.pixelSize: 25; color: config.textColor}
-                }
+                text: lineStart + "->" + lineEnd;
+                font.pixelSize: 25; color:
+                config.textColor
             }
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
-                    list.visible = false
-                    grid.visible = true
-                    dataRect.visible = true
                     showLineInfo()
                 }
                 onPressedChanged: {
@@ -455,6 +450,10 @@ Page {
             anchors.topMargin: 10
             anchors.rightMargin: 10
             delegate: lineInfoDelegate
+            section {
+                property: "lineTypeName"
+                delegate: lineInfoSectionHeader
+            }
             model: lineInfoModel
             spacing: 10
             highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
@@ -578,7 +577,10 @@ Page {
         for (var ii = 0; ii < JS.response.childNodes.length; ++ii) {
             saveLine(ii)
         }
-        if (lineInfoModel.count > tempCount) list.currentIndex = tempCount
+        if (lineInfoModel.count > tempCount) {
+            list.currentIndex = tempCount
+            showLineInfo()
+        }
         console.log ("spinner invisible")
         loading.visible = false
         gotLinesInfo()
@@ -590,7 +592,7 @@ Page {
                                  "lineStart" : "" + JS.response.childNodes[ii].childNodes[3].firstChild.nodeValue,
                                  "lineEnd" : "" + JS.response.childNodes[ii].childNodes[4].firstChild.nodeValue,
                                  "lineType" : "" + JS.response.childNodes[ii].childNodes[2].firstChild.nodeValue,
-                                 "lineTypeName" : "" + JS.getLineType(JS.response.childNodes[ii].childNodes[2].firstChild.nodeValue)
+                                 "lineTypeName" : "" + JS.getLineType(JS.response.childNodes[ii].childNodes[2].firstChild.nodeValue) + " " + JS.response.childNodes[ii].childNodes[1].firstChild.nodeValue
                                  });
             if ( JS.addLine(""+ JS.response.childNodes[ii].childNodes[0].firstChild.nodeValue +
                             ";"+ JS.response.childNodes[ii].childNodes[1].firstChild.nodeValue +
@@ -859,12 +861,12 @@ Page {
                    stopReachModel.clear()
                    for (var ii=0; ii < rs.rows.length; ++ii) {
                        lineInfoModel.append({"lineIdLong" : rs.rows.item(ii).lineIdLong,
-                                            "lineIdshort" : rs.rows.item(ii).lineIdShort,
+                                            "lineIdShort" : rs.rows.item(ii).lineIdShort,
                                             "lineName" : rs.rows.item(ii).lineName,
                                             "lineStart" : rs.rows.item(ii).lineStart,
                                             "lineEnd" : rs.rows.item(ii).lineEnd,
                                             "lineType" : rs.rows.item(ii).lineType,
-                                            "lineTypeName" : JS.getLineType(rs.rows.item(ii).lineType)
+                                            "lineTypeName" : JS.getLineType(rs.rows.item(ii).lineType) + " " + rs.rows.item(ii).lineIdShort
                                             });
                    }
                } else {
@@ -875,6 +877,9 @@ Page {
         return retVal
     }
     function showLineInfo() {
+        list.visible = false
+        grid.visible = true
+        dataRect.visible = true
         showMapButtonButton.visible = true
         scheduleLoaded = 0
         scheduleClear()
@@ -883,7 +888,7 @@ Page {
         lineShortCodeName.text = lineInfoModel.get(list.currentIndex).lineIdShort
         lineStart.text = "From : " + lineInfoModel.get(list.currentIndex).lineStart
         lineEnd.text = "To : " + lineInfoModel.get(list.currentIndex).lineEnd
-        lineType.text = lineInfoModel.get(list.currentIndex).lineTypeName
+        lineType.text = JS.getLineType(lineInfoModel.get(list.currentIndex).lineType)
     }
     function gotLinesInfo() {
         infoRect.visible = true;
@@ -907,7 +912,7 @@ Page {
                      for (var i=0; i<rs.rows.length; ++i) {
                          lineInfoModel.append({"lineIdLong":rs.rows.item(i).lineIdLong, "lineIdShort":rs.rows.item(i).lineIdShort, "lineName":rs.rows.item(i).lineName,
                                               "lineStart":rs.rows.item(i).lineStart, "lineEnd":rs.rows.item(i).lineEnd, "lineType":rs.rows.item(i).lineType,
-                                                  "lineTypeName" : JS.getLineType(rs.rows.item(i).lineType)})
+                                                  "lineTypeName" : JS.getLineType(rs.rows.item(i).lineType) + " " + rs.rows.item(i).lineIdShort})
                      }
                  }
         )

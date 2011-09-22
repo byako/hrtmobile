@@ -21,7 +21,7 @@ Page {
     property string searchString: ""    // keep stopIdLong here. If stopIdShort supplied (request from lineInfo) -> remove and place stopIdLong
     orientationLock: PageOrientation.LockPortrait
 
-    Component.onCompleted: { JS.loadConfig(config); infoModel.clear(); trafficModel.clear(); fillModel(); setCurrent(); }
+    Component.onCompleted: { JS.loadConfig(config); infoModel.clear(); fillModel(); setCurrent(); }
     Item {
         id: loading
         visible: false
@@ -295,7 +295,7 @@ Page {
             width: recentList.width
             height: 70
             radius: 20
-            color: "#333333"
+            color: config.highlightColorBg
             opacity: 0.8
             Column {
                 height: parent.height
@@ -388,13 +388,12 @@ Page {
                 Text{
                     text: departTime
                     font.pixelSize: 25
-//                    color: trafficModel.get(grid.currentIndex).departDest == departDest ? "#aaaa00" : config.textColor
-                    color: trafficModel.get(grid.currentIndex).departLine == departLine ? config.highlightColor : config.textColor
+                    color: trafficModel.get(grid.currentIndex).departLine == departLine ? (grid.currentIndex == index ? config.highlightColor : config.highlightColor) : config.textColor
                 }
                 Text{
                     text: departLine
                     font.pixelSize: 25
-                    color: trafficModel.get(grid.currentIndex).departLine == departLine ? config.highlightColor : config.textColor
+                    color: trafficModel.get(grid.currentIndex).departLine == departLine ? (grid.currentIndex == index ? config.highlightColor : config.highlightColor) : config.textColor
                 }
             }
             MouseArea {
@@ -662,7 +661,7 @@ Page {
             coords = JS.addStop(stopAddString)
             stopAddString = ""
             if (coords == 1) {
-                showError("Added stop " + stopName.text)
+                showError("Saved stop info: " + stopName.text)
                 fillModel()
             } else if (coords == -1) {
                 showError("ERROR. Stop is not added. Sorry")

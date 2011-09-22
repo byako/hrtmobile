@@ -19,6 +19,12 @@ PageStackWindow {
             height: 100
             width: parent.width
             anchors.fill: parent
+/*            Label {
+                anchors.top: parent.top
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "Networking mode: Partly online. Only database search"
+                visible: config.networking > 1 ? true : false
+            }*/
             Rectangle {
                 width: 260
                 height: 40
@@ -26,6 +32,7 @@ PageStackWindow {
                 radius: 20
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
+                anchors.topMargin: 40
                 TextInput{
                     id: searchInput
                     anchors.fill: parent

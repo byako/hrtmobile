@@ -181,7 +181,7 @@ Page {
     }
     function setLineShape() {
         if (loadLine != "") {
-            console.log("loading stop #" + loadLine)
+            console.log("loading line shape #" + loadLine)
             JS.__db().transaction(
                 function(tx) {
                     try { var rs = tx.executeSql("SELECT lineShape FROM Lines WHERE lineIdLong=?", [loadLine]) }
