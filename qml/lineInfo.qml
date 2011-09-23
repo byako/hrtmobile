@@ -51,7 +51,7 @@ Page {
     property int currentSchedule : -1
     property string searchString: ""
 
-    ContextMenu {   // recent stops context menu
+    ContextMenu {   // line info context menu
         id: linesContextMenu
         MenuLayout {
             MenuItem {
@@ -60,6 +60,7 @@ Page {
                     if (JS.deleteLine(lineInfoModel.get(list.currentIndex).lineIdLong) == 0) {
                         fillModel();
                     }
+                    showLineInfo()
                 }
             }
             MenuItem {
@@ -70,11 +71,12 @@ Page {
                         fillModel();
                     }
                     loading.visible = false
+                    showLineInfo()
                 }
             }
         }
     }
-    ContextMenu {   // depart line context menu
+    ContextMenu {   // stop reach context menu
         id: stopContextMenu
         MenuLayout {
             MenuItem {
@@ -877,18 +879,24 @@ Page {
         return retVal
     }
     function showLineInfo() {
-        list.visible = false
-        grid.visible = true
-        dataRect.visible = true
-        showMapButtonButton.visible = true
-        scheduleLoaded = 0
-        scheduleClear()
-        stopReachModel.clear()
-        getStops()
-        lineShortCodeName.text = lineInfoModel.get(list.currentIndex).lineIdShort
-        lineStart.text = "From : " + lineInfoModel.get(list.currentIndex).lineStart
-        lineEnd.text = "To : " + lineInfoModel.get(list.currentIndex).lineEnd
-        lineType.text = JS.getLineType(lineInfoModel.get(list.currentIndex).lineType)
+        if (list.currentIndex >= 0) {
+            list.visible = false
+            grid.visible = true
+            dataRect.visible = true
+            showMapButtonButton.visible = true
+            scheduleLoaded = 0
+            scheduleClear()
+            stopReachModel.clear()
+            getStops()
+            lineShortCodeName.text = lineInfoModel.get(list.currentIndex).lineIdShort
+            lineStart.text = "From : " + lineInfoModel.get(list.currentIndex).lineStart
+            lineEnd.text = "To : " + lineInfoModel.get(list.currentIndex).lineEnd
+            lineType.text = JS.getLineType(lineInfoModel.get(list.currentIndex).lineType)
+        } else {
+            dataRect.visible = false
+            stopReachModel.clear()
+            scheduleClear()
+        }
     }
     function gotLinesInfo() {
         infoRect.visible = true;
