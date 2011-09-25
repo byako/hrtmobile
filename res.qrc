@@ -15,5 +15,8 @@
         <file>qml/MyQueryDialog.qml</file>
         <file>images/loading.png</file>
         <file>qml/Spinner.qml</file>
+        <file>qml/database.js</file>
+        <file>qml/Config.qml</file>
+        <file>qml/route.js</file>
     </qresource>
 </RCC>

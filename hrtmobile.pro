@@ -39,12 +39,15 @@ OTHER_FILES += \
     qtc_packaging/debian_harmattan/changelog \
     qml/stopInfo.qml \
     qml/lineInfo.qml \
-    qml/lineInfo.js \
     qml/route.qml \
     qml/settings.qml \
     qml/realtimeSchedule.qml \
     qml/MyQueryDialog.qml \
-    qml/Spinner.qml
+    qml/Spinner.qml \
+    qml/database.js \
+    qml/Config.qml \
+    qml/lineInfo.js \
+    qml/route.js
 
 RESOURCES += \
     res.qrc
@@ -65,6 +68,13 @@ contains(MEEGO_EDITION,harmattan) {
     icon.path = /usr/share/icons/hicolor/80x80/apps
     INSTALLS += icon
 }
+
+
+
+
+
+
+
 
 
 

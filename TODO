@@ -1,5 +1,6 @@
 general:
-
+* fill this TODO DONE section with data from git log
+* use WorkerScript to provide threading in lineInfo, stopInfo, settings, realtimeSchedule,  mainPage (route - loading done)
 * finish networking config in settings and lineInfo - make possible to search online using dialog to ask
 * fix showLine map action in context of stopInfo
 * koolah
@@ -8,11 +9,11 @@ general:
 * use NetworkInfo API to check if online\offline http://doc.qt.nokia.com/qtmobility-1.2/qml-networkinfo.html
 * use landmarks from Location API on route page
 * check if the page is in stack before pushing so we can prevent loops
-* improve speed of line shape creation
 * fix models names and views names
 * split all data into favorites and just DB
 
 lineInfo: 
+* move lines parsing to worker script
 * add networking config support
 * add possibility to search online even when offline data found
 * add confirmation on delete all lines action
@@ -20,7 +21,7 @@ lineInfo:
 * after lookup of stop ID from line stops list - update stops list
 * make sure after search lines\stops list has currentIndex of new stop, it will be used in route/map page: after moving index show line info
 * add checkboxes to multiselectiong dialog lines
-* merge same line in one, show both directions in drop down or so
+* add settings "group same line with diff directions)
 
 stopInfo:
 * add networking config support
@@ -40,7 +41,16 @@ realtime:
 * schedule countdown timer visualize
 * search button gives search to current page. fix
 
+route
+* check where threading can be enabled more (i.e. surrounding stops and all passing routes load)
+
 Done:
+
+2011 09 25
 * ADD FUCKING PROGRESS INDICATOR. 16 lines parsing takes too long
 * consider not push to DB all found stops\lines but only which user marks as favourit
+* worker script for route loads lineshape much faster
+* improve speed of line shape creation
+* move config object to separate qml file
+* merge same line in one, show both directions in drop down or so
 

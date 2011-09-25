@@ -1,6 +1,6 @@
 import QtQuick 1.1
 import com.meego 1.0
-import "lineInfo.js" as JS
+import "database.js" as JS
 
 Page {
     id: mainPage
@@ -8,14 +8,8 @@ Page {
     objectName: "mainPage"
     orientationLock: PageOrientation.LockPortrait
 
-    Item {
+    Config {
         id: config
-        property string bgColor: ""
-        property string textColor: ""
-        property string highlightColor: ""
-        property string bgImage: ""
-        property string highlightColorBg: ""
-        property int networking: 5  // default
     }
     Component.onCompleted: { JS.loadConfig(config)}
     Rectangle{    // dark background

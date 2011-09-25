@@ -1,19 +1,14 @@
 import QtQuick 1.1
 import com.meego 1.0
-import "lineInfo.js" as JS
+import "database.js" as JS
 import com.nokia.extras 1.0
 
 Page {
     id: lineInfoPage
     tools: commonTools
-    Item {      // config object
+
+    Config {
         id: config
-        property string bgColor: ""
-        property string textColor: ""
-        property string highlightColor: ""
-        property string bgImage: ""
-        property string highlightColorBg: ""
-        property int networking: 5  // default
     }
     InfoBanner {// info banner
         id: infoBanner

@@ -1,7 +1,7 @@
 import QtQuick 1.1
 import com.meego 1.0
 import QtMobility.location 1.2
-import "lineInfo.js" as JS
+import "database.js" as JS
 
 Page {
     id: routePage
@@ -9,7 +9,18 @@ Page {
     tools: commonTools
     orientationLock: PageOrientation.LockPortrait
 
-    Component.onCompleted: { setLineShape(); setCurrent(); }
+    WorkerScript {
+        id: loader
+        source: "route.js"
+
+        onMessage: {
+            temp.longitude = messageObject.longitude
+            temp.latitude = messageObject.latitude
+            lineShape.addCoordinate(temp)
+        }
+    }
+
+    Component.onCompleted: { loader.sendMessage({"lineIdLong" : loadLine}); setCurrent(); }
     Coordinate {
         id: temp
     }
@@ -179,7 +190,7 @@ Page {
             )
         }
     }
-    function setLineShape() {
+/*    function setLineShape() {
         if (loadLine != "") {
             console.log("loading line shape #" + loadLine)
             JS.__db().transaction(
@@ -205,5 +216,5 @@ Page {
                 }
             )
         }
-    }
+    }*/
 }
