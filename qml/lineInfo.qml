@@ -333,7 +333,7 @@ Page {
             width: list.width;
             height: 35
             Text{
-                anchors.right: parent.right
+                anchors.horizontalCenter:  parent.horizontalCenter
                 anchors.rightMargin: 20
                 anchors.verticalCenter: parent.verticalCenter
                 text: section;
@@ -343,21 +343,63 @@ Page {
         }
     }
     Component{  // lineInfo delegate
-        id:lineInfoDelegate
-//        Rectangle {
+        id:lineInfoShortDelegate
         Item {
             width: list.width;
             height: 45
-//            radius: 15
-//            color: config.highlightColorBg
-//            opacity: 0.8
             Text{
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: parent.left
                 anchors.leftMargin: 10
-                text: lineStart + "->" + lineEnd;
-                font.pixelSize: 25; color:
-                config.textColor
+                text: lineStart + " -> " + lineEnd;
+                font.pixelSize: 25;
+                color: config.textColor
+            }
+            MouseArea {
+                anchors.fill:  parent
+                onClicked: {
+                    showLineInfo()
+                }
+                onPressedChanged: {
+                    if (pressed == true) {
+                        list.focus = true
+                        list.currentIndex = index
+                    }
+                }
+                onPressAndHold: {
+                    linesContextMenu.open()
+                }
+            }
+        }
+    }
+    Component{  // lineInfo delegate
+        id:lineInfoDelegate
+        Item {
+            width: list.width;
+            height: 70
+//            radius: 15
+//            color: config.highlightColorBg
+//            opacity: 0.8
+            Column {
+                height: parent.height
+                width: parent.width
+                anchors.top: parent.top
+                anchors.topMargin: 5
+                anchors.horizontalCenter: parent.horizontalCenter
+                Text{
+                    anchors.left: parent.left
+                    anchors.leftMargin: 10
+                    text: lineTypeName
+                    font.pixelSize: 25
+                    color: config.textColor
+                }
+                Text{
+                    anchors.left: parent.left
+                    anchors.leftMargin: 10
+                    text: lineStart + " -> " + lineEnd;
+                    font.pixelSize: 25;
+                    color: config.textColor
+                }
             }
             MouseArea {
                 anchors.fill:  parent
@@ -446,11 +488,9 @@ Page {
             anchors.leftMargin:10
             anchors.topMargin: 10
             anchors.rightMargin: 10
-            delegate: lineInfoDelegate
-            section {
-                property: "lineTypeName"
-                delegate: lineInfoSectionHeader
-            }
+            delegate: config.lineGroup == "true" ? lineInfoShortDelegate : lineInfoDelegate
+            section.property: config.lineGroup == "true" ? "lineTypeName": ""
+            section.delegate: config.lineGroup == "true" ? lineInfoSectionHeader : {} ;
             model: lineInfoModel
             spacing: 10
             highlight: Rectangle { color:config.highlightColorBg; radius:  5 }

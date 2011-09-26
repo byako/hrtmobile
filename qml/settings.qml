@@ -40,37 +40,6 @@ Page {
             themeDialog.open()
         }
     }
-/*    Row {
-        id: offlineRow
-        width: parent.width
-        anchors.top : themeButton.bottom
-        spacing: 20
-        anchors.topMargin: 20
-        anchors.left: parent.left
-        anchors.leftMargin: 20
-
-        Text {
-            width: offlineRow.width - offlineRow.spacing - switchComponent.width -50
-            height: switchComponent.height
-            verticalAlignment: Text.AlignVCenter
-            text: switchComponent.checked ? "Offline" : "Online"
-            font.pixelSize: 35
-            color: config.textColor
-        }
-
-        Switch {
-            id: switchComponent
-            onCheckedChanged: {
-                if (checked) {
-                    console.log("offline")
-                    JS.setCurrent("offline", "true")
-                } else {
-                    console.log("online")
-                    JS.setCurrent("offline", "false")
-                }
-            }
-        }
-    }*/
     Button {
         id: resetButton
         text: "Reset database"
@@ -96,7 +65,38 @@ Page {
             networkingDialog.open()
         }
     }
+    Row {
+        id: lineGroupRow
+        height: 40
+        anchors.top : networkingButton.bottom
+        anchors.topMargin: 20
+        anchors.left: parent.left
+        anchors.leftMargin: 20
+        anchors.right: parent.right
+        anchors.rightMargin: 20
+        spacing: 20
+        Text {
+            width: 350
+            height: parent.height
+            verticalAlignment: Text.AlignVCenter
+            text: "Groupe same line directions"
+            font.pixelSize: 25
+            color: config.textColor
+        }
 
+        Switch {
+            id: lineGroupSwitch
+            anchors.verticalCenter: parent.verticalCenter
+            checked: config.lineGroup
+            onCheckedChanged: {
+                if (checked == true) {
+                    JS.setCurrent("lineGroup", "true")
+                } else {
+                    JS.setCurrent("lineGroup", "false")
+                }
+            }
+        }
+    }
 //----------------------------------------------------------------------------//
     ListModel {
         id: themesModel

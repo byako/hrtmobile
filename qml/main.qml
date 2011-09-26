@@ -77,12 +77,18 @@ PageStackWindow {
              platformIconId: "toolbar-back"
              onClicked: {
                  pageStack.pop()
-                 backTool.visible = pageStack.currentPage==mainPage ? false : true
+                 if (pageStack.currentPage == mainPage) {
+                     backTool.visible = false
+                     searchTool.visible = false
+                 } else {
+                     backTool.visible = true
+                     searchTool.visible = true
+                 }
              }
              visible: false
         }
         ToolIcon {
-            id: searchButton
+            id: searchTool
             platformIconId: "toolbar-search"
             anchors.left: backTool.right
             anchors.verticalCenter: parent.verticalCenter

@@ -137,7 +137,7 @@ Page {
                     text: "M"
                     visible: false
                     onClicked: {
-                        pageStack.push(Qt.resolvedUrl("route.qml"),{"loadStop":searchString})
+                        pageStack.push(Qt.resolvedUrl("route.qml"),{"loadStop":recentModel.get(grid.currentIndex).stopIdLong})
                     }
                 }
                 BusyIndicator{    // loading spinner
@@ -285,12 +285,12 @@ Page {
     }
     Component {     // recent stops delegate
         id: recentDelegate
-        Rectangle {
+        Item {
             width: recentList.width
             height: 70
-            radius: 20
-            color: config.highlightColorBg
-            opacity: 0.8
+//            radius: 20
+//            color: config.highlightColorBg
+//            opacity: 0.8
             Column {
                 height: parent.height
                 width: parent.width
@@ -354,7 +354,6 @@ Page {
                 onPressedChanged: {
                     if (pressed == true) {
                         recentList.focus = true
-                        recentList.currentIndex = index
                     }
                 }
                 onPressAndHold: {

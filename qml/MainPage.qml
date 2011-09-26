@@ -37,7 +37,7 @@ Page {
         anchors.topMargin: 50
         text: qsTr("Line info")
         onClicked: {
-            searchButton.visible = true
+            searchTool.visible = true
             pageStack.push(Qt.resolvedUrl("lineInfo.qml"))
             backTool.visible=true
         }
@@ -50,7 +50,7 @@ Page {
         text: qsTr("Stop info")
         height: 100
         onClicked: {
-            searchButton.visible = true
+            searchTool.visible = true
             pageStack.push(Qt.resolvedUrl("stopInfo.qml"))
             backTool.visible=true
         }

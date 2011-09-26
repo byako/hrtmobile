@@ -37,6 +37,7 @@ function loadConfig(config2) {
     config2.textColor = getCurrent("textColor")
     config2.highlightColorBg = getCurrent("highlightColorBg")
     config2.networking = getCurrent("networking")
+    config2.lineGroup = getCurrent("lineGroup")
 }
 function initDB() {
     console.log("initializing Database ")
@@ -87,6 +88,7 @@ function createDefaultConfig() {
             try {
                 tx.executeSql("INSERT INTO Current VALUES(?, ?)",["networking","1"])
                 tx.executeSql("INSERT INTO Current VALUES(?, ?)",["currentTheme","black"])
+                tx.executeSql("INSERT INTO Current VALUES(?, ?)",["lineGroup","false"])
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'bgColor', '#000000' , "black"]);
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'textColor', '#cdd9ff', "black"]);
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'highlightColor', '#00ee10', "black"]);

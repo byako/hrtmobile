@@ -1,13 +1,10 @@
 general:
-* fill this TODO DONE section with data from git log
 * use WorkerScript to provide threading in lineInfo, stopInfo, settings, realtimeSchedule,  mainPage (route - loading done)
 * finish networking config in settings and lineInfo - make possible to search online using dialog to ask
-* fix showLine map action in context of stopInfo
 * koolah
 * pinch anction on map
 * ленивая загрузка
 * use NetworkInfo API to check if online\offline http://doc.qt.nokia.com/qtmobility-1.2/qml-networkinfo.html
-* use landmarks from Location API on route page
 * check if the page is in stack before pushing so we can prevent loops
 * fix models names and views names
 * split all data into favorites and just DB
@@ -21,7 +18,7 @@ lineInfo:
 * after lookup of stop ID from line stops list - update stops list
 * make sure after search lines\stops list has currentIndex of new stop, it will be used in route/map page: after moving index show line info
 * add checkboxes to multiselectiong dialog lines
-* add settings "group same line with diff directions)
+* on stops tab if stop selected - show on map (if showMapButton triggered)
 
 stopInfo:
 * add networking config support
@@ -30,6 +27,7 @@ stopInfo:
 * show nearest available stops based on GPS data
 * split depart schedule to hours
 * merge same stops, show all line types in drop down or so
+* fix showLine map action in context of stopInfo
 
 settings:
 * add networking mode variants:
@@ -40,11 +38,17 @@ settings:
 realtime:
 * schedule countdown timer visualize
 * search button gives search to current page. fix
+* add possibility to manage lines count
+* after new stop search refresh the stops list
 
 route
 * check where threading can be enabled more (i.e. surrounding stops and all passing routes load)
+* use landmarks from Location API on route page
 
 Done:
+2011 09 26
+* add settings "group same line with diff directions"
+* hide search tool when on main page
 
 2011 09 25
 * ADD FUCKING PROGRESS INDICATOR. 16 lines parsing takes too long
@@ -53,4 +57,42 @@ Done:
 * improve speed of line shape creation
 * move config object to separate qml file
 * merge same line in one, show both directions in drop down or so
+
+2011 09 20
+* start to support networking variants, several fixes
+* add spinner while searching for data in stopInfo
+* scroll down and highlight items just saved from search
+* search result show in another model for query dialog like themes in config page
+* more info in dataRect, split direction info From: To:
+* parsing of 54 lines ("Tapiola" request) takes too long. Need to make a dialog ["Got too many lines.
+      Save all? (will take ~1 minute) or mark lines to save?"] or just page for selecting
+* add banner show "building line shape" while loading map
+
+2011 09 19
+* stopInfo cosmetic changes: button rows wider, +1 button, Info alignment : left, width: fixed
+* add passing lines list
+* saved lines show in lineInfoModel
+* make sure deleteStop\deleteLine deletes also data from other tables
+* deletions of saved lines
+* rename fields in lineInfoModel to correspond to DB field names
+
+2011 09 16
+* find tool on toolbar (small redesign), remove search button from header
+* put stop info in DB
+* load info from database when loading saved stop
+* stop pushing stop coords to the map, push stop ID only
+* make sure offline mode has everything needed in DB
+* fixed focus clear in lineInfo to hide keyboard
+* fix dataRect visibility after new search when dataRect already visible or don't clean list & grid before new data is recieved
+* stop pushing stopIdLong to DB, push directly to page : pushStopId()
+
+2011 09 15
+* parse stops from dox.responseXML : switch to DB SELECT
+* parse lines description, map     : add stops INSERT INTO DB
+* xml http request : switch to use local var instead of JS.doc
+* xml http request : schedule reittiopas page  : take from DB instead of JS.doc
+* remove JS.currentSchedule from scheduleShow()
+* make sure offline mode loads all needed info for lineInfo (limit responseXML usage, remove it)
+* when searching line from stopInfo -> check DB first
+
 
