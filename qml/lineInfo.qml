@@ -6,6 +6,13 @@ import com.nokia.extras 1.0
 Page {
     id: lineInfoPage
     tools: commonTools
+    objectName: "lineInfoPage"
+    orientationLock: PageOrientation.LockPortrait
+    property string loadLine: ""
+    property string loadLineMap: ""
+    property int scheduleLoaded : 0
+    property int currentSchedule : -1
+    property string searchString: ""
 
     Config {
         id: config
@@ -38,13 +45,18 @@ Page {
             platformStyle: BusyIndicatorStyle { size: "large" }
         }
     }
-    objectName: "lineInfoPage"
-    orientationLock: PageOrientation.LockPortrait
-    property string loadLine: ""
-    property string loadLineMap: ""
-    property int scheduleLoaded : 0
-    property int currentSchedule : -1
-    property string searchString: ""
+    WorkerScript {
+        id: stopReachLoader
+        source: "lineInfo.js"
+
+        onMessage: {
+            for (var i=0;i<stopReachModel.count;++i) {
+                if (stopReachModel.get(i).stopIdLong == messageObject.stopIdLong) {
+                    stopReachModel.set(i, {"stopName" : messageObject.stopName })
+                }
+            }
+        }
+    }
 
     ContextMenu {   // line info context menu
         id: linesContextMenu
@@ -271,7 +283,7 @@ Page {
             }
     }
 //--  Lists and delegates  ---------------------------------------------------//
-    ListModel{  // stops list model
+    ListModel{  // stops reach model
         id:stopReachModel
         ListElement {
             stopIdLong: "Stop"
@@ -870,6 +882,9 @@ Page {
     function updateStopReachModel() {
         for (var ii=0;ii<stopReachModel.count;++ii) {
             stopReachModel.set(ii,{"stopName" : JS.getStopName(stopReachModel.get(ii).stopIdLong)});
+            if (stopReachModel.get(ii).stopName == "") {
+                stopReachLoader.sendMessage({"stopIdLong":stopReachModel.get(ii).stopIdLong})
+            }
         }
     }
     function showMap() {

@@ -80,7 +80,6 @@ Page {
                 }
             }
         }
-
     }
     ContextMenu {   // depart line context menu
         id: lineContext
@@ -288,9 +287,6 @@ Page {
         Item {
             width: recentList.width
             height: 70
-//            radius: 20
-//            color: config.highlightColorBg
-//            opacity: 0.8
             Column {
                 height: parent.height
                 width: parent.width

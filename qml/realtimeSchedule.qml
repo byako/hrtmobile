@@ -9,7 +9,7 @@ Page {
     Config {
         id: config
     }
-    objectName: "stopInfoPage"
+    objectName: "realtimeSchedule"
     property string stopId: ""
     property string linesCount: "10"
     orientationLock: PageOrientation.LockPortrait
@@ -72,6 +72,7 @@ Page {
                 list.visible = false
                 backToRecent.visible = false
                 refresh.visible = false
+                linesCountRect.visible = false
                 refreshTimer.stop()
                 stopNameLabel.visible = false
                 searchButton.visible = true
@@ -97,6 +98,7 @@ Page {
         width: 200
         onClicked: {
             pageStack.push(Qt.resolvedUrl("stopInfo.qml"))
+            searchTool.visible = true
         }
     }
     Item {          // refresh time
@@ -128,6 +130,34 @@ Page {
             }
         }
     }
+    Item {          // request lines count
+        id: linesCountRect
+        visible: false
+        anchors.top: parent.top
+        anchors.topMargin: 10
+        anchors.right: refresh.left
+        anchors.rightMargin: 10
+        height: 60
+        width: 60
+        Rectangle {
+            anchors.fill: parent
+            radius: 15
+            color: config.highlightColorBg
+        }
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+            text: linesCount
+            color: config.textColor
+            font.pixelSize: 40
+        }
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                requestDialog.open()
+            }
+        }
+    }
 
     SelectionDialog {  // refreshDialog
          id: refreshDialog
@@ -145,6 +175,15 @@ Page {
              }
          }
     }
+    SelectionDialog {  // refreshDialog
+         id: requestDialog
+         titleText: "Amount of lines"
+         selectedIndex: 0
+         model: requestModel
+         onSelectedIndexChanged: {
+             linesCount = requestModel.get(selectedIndex).name
+         }
+    }
 
     ListModel {     // refresh model
         id: refreshModel
@@ -152,6 +191,13 @@ Page {
         ListElement { name: "10" }
         ListElement { name: "30" }
         ListElement { name: "60" }
+    }
+    ListModel {     // refresh model
+        id: requestModel
+        ListElement { name: "10" }
+        ListElement { name: "15" }
+        ListElement { name: "20" }
+        ListElement { name: "30" }
     }
     ListModel {     // stopSchedule
         id: scheduleModel
@@ -286,6 +332,7 @@ Page {
                     list.visible = true
                     backToRecent.visible = true
                     refresh.visible = true
+                    linesCountRect.visible = true
                     stopNameLabel.visible = true
                     stopNameLabel.text = recentModel.get(index).stopName
                     searchButton.visible = false

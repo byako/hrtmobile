@@ -15,10 +15,11 @@ lineInfo:
 * add possibility to search online even when offline data found
 * add confirmation on delete all lines action
 * remove exceeding fields in lineInfoModel
-* after lookup of stop ID from line stops list - update stops list
 * make sure after search lines\stops list has currentIndex of new stop, it will be used in route/map page: after moving index show line info
 * add checkboxes to multiselectiong dialog lines
 * on stops tab if stop selected - show on map (if showMapButton triggered)
+* show saved stops on map, ask to download all stops info
+* fix stop name fetch: use from 1st model fill. now works only after moving to other page
 
 stopInfo:
 * add networking config support
@@ -37,18 +38,20 @@ settings:
 
 realtime:
 * schedule countdown timer visualize
-* search button gives search to current page. fix
-* add possibility to manage lines count
-* after new stop search refresh the stops list
 
 route
 * check where threading can be enabled more (i.e. surrounding stops and all passing routes load)
 * use landmarks from Location API on route page
 
 Done:
-2011 09 26
-* add settings "group same line with diff directions"
-* hide search tool when on main page
+2011 09 27
+* lineInfo: add settings "group same line with diff directions"
+* toolbar: hide search tool when on main page
+* toolbar: search button gives search to current page. fix
+* realtime: add possibility to manage lines count
+* realtime: after new stop search refresh the stops list
+* lineInfo: after lookup of stop ID from line stops list - update stops list
+* lineInfo: stop reach : auto fetch name
 
 2011 09 25
 * ADD FUCKING PROGRESS INDICATOR. 16 lines parsing takes too long
