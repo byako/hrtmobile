@@ -10,7 +10,6 @@ general:
 * split all data into favorites and just DB
 
 lineInfo: 
-* move lines parsing to worker script
 * add networking config support
 * add possibility to search online even when offline data found
 * add confirmation on delete all lines action
@@ -22,6 +21,7 @@ lineInfo:
 * fix stop name fetch: use from 1st model fill. now works only after moving to other page
 
 stopInfo:
+* move lines parsing to worker script
 * add networking config support
 * add confirmation on delete all stops action
 * save schedule in DB

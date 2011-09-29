@@ -23,7 +23,7 @@ Page {
         z: 10
         opacity: 1.0
     }
-    Item {
+    Item {      // busy indicator
         id: loading
         visible: false
         anchors.fill: parent
@@ -45,7 +45,7 @@ Page {
             platformStyle: BusyIndicatorStyle { size: "large" }
         }
     }
-    WorkerScript {
+    WorkerScript {  // stopReach loader
         id: stopReachLoader
         source: "lineInfo.js"
 
@@ -257,7 +257,7 @@ Page {
                 onClicked: {
                     if (grid.visible == false) {
                         list.visible = false
-                        updateStopReachModel()
+//                        updateStopReachModel()
                         grid.visible = true
                         schedule.visible = false
                         scheduleButtons.visible = false
@@ -597,12 +597,17 @@ Page {
         infoBanner.show()
     }
     function getStops(){             // parse stops from dox.responseXML
+        var temp_name
         JS.__db().transaction(
             function(tx) {
                 var rs = tx.executeSql('SELECT * FROM LineStops WHERE lineIdLong=?', [lineInfoModel.get(list.currentIndex).lineIdLong]);
                 for (var ii=0; ii<rs.rows.length; ++ii) {
+                    temp_name = JS.getStopName(rs.rows.item(ii).stopIdLong)
+                    if (temp_name == "") {
+                        stopReachLoader.sendMessage({"stopIdLong":rs.rows.item(ii).stopIdLong})
+                    }
                     stopReachModel.append({"stopIdLong" : rs.rows.item(ii).stopIdLong,
-                                  "stopName" : JS.getStopName(rs.rows.item(ii).stopIdLong),
+                                  "stopName" : temp_name,
                                   "reachTime" : rs.rows.item(ii).stopReachTime });
                 }
             }

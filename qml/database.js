@@ -50,6 +50,7 @@ function initDB() {
                 tx.executeSql('CREATE TABLE IF NOT EXISTS LineTypes(lineType TEXT, lineTypeName TEXT, PRIMARY KEY(lineType,lineTypeName))')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS Lines(lineIdLong TEXT PRIMARY KEY, lineIdShort TEXT, lineName TEXT, lineType TEXT, lineStart TEXT, lineEnd TEXT, startStopIdLong TEXT, endStopIdLong TEXT, lineShape TEXT, lineSchedule TEXT, FOREIGN KEY(lineType) REFERENCES LineTypes(lineType))')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS LineStops(lineIdLong TEXT, stopIdLong TEXT, stopReachTime TEXT, FOREIGN KEY(lineIdLong) REFERENCES Lines(lineIdLong))')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS LineSchedule(lineIdLong TEXT, weekDay TEXT, departTime TEXT, PRIMARY KEY(lineIdLong,weekDay,departTime))')  // not used for now
 
                 tx.executeSql('CREATE TABLE IF NOT EXISTS Stops(stopIdLong TEXT PRIMARY KEY, stopIdShort TEXT, stopName TEXT, stopAddress TEXT, stopCity TEXT, stopLongitude TEXT, stopLatitude TEXT)')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS StopLines(stopIdLong TEXT, lineIdLong TEXT, lineEnd TEXT, PRIMARY KEY(stopIdLong,lineIdLong), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong))')
@@ -77,6 +78,7 @@ function cleanAll() {
             tx.executeSql('DROP TABLE IF EXISTS LineTypes');
             tx.executeSql('DROP TABLE IF EXISTS StopLines');
             tx.executeSql('DROP TABLE IF EXISTS StopInfo');
+            tx.executeSql('DROP TABLE IF EXISTS lineSchedule');
         }
     )
 }

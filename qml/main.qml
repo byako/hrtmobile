@@ -83,7 +83,7 @@ PageStackWindow {
                  } else if (pageStack.currentPage.objectName == "realtimeSchedule") {
                      pageStack.currentPage.fillModel()
                  } else if (pageStack.currentPage.objectName == "lineInfoPage") {
-                     pageStack.currentPage.updateStopReachModel()
+//                     pageStack.currentPage.updateStopReachModel()
                  } else {
                      backTool.visible = true
                      searchTool.visible = true
