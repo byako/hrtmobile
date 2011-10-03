@@ -18,5 +18,6 @@
         <file>qml/database.js</file>
         <file>qml/Config.qml</file>
         <file>qml/route.js</file>
+        <file>qml/lineInfoSchedule.js</file>
     </qresource>
 </RCC>

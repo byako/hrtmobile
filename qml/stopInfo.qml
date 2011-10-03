@@ -6,17 +6,18 @@ import com.nokia.extras 1.0
 Page {
     id: stopInfoPage
     tools: commonTools
-    Config {
+    Config {  // config
         id: config
     }
     objectName: "stopInfoPage"
     property string stopAddString: ""
     property string loadStop: ""
     property string searchString: ""    // keep stopIdLong here. If stopIdShort supplied (request from lineInfo) -> remove and place stopIdLong
+    property int selectedStopIndex: -1
     orientationLock: PageOrientation.LockPortrait
 
     Component.onCompleted: { JS.loadConfig(config); infoModel.clear(); fillModel(); setCurrent(); }
-    Item {
+    Item {                   // busy indicator
         id: loading
         visible: false
         anchors.fill: parent
@@ -38,7 +39,7 @@ Page {
             running: true
         }
     }
-    QueryDialog {
+    QueryDialog {            // offline dialog
         id: offlineModeOff
         acceptButtonText: "Go online"
         rejectButtonText: "Keep offline"
@@ -54,13 +55,13 @@ Page {
             console.log("User declined to go online")
         }
     }
-    InfoBanner {// info banner
+    InfoBanner {             // info banner
         id: infoBanner
         text: "info description here"
         z: 10
         opacity: 1.0
     }
-    ContextMenu {   // recent stops context menu
+    ContextMenu {            // recent stops context menu
         id: recentStopsContextMenu
         MenuLayout {
             MenuItem {
@@ -81,7 +82,7 @@ Page {
             }
         }
     }
-    ContextMenu {   // depart line context menu
+    ContextMenu {            // depart line context menu
         id: lineContext
         MenuLayout {
             MenuItem {
@@ -98,7 +99,7 @@ Page {
             }
         }
     }
-    Rectangle {     // dark background
+    Rectangle {              // dark background
         color: config.bgColor;
         anchors.fill: parent
         width: parent.width
@@ -111,7 +112,7 @@ Page {
             }
         }
     }
-    Item {          // Data
+    Item {                   // Data
         id: dataRect
         anchors.left: parent.left
         anchors.top:  parent.top
@@ -136,7 +137,7 @@ Page {
                     text: "M"
                     visible: false
                     onClicked: {
-                        pageStack.push(Qt.resolvedUrl("route.qml"),{"loadStop":recentModel.get(grid.currentIndex).stopIdLong})
+                        pageStack.push(Qt.resolvedUrl("route.qml"),{"loadStop":recentModel.get(selectedStopIndex).stopIdLong})
                     }
                 }
                 BusyIndicator{    // loading spinner
@@ -205,7 +206,7 @@ Page {
             font.pixelSize: 25
         }
     }
-    Rectangle {     // HR separator 2
+/*    Rectangle {              // HR separator 2
         id: hrLineSeparator2
         anchors.left: parent.left
         anchors.top: dataRect.bottom
@@ -213,11 +214,11 @@ Page {
         width: parent.width
         height:  2
         color: config.textColor
-    }
-    ButtonRow {     // tabs rect
+    }*/
+    ButtonRow {              // tabs rect
         id: tabRect
         width: parent.width
-        anchors.top: hrLineSeparator2.bottom
+        anchors.top: dataRect.bottom
         anchors.topMargin: 5
         anchors.horizontalCenter: parent.horizontalCenter
             Button {
@@ -225,6 +226,9 @@ Page {
                 text: "Recent"
                 onClicked: {
                     if (recentList.visible == false) {
+                        if (recentList.currentIndex != selectedStopIndex) {
+                            recentList.currentIndex = selectedStopIndex
+                        }
                         linesList.visible = false
                         list.visible = false
                         grid.visible = false
@@ -270,7 +274,7 @@ Page {
             }
     }
 /*<----------------------------------------------------------------------->*/
-    ListModel {     // recent stops list
+    ListModel {              // recent stops list
         id: recentModel
         ListElement {
             stopIdLong: ""
@@ -282,7 +286,7 @@ Page {
             stopLatitude: ""
         }
     }
-    Component {     // recent stops delegate
+    Component {              // recent stops delegate
         id: recentDelegate
         Item {
             width: recentList.width
@@ -328,37 +332,43 @@ Page {
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
-                    recentList.focus = true
-                    recentList.currentIndex = index
-                    searchString = recentModel.get(index).stopIdShort
-                    showMapButtonButton.visible = true
-                    fillInfoModel()
-                    fillLinesModel()
-                    if (config.networking < 1) {
-                        showError("Offline networking mode enabled. Change networking mode in settings.")
-                        console.log("stop: " + recentModel.get(recentList.currentIndex).stopName+ "; id:" + recentList.currentIndex)
-                        stopName.text = recentModel.get(recentList.currentIndex).stopName
-                        stopAddress.text = recentModel.get(recentList.currentIndex).stopAddress
-                        stopCity.text = recentModel.get(recentList.currentIndex).stopCity
-                        dataRect.visible = true
-                        loadingMap.visible = false
+                    if (selectedStopIndex != index) {
+                        console.log("Clicked!")
+                        selectedStopIndex = index
+                        recentList.focus = true
+                        recentList.currentIndex = index
+                        searchString = recentModel.get(index).stopIdShort
                         showMapButtonButton.visible = true
-                    } else {
-                        updateSchedule()
+                        fillInfoModel()
+                        fillLinesModel()
+                        if (config.networking < 1) {
+                            showError("Offline networking mode enabled. Change networking mode in settings.")
+                            console.log("stop: " + recentModel.get(recentList.currentIndex).stopName+ "; id:" + recentList.currentIndex)
+                            stopName.text = recentModel.get(recentList.currentIndex).stopName
+                            stopAddress.text = recentModel.get(recentList.currentIndex).stopAddress
+                            stopCity.text = recentModel.get(recentList.currentIndex).stopCity
+                            dataRect.visible = true
+                            loadingMap.visible = false
+                            showMapButtonButton.visible = true
+                        } else {
+                            updateSchedule()
+                        }
                     }
                 }
                 onPressedChanged: {
                     if (pressed == true) {
                         recentList.focus = true
+                        recentList.currentIndex = index
                     }
                 }
                 onPressAndHold: {
+                    console.log("Press and holded!!!")
                     recentStopsContextMenu.open()
                 }
             }
         }
     }
-    ListModel {     // traffic Model (Time depart; Line No)
+    ListModel {              // traffic Model (Time depart; Line No)
         id:trafficModel
         ListElement {
             departTime: "Time"
@@ -708,7 +718,7 @@ Page {
     function fillInfoModel() {  // checkout stop info from database
         JS.__db().transaction(
             function(tx) {
-                try { var rs = tx.executeSql("SELECT option,value FROM StopInfo WHERE stopIdLong=?",[recentModel.get(recentList.currentIndex).stopIdLong]); }
+                try { var rs = tx.executeSql("SELECT option,value FROM StopInfo WHERE stopIdLong=?",[recentModel.get(selectedStopIndex).stopIdLong]); }
                 catch(e) { console.log("FillInfoModel EXCEPTION: " + e) }
                 infoModel.clear();
                 for (var i=0; i<rs.rows.length; ++i) {
@@ -721,7 +731,7 @@ Page {
     function fillLinesModel() {  // checkout stop info from database
         JS.__db().transaction(
             function(tx) {  // TODO
-                try { var rs = tx.executeSql("SELECT lineIdLong, lineEnd FROM StopLines WHERE stopIdLong=?",[recentModel.get(recentList.currentIndex).stopIdLong]); }
+                try { var rs = tx.executeSql("SELECT lineIdLong, lineEnd FROM StopLines WHERE stopIdLong=?",[recentModel.get(selectedStopIndex).stopIdLong]); }
                 catch(e) { console.log("FillInfoModel EXCEPTION: " + e) }
                 linesModel.clear();
                 for (var i=0; i<rs.rows.length; ++i) {

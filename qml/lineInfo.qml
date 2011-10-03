@@ -13,17 +13,18 @@ Page {
     property int scheduleLoaded : 0
     property int currentSchedule : -1
     property string searchString: ""
+    property int selectedLineIndex : -1
 
     Config {
         id: config
     }
-    InfoBanner {// info banner
+    InfoBanner {    // info banner
         id: infoBanner
         text: "info description here"
         z: 10
         opacity: 1.0
     }
-    Item {      // busy indicator
+    Item {          // busy indicator
         id: loading
         visible: false
         anchors.fill: parent
@@ -54,6 +55,19 @@ Page {
                 if (stopReachModel.get(i).stopIdLong == messageObject.stopIdLong) {
                     stopReachModel.set(i, {"stopName" : messageObject.stopName })
                 }
+            }
+        }
+    }
+    WorkerScript {  // schedule loader
+        id: scheduleLoader
+        source: "lineInfoSchedule.js"
+
+        onMessage: {
+            switch(messageObject.departDay) {
+                case 0: scheduleModel.append({"departTime" : messageObject.departTime}); break;
+                case 1: scheduleModel1.append({"departTime" : messageObject.departTime}); break;
+                case 2: scheduleModel2.append({"departTime" : messageObject.departTime}); break;
+                default : console.log("What the F&&&???!! - " + messageObject.departDay);
             }
         }
     }
@@ -113,7 +127,7 @@ Page {
             fillSearchResultInfoModel()
         }
     }
-    MultiSelectionDialog {  // save lines select dialog
+    MultiSelectionDialog {   // save lines select dialog
          id: chooseLinesDialog
          acceptButtonText: "Save"
          rejectButtonText: "Not any"
@@ -136,10 +150,10 @@ Page {
 
     Component.onCompleted: { // load config and recent lines
         JS.loadConfig(config)
-        fillModel()
         checkLineLoadRequest()
+        fillModel()
     }
-    Rectangle{  // dark background
+    Rectangle{      // dark background
         color: config.bgColor
         anchors.fill: parent
         width: parent.width
@@ -150,7 +164,7 @@ Page {
             onClicked: focus = true
         }
     }
-    Item{       // data rect: info labels
+    Item{           // data rect: info labels
         id: dataRect
         anchors.left: parent.left
         anchors.leftMargin: 10
@@ -176,8 +190,10 @@ Page {
                     text: "M"
                     visible: false
                     onClicked: {
-                        showError("Building line shape")
-                        showMap()
+                        if (searchString != "") {
+                            showError("Building line shape")
+                            showMap()
+                        }
                     }
                 }
         }
@@ -222,7 +238,7 @@ Page {
             font.pixelSize: 25
         }
     }
-    Rectangle { // decorative horizontal line
+/*    Rectangle {     // decorative horizontal line
         id: hrLineSeparator2
         anchors.left: parent.left
         anchors.top: dataRect.bottom
@@ -230,8 +246,8 @@ Page {
         width: parent.width
         height:  2
         color: config.textColor
-    }
-    ButtonRow { // tabs rect
+    }*/
+    ButtonRow {     // tabs rect
         id: tabRect
         anchors.top: dataRect.bottom
         anchors.topMargin: 10
@@ -248,6 +264,9 @@ Page {
                         schedule.visible = false
                         scheduleButtons.visible = false
                         focus = true
+                        if (list.currentIndex != selectedLineIndex) {
+                            list.currentIndex = selectedLineIndex
+                        }
                     }
                 }
             }
@@ -257,7 +276,6 @@ Page {
                 onClicked: {
                     if (grid.visible == false) {
                         list.visible = false
-//                        updateStopReachModel()
                         grid.visible = true
                         schedule.visible = false
                         scheduleButtons.visible = false
@@ -275,7 +293,8 @@ Page {
                         schedule.visible = true
                         scheduleButtons.visible = true
                         if (scheduleLoaded == 0 && list.currentIndex != -1) {
-                            getSchedule()
+                            scheduleLoader.sendMessage({"lineIdLong":searchString})
+                            scheduleLoaded = 1
                         }
                         focus = true
                     }
@@ -283,7 +302,7 @@ Page {
             }
     }
 //--  Lists and delegates  ---------------------------------------------------//
-    ListModel{  // stops reach model
+    ListModel {     // stops reach model
         id:stopReachModel
         ListElement {
             stopIdLong: "Stop"
@@ -291,7 +310,7 @@ Page {
             reachTime: "Time"
         }
     }
-    Component{  // stops reach delegate
+    Component {     // stops reach delegate
         id:stopReachDelegate
         Item {
             width: grid.width;
@@ -321,7 +340,8 @@ Page {
             }
         }
     }
-    ListModel{  // lineInfo list model
+
+    ListModel {     // lineInfo list model
         id:lineInfoModel
         ListElement{
             lineIdLong: "lineId"
@@ -333,13 +353,13 @@ Page {
             lineTypeName: "type"
         }
     }
-    ListModel{  // search result lineInfo list model
+    ListModel {     // search result lineInfo list model
         id:searchResultLineInfoModel
         ListElement{
             name: "lineId"
         }
     }
-    Component{  // lineInfo section header
+    Component {     // lineInfo section header
         id:lineInfoSectionHeader
         Item {
             width: list.width;
@@ -354,7 +374,7 @@ Page {
             }
         }
     }
-    Component{  // lineInfo delegate
+    Component {     // lineInfo short delegate
         id:lineInfoShortDelegate
         Item {
             width: list.width;
@@ -370,7 +390,11 @@ Page {
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
-                    showLineInfo()
+                    if (selectedLineIndex != index) {
+                        searchString = lineIdLong
+                        selectedLineIndex = index
+                        showLineInfo()
+                    }
                 }
                 onPressedChanged: {
                     if (pressed == true) {
@@ -384,14 +408,11 @@ Page {
             }
         }
     }
-    Component{  // lineInfo delegate
+    Component {     // lineInfo delegate
         id:lineInfoDelegate
         Item {
             width: list.width;
             height: 70
-//            radius: 15
-//            color: config.highlightColorBg
-//            opacity: 0.8
             Column {
                 height: parent.height
                 width: parent.width
@@ -416,7 +437,11 @@ Page {
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
-                    showLineInfo()
+                    if (selectedLineIndex != index) {
+                        searchString = lineIdLong
+                        selectedLineIndex = index
+                        showLineInfo()
+                    }
                 }
                 onPressedChanged: {
                     if (pressed == true) {
@@ -430,66 +455,42 @@ Page {
             }
         }
     }
-    ListModel{  // schedule list model direction 1 Mon-Fri
-        id:scheduleModelDir1MonFri
+
+    ListModel {     // schedule list Mon - Fri model
+        id:scheduleModel
         ListElement {
             departTime: "Time"
         }
     }
-    ListModel{  // schedule list model direction 1 Sat
-        id:scheduleModelDir1Sat
+    ListModel {     // schedule list Sat model
+        id:scheduleModel1
         ListElement {
             departTime: "Time"
         }
     }
-    ListModel{  // schedule list model direction 1 Sun
-        id:scheduleModelDir1Sun
+    ListModel {     // schedule list Sun model
+        id:scheduleModel2
         ListElement {
             departTime: "Time"
         }
     }
-    ListModel{  // schedule list model direction 2 Mon-Fri
-        id:scheduleModelDir2MonFri
-        ListElement {
-            departTime: "Time"
-        }
-    }
-    ListModel{  // schedule list model direction 2 Sat
-        id:scheduleModelDir2Sat
-        ListElement {
-            departTime: "Time"
-        }
-    }
-    ListModel{  // schedule list model direction 2 Sun
-        id:scheduleModelDir2Sun
-        ListElement {
-            departTime: "Time"
-        }
-    }
-    Component{  // schedule delegate
+    Component{      // schedule delegate
         id:scheduleDelegate
         Item {
             width: schedule.cellWidth
             height: schedule.cellHeight
             Row {
+                spacing: 5
                 anchors.horizontalCenter: parent.horizontalCenter
                 Text{ text: departTime; font.pixelSize: 25; color: config.textColor}
-            }
-            MouseArea {
-                anchors.fill:  parent
-                onClicked: {
-                    schedule.focus = true
-                    if (schedule.currentIndex != index) {
-                        schedule.currentIndex = index
-                    }
-                }
             }
         }
     }
 //--                        --------------------------------------------------//
-    Item{  // grid rect
+    Item{           // grid rect
         id: infoRect
         anchors.top: tabRect.bottom
+        anchors.topMargin: 10
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
@@ -497,9 +498,6 @@ Page {
         ListView {  // Lines list
             id: list
             anchors.fill:  parent
-            anchors.leftMargin:10
-            anchors.topMargin: 10
-            anchors.rightMargin: 10
             delegate: config.lineGroup == "true" ? lineInfoShortDelegate : lineInfoDelegate
             section.property: config.lineGroup == "true" ? "lineTypeName": ""
             section.delegate: config.lineGroup == "true" ? lineInfoSectionHeader : {} ;
@@ -518,8 +516,6 @@ Page {
         ListView {  // stops reach model show
             id: grid
             anchors.fill:  parent
-            anchors.leftMargin:10
-            anchors.topMargin: 10
             delegate: stopReachDelegate
             model: stopReachModel
             highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
@@ -535,49 +531,44 @@ Page {
         ButtonRow { // scheduleButtons week period choose
             id: scheduleButtons
             anchors.top: parent.top
-            anchors.topMargin: 10
             anchors.left: parent.left
             anchors.leftMargin: 10
             anchors.right: parent.right
             anchors.rightMargin: 10
             visible: false
-            height: 35
             Button {
                 id: scheduleButton0
                 text: "Mon-Fri"
                 onClicked: {
-                    currentSchedule = 0
-                    scheduleShow();
+                    schedule.model = scheduleModel
                 }
             }
             Button {
                 id: scheduleButton1
                 text: "Sat"
                 onClicked: {
-                    currentSchedule = 1
-                    scheduleShow();
+                    schedule.model = scheduleModel1
                 }
             }
             Button {
                 id: scheduleButton2
                 text: "Sun"
                 onClicked: {
-                    currentSchedule = 2
-                    scheduleShow();
+                    schedule.model = scheduleModel2
                 }
             }
         }
-        GridView {  // scheduleModel
+        GridView {  // schedule list
             id: schedule
             anchors.left: parent.left
             anchors.leftMargin:10
             anchors.right: parent.right
             anchors.rightMargin: 10
-            anchors.top: parent.top
-            anchors.topMargin: 70
+            anchors.top: scheduleButtons.bottom
+            anchors.topMargin: 10
             anchors.bottom: parent.bottom
             delegate: scheduleDelegate
-            model: scheduleModelDir1MonFri
+            model: scheduleModel
             cellWidth: 115
             cellHeight: 30
             highlight: Rectangle { color: config.highlightColorBg; radius:  5 }
@@ -596,7 +587,7 @@ Page {
         infoBanner.text = errorText
         infoBanner.show()
     }
-    function getStops(){             // parse stops from dox.responseXML
+    function getStops() {             // parse stops from dox.responseXML
         var temp_name
         JS.__db().transaction(
             function(tx) {
@@ -639,7 +630,7 @@ Page {
         loading.visible = false
         gotLinesInfo()
     }
-    function saveLine(ii){            // parse lines description, map
+    function saveLine(ii) {           // parse lines description, map
             lineInfoModel.append({"lineIdLong" : "" + JS.response.childNodes[ii].childNodes[0].firstChild.nodeValue,
                                  "lineIdShort" : ""+ JS.response.childNodes[ii].childNodes[1].firstChild.nodeValue,
                                  "lineName" : "" + JS.response.childNodes[ii].childNodes[5].firstChild.nodeValue,
@@ -697,185 +688,14 @@ Page {
     loading.visible = true
     doc.send();
     }
-    function parseHttp(text_) {      // parse schedule reittiopas http page  : TODO: switch to use local vars
-        scheduleClear();
-        var tables = new Array;
-        var lines = new Array;
-        var text = new String;
-        var times = new Array;
-        var one = new Array;
-        var two = new Array;
-        var three = new Array;
-        var cur=0;
-        text = text_;
-        lines = text.split("\n");
-        for (var ii=0; ii < lines.length; ++ii) {
-            if (lines[ii].search("line_dirtitle") != -1) {
-                tables.push(ii);
-                console.log("line " + ii + " : " + lines[ii]);
-            }
-        }
-
-        for (var ii=0; ii<tables.length; ++ii) {
-            cur = tables[ii];
-            while (lines[cur-1].search("</table>") == -1) {
-                if (lines[cur].search("time") != -1) {
-                    times = lines[cur].split("<");
-                    one.push(times[1].slice(times[1].length-5));
-                    two.push(times[2].slice(times[2].length-5));
-                    if (times[3].slice(times[3].length-1) != ";") {
-                        three.push(times[3].slice(times[3].length-5));
-                    }
-                }
-                cur++;
-            }
-            switch (ii) {
-            case 0: // Dir 1 MonFri
-                while (one.length > 0) {
-                    scheduleModelDir1MonFri.append({"departTime" : one.shift()});
-                };
-                while (two.length > 0) {
-                    scheduleModelDir1MonFri.append({"departTime" : two.shift()});
-                }
-                while (three.length > 0) {
-                    scheduleModelDir1MonFri.append({"departTime" : three.shift()});
-                }
-                break;
-            case 1: // Dir 2 MonFri
-                while (one.length > 0) {
-                    scheduleModelDir2MonFri.append({"departTime" : one.shift()});
-                };
-                while (two.length > 0) {
-                    scheduleModelDir2MonFri.append({"departTime" : two.shift()});
-                }
-                while (three.length > 0) {
-                    scheduleModelDir2MonFri.append({"departTime" : three.shift()});
-                }
-                break;
-            case 2: // Dir 2 MonFri
-                while (one.length > 0) {
-                    scheduleModelDir1Sat.append({"departTime" : one.shift()});
-                };
-                while (two.length > 0) {
-                    scheduleModelDir1Sat.append({"departTime" : two.shift()});
-                }
-                while (three.length > 0) {
-                    scheduleModelDir1Sat.append({"departTime" : three.shift()});
-                }
-                break;
-            case 3: // Dir 2 MonFri
-                while (one.length > 0) {
-                    scheduleModelDir2Sat.append({"departTime" : one.shift()});
-                };
-                while (two.length > 0) {
-                    scheduleModelDir2Sat.append({"departTime" : two.shift()});
-                }
-                while (three.length > 0) {
-                    scheduleModelDir2Sat.append({"departTime" : three.shift()});
-                }
-                break;
-            case 4: // Dir 2 MonFri
-                while (one.length > 0) {
-                    scheduleModelDir1Sun.append({"departTime" : one.shift()});
-                };
-                while (two.length > 0) {
-                    scheduleModelDir1Sun.append({"departTime" : two.shift()});
-                }
-                while (three.length > 0) {
-                    scheduleModelDir1Sun.append({"departTime" : three.shift()});
-                }
-                break;
-            case 5: // Dir 2 MonFri
-                while (one.length > 0) {
-                    scheduleModelDir2Sun.append({"departTime" : one.shift()});
-                };
-                while (two.length > 0) {
-                    scheduleModelDir2Sun.append({"departTime" : two.shift()});
-                }
-                while (three.length > 0) {
-                    scheduleModelDir2Sun.append({"departTime" : three.shift()});
-                }
-                break;
-            default:
-                break;
-            }
-        }
-        scheduleLoaded = 1;
-        currentSchedule = 0;
-    }
-    function getSchedule() {         // xml http request : schedule reittiopas page
-        var scheduleURL = ""
-        var scheduleHtmlReply = new XMLHttpRequest()
-        scheduleHtmlReply.onreadystatechange = function() {
-            if (scheduleHtmlReply.readyState == XMLHttpRequest.HEADERS_RECEIVED) {
-            } else if (scheduleHtmlReply.readyState == XMLHttpRequest.DONE) {
-                    parseHttp(scheduleHtmlReply.responseText)
-                    schedule.visible = true
-            } else if (scheduleHtmlReply.readyState == XMLHttpRequest.ERROR) {
-                console.log("ERROR")
-                showError("ERROR")
-            }
-        }
-        JS.__db().transaction(
-            function(tx) {
-                        try { var rs = tx.executeSql("SELECT lineSchedule FROM Lines WHERE lineIdLong=?", [lineInfoModel.get(list.currentIndex).lineIdLong]) }
-                catch(e) { console.log("EXCEPTION: " + e) }
-                if (rs.rows.length > 0) {
-                    scheduleURL = rs.rows.item(0).lineSchedule
-                }
-            }
-        )
-        if (scheduleURL == "") {
-            return
-        }
-        scheduleHtmlReply.open("GET",scheduleURL)
-        scheduleHtmlReply.send()
-    }
     function scheduleClear() {
-        scheduleModelDir1MonFri.clear();
-        scheduleModelDir1Sat.clear();
-        scheduleModelDir1Sun.clear();
-        scheduleModelDir2MonFri.clear();
-        scheduleModelDir2Sat.clear();
-        scheduleModelDir2Sun.clear();
+        scheduleModel.clear()
+        scheduleModel1.clear()
+        scheduleModel2.clear()
     }
-    function scheduleShow() {
-        grid.visible = false;
-        list.visible = false;
-        switch(currentSchedule) {
-            case 0:
-                schedule.model = scheduleModelDir1MonFri;
-                schedule.visible = true;
-                break;
-            case 1:
-                schedule.model = scheduleModelDir1Sat;
-                schedule.visible = true;
-                break;
-            case 2:
-                schedule.model = scheduleModelDir1Sun;
-                schedule.visible = true;
-                break;
-            case 3:
-                schedule.model = scheduleModelDir2MonFri;
-                schedule.visible = true;
-                break;
-            case 4:
-                schedule.model = scheduleModelDir2Sat;
-                schedule.visible = true;
-                break;
-            case 5:
-                schedule.model = scheduleModelDir2Sun;
-                schedule.visible = true;
-                break;
-            case -1:
-                schedule.visible = false;
-            default:
-                console.log("ERROR. Unknows switch code in scheduleShow\n")
-        }
-    }
-    function buttonClicked() {
+    function buttonClicked() {  // entry point after search dialog: searchString is set now to what user has entered to search
         if (searchString == "Enter LineID" || searchString == "") {
-            showError("Enter search criteria\nline number/line code/Key place\ni.e. 156A or Tapiola or 2132  2")
+            showError("Enter search criteria\nline number/line code/Key place\ni.e. 156A or Tapiola")
             return
         }
         if (checkOffline() != 0) {
@@ -892,7 +712,7 @@ Page {
             }
         }
     }
-    function showMap() {
+    function showMap() {        // push Map page or replace current with Map page
         if (list.currentIndex >= 0) {
             if (loadLineMap != "") {
                 pageStack.replace(Qt.resolvedUrl("route.qml"),{"loadLine":lineInfoModel.get(list.currentIndex).lineIdLong})
@@ -904,6 +724,9 @@ Page {
     function checkLineLoadRequest() {
         if (loadLine != "") {
             searchString = loadLine
+            buttonClicked()
+        } else if (loadLineMap != "") {
+            searchString = loadLineMap
             buttonClicked()
         }
     }
@@ -953,7 +776,7 @@ Page {
             scheduleClear()
         }
     }
-    function gotLinesInfo() {
+    function gotLinesInfo() {  // after offline search is succeded
         infoRect.visible = true;
         if (loadLineMap != "") {
             list.currentIndex = 0

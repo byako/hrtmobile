@@ -5,11 +5,12 @@
 
 WorkerScript.onMessage = function (message) {
     var scheduleURL = ""
+    var lineTemplate = ""
     var scheduleHtmlReply = new XMLHttpRequest()
     scheduleHtmlReply.onreadystatechange = function() {
         if (scheduleHtmlReply.readyState == XMLHttpRequest.DONE) {
-            parseHttp(scheduleHtmlReply.responseText)
-        } else if (doc.readyState == XMLHttpRequest.ERROR) {
+            parseHttp(scheduleHtmlReply.responseText, message.lineIdLong)
+        } else if (scheduleHtmlReply.readyState == XMLHttpRequest.ERROR) {
             console.log("Request error. Is Network available?")
             WorkerScript.sendMessage({"result": "error"})
         }
@@ -21,6 +22,7 @@ WorkerScript.onMessage = function (message) {
             catch(e) { console.log("EXCEPTION: " + e) }
             if (rs.rows.length > 0) {
                 scheduleURL = rs.rows.item(0).lineSchedule
+                lineTemplate = message.lineIdLong.slice(0,-1)
             }
         }
     )
@@ -33,21 +35,31 @@ WorkerScript.onMessage = function (message) {
     scheduleHtmlReply.send()
 }
 
-function parseHttp(text_) {      // parse schedule reittiopas http page  : TODO: switch to use local vars
+function parseHttp(text_, lineTemplate) {      // parse schedule reittiopas http page  : TODO: switch to use local vars
 
     // get last symbol from lineIdLong - get the direction. save only 1 direction for now. other will be saved when user will check it
-    scheduleClear();
     var tables = new Array;
     var lines = new Array;
-    var text = new String;
+//    var text = new String;
     var times = new Array;
     var one = new Array;
     var two = new Array;
     var three = new Array;
     var cur=0;
-    text = text_;
-    lines = text.split("\n");
-    for (var ii=0; ii < lines.length; ++ii) {
+    var day = 0
+    var direction = lineTemplate.slice(-1)
+
+    if (direction == 2) {
+        console.log ("direction was 2, decreasing by 2")
+        direction = 0
+    }
+
+//    text = text_;
+    lines = text_.split("\n");
+
+    console.log("lineTemplate is : " + lineTemplate)
+
+    for (var ii=0; ii < lines.length; ++ii) {  // looking for a table header
         if (lines[ii].search("line_dirtitle") != -1) {
             tables.push(ii);
             console.log("line " + ii + " : " + lines[ii]);
@@ -55,87 +67,37 @@ function parseHttp(text_) {      // parse schedule reittiopas http page  : TODO:
     }
 
     for (var ii=0; ii<tables.length; ++ii) {
-        cur = tables[ii];
-        while (lines[cur-1].search("</table>") == -1) {
-            if (lines[cur].search("time") != -1) {
-                times = lines[cur].split("<");
-                one.push(times[1].slice(times[1].length-5));
-                two.push(times[2].slice(times[2].length-5));
-                if (times[3].slice(times[3].length-1) != ";") {
-                    three.push(times[3].slice(times[3].length-5));
+        if (ii%2 != direction) {
+            if (ii < 2) {         // 1st and 2nd tables are Mon-Fri
+                day = 0
+            } else if (ii < 4) {  // 3rd and 4th - Sat
+                day = 1
+            } else {              // 5th and 6th - Sun
+                day = 2
+            }
+
+            cur = tables[ii]
+            while (lines[cur-1].search("</table>") == -1) {
+                if (lines[cur].search("time") != -1) {
+                    times = lines[cur].split("<")
+                    one.push(times[1].slice(times[1].length-5))
+                    two.push(times[2].slice(times[2].length-5))
+                    if (times[3].slice(times[3].length-1) != ";") {
+                        three.push(times[3].slice(times[3].length-5))
+                    }
                 }
+                cur++
             }
-            cur++;
-        }
-        switch (ii) {
-        case 0: // Dir 1 MonFri
+
             while (one.length > 0) {
-                scheduleModelDir1MonFri.append({"departTime" : one.shift()});
-            };
+                WorkerScript.sendMessage({"departTime" : one.shift(), "departDay":day})
+            }
             while (two.length > 0) {
-                scheduleModelDir1MonFri.append({"departTime" : two.shift()});
+                WorkerScript.sendMessage({"departTime" : two.shift(), "departDay":day})
             }
             while (three.length > 0) {
-                scheduleModelDir1MonFri.append({"departTime" : three.shift()});
+                WorkerScript.sendMessage({"departTime" : three.shift(), "departDay":day})
             }
-            break;
-        case 1: // Dir 2 MonFri
-            while (one.length > 0) {
-                scheduleModelDir2MonFri.append({"departTime" : one.shift()});
-            };
-            while (two.length > 0) {
-                scheduleModelDir2MonFri.append({"departTime" : two.shift()});
-            }
-            while (three.length > 0) {
-                scheduleModelDir2MonFri.append({"departTime" : three.shift()});
-            }
-            break;
-        case 2: // Dir 2 MonFri
-            while (one.length > 0) {
-                scheduleModelDir1Sat.append({"departTime" : one.shift()});
-            };
-            while (two.length > 0) {
-                scheduleModelDir1Sat.append({"departTime" : two.shift()});
-            }
-            while (three.length > 0) {
-                scheduleModelDir1Sat.append({"departTime" : three.shift()});
-            }
-            break;
-        case 3: // Dir 2 MonFri
-            while (one.length > 0) {
-                scheduleModelDir2Sat.append({"departTime" : one.shift()});
-            };
-            while (two.length > 0) {
-                scheduleModelDir2Sat.append({"departTime" : two.shift()});
-            }
-            while (three.length > 0) {
-                scheduleModelDir2Sat.append({"departTime" : three.shift()});
-            }
-            break;
-        case 4: // Dir 2 MonFri
-            while (one.length > 0) {
-                scheduleModelDir1Sun.append({"departTime" : one.shift()});
-            };
-            while (two.length > 0) {
-                scheduleModelDir1Sun.append({"departTime" : two.shift()});
-            }
-            while (three.length > 0) {
-                scheduleModelDir1Sun.append({"departTime" : three.shift()});
-            }
-            break;
-        case 5: // Dir 2 MonFri
-            while (one.length > 0) {
-                scheduleModelDir2Sun.append({"departTime" : one.shift()});
-            };
-            while (two.length > 0) {
-                scheduleModelDir2Sun.append({"departTime" : two.shift()});
-            }
-            while (three.length > 0) {
-                scheduleModelDir2Sun.append({"departTime" : three.shift()});
-            }
-            break;
-        default:
-            break;
         }
     }
 }
