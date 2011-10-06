@@ -1,13 +1,13 @@
 general:
 * use WorkerScript to provide threading in lineInfo, stopInfo, settings, realtimeSchedule,  mainPage (route - loading done)
 * finish networking config in settings and lineInfo - make possible to search online using dialog to ask
-* koolah
 * pinch anction on map
-* ленивая загрузка
+* lazy pages load
 * use NetworkInfo API to check if online\offline http://doc.qt.nokia.com/qtmobility-1.2/qml-networkinfo.html
 * check if the page is in stack before pushing so we can prevent loops
 * fix models names and views names
 * split all data into favorites and just DB
+* koolah
 
 lineInfo:
 * when moving to stop info pass the line number to highlight
@@ -24,6 +24,7 @@ lineInfo:
 * fix schedule parsing
 
 stopInfo:
+* check if came from schedule - open search dialog
 * if moved from line info - highlight retrieved line number
 * move lines parsing to worker script
 * add networking config support
@@ -44,11 +45,14 @@ realtime:
 * schedule countdown timer visualize
 * add context menu to propose show selected stop on map
 * refresh request after lines amount has been changed 
-* move all buttong lower, leave all headline for stop name
+* move all buttons lower, leave all headline for stop name
+* add busy indicator while loading stop schedule
+* when moving to stopInfo search - push also search flag to open search dialog
 
 route
 * check where threading can be enabled more (i.e. surrounding stops and all passing routes load)
 * use landmarks from Location API on route page
+* show stops from database and request near-by stops
 
 Done:
 * make sure after search lines\stops list has currentIndex of new stop, it will be used in route/map page: after moving index show line info

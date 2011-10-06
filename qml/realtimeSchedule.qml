@@ -44,29 +44,39 @@ Page {
         }
     }
 
-    Item {          // back to recent
-        id: backToRecent
-        visible: false
+    Item{           // header
+        id: header
         anchors.top: parent.top
-        anchors.topMargin: 10
-        anchors.left: parent.left
-        anchors.leftMargin: 10
-        height: 60
-        width: 60
-        Rectangle {
-            anchors.fill: parent
-            radius: 15
-            color: config.highlightColorBg
-        }
-        Text {
+        width: parent.width
+        anchors.horizontalCenter: parent.horizontalCenter
+        Label {         // stop Name label
+            id: stopNameLabel
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.verticalCenter: parent.verticalCenter
-            text: "<"
+            visible: false
+            text: "StopName"
+            font.pixelSize: 35
             color: config.textColor
-            font.pixelSize: 50
         }
-        MouseArea {
-            anchors.fill: parent
+        Button{         // search stop button
+            id: searchButton
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: qsTr("Search")
+            width: 200
+            onClicked: {
+            pageStack.push(Qt.resolvedUrl("stopInfo.qml"))
+            searchTool.visible = true
+        }
+        }
+    }
+    Item{           // header buttons
+        id:headerButtons
+        anchors.top: header.bottom
+        Button {          // back to recent
+            id: backToRecent
+            visible: false
+            height: 60
+            width: 60
+            text: "<"
             onClicked: {
                 recentList.visible = true
                 list.visible = false
@@ -78,81 +88,23 @@ Page {
                 searchButton.visible = true
             }
         }
-    }
-    Label {         // stop Name label
-        id: stopNameLabel
-        anchors.top: parent.top
-        anchors.topMargin: 20
-        anchors.horizontalCenter: parent.horizontalCenter
-        visible: false
-        text: "StopName"
-        font.pixelSize: 35
-        color: config.textColor
-    }
-    Button{         // search stop button
-        id: searchButton
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: parent.top
-        anchors.topMargin: 10
-        text: qsTr("Search")
-        width: 200
-        onClicked: {
-            pageStack.push(Qt.resolvedUrl("stopInfo.qml"))
-            searchTool.visible = true
-        }
-    }
-    Item {          // refresh time
-        id: refresh
-        visible: false
-        anchors.top: parent.top
-        anchors.topMargin: 10
-        anchors.right: parent.right
-        anchors.rightMargin: 10
-        height: 60
-        width: 60
-        Rectangle {
-            anchors.fill: parent
-            radius: 15
-            color: config.highlightColorBg
-        }
-        Text {
-            id: refreshText
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.verticalCenter: parent.verticalCenter
+        Button {          // refresh time
+            id: refresh
+            visible: false
+            height: 60
+            width: 60
             text: "0"
-            color: config.textColor
-            font.pixelSize: 40
-        }
-        MouseArea {
-            anchors.fill: parent
             onClicked: {
                 refreshDialog.open()
             }
         }
-    }
-    Item {          // request lines count
-        id: linesCountRect
-        visible: false
-        anchors.top: parent.top
-        anchors.topMargin: 10
-        anchors.right: refresh.left
-        anchors.rightMargin: 10
-        height: 60
-        width: 60
-        Rectangle {
-            anchors.fill: parent
-            radius: 15
-            color: config.highlightColorBg
-        }
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.verticalCenter: parent.verticalCenter
+        Button {          // request lines count
+            id: linesCountRect
+            visible: false
+            height: 60
+            width: 60
             text: linesCount
-            color: config.textColor
             font.pixelSize: 40
-        }
-        MouseArea {
-            anchors.fill: parent
             onClicked: {
                 requestDialog.open()
             }
@@ -351,7 +303,7 @@ Page {
 
     Item {     // grid rect
         id: infoRect
-        anchors.top: searchButton.bottom
+        anchors.top: headerButtons.bottom
         anchors.topMargin: 10
         anchors.left: parent.left
         anchors.right: parent.right
