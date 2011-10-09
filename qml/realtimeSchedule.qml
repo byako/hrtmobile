@@ -47,6 +47,7 @@ Page {
     Item{           // header
         id: header
         anchors.top: parent.top
+        height: 40
         width: parent.width
         anchors.horizontalCenter: parent.horizontalCenter
         Label {         // stop Name label
@@ -71,10 +72,12 @@ Page {
     Item{           // header buttons
         id:headerButtons
         anchors.top: header.bottom
+        height: 60
+        width: parent.width
         Button {          // back to recent
             id: backToRecent
             visible: false
-            height: 60
+            height: parent.height
             width: 60
             text: "<"
             onClicked: {
@@ -88,27 +91,31 @@ Page {
                 searchButton.visible = true
             }
         }
-        Button {          // refresh time
+        TumblerButton {          // refresh time
             id: refresh
             visible: false
-            height: 60
-            width: 60
+            height: parent.height
+            anchors.left: backToRecent.right
+            anchors.leftMargin: 20
+            width: 120
             text: "0"
             onClicked: {
                 refreshDialog.open()
             }
         }
-        Button {          // request lines count
+        TumblerButton {          // request lines count
             id: linesCountRect
             visible: false
-            height: 60
-            width: 60
+            height: parent.height
+            anchors.left: refresh.right
+            anchors.leftMargin: 20
+            width: 120
             text: linesCount
-            font.pixelSize: 40
             onClicked: {
                 requestDialog.open()
             }
         }
+
     }
 
     SelectionDialog {  // refreshDialog
@@ -120,10 +127,10 @@ Page {
              if (selectedIndex != 0) {
                  refreshTimer.interval = 1000 * refreshModel.get(selectedIndex).name
                  refreshTimer.start()
-                 refreshText.text = refreshModel.get(selectedIndex).name
+                 refresh.text = refreshModel.get(selectedIndex).name
              } else {
                  refreshTimer.stop()
-                 refreshText.text = "0"
+                 refresh.text = "0"
              }
          }
     }
@@ -134,6 +141,8 @@ Page {
          model: requestModel
          onSelectedIndexChanged: {
              linesCount = requestModel.get(selectedIndex).name
+             scheduleModel.clear()
+             getSchedule()
          }
     }
 
@@ -288,7 +297,7 @@ Page {
                     stopNameLabel.visible = true
                     stopNameLabel.text = recentModel.get(index).stopName
                     searchButton.visible = false
-                    if (refreshText.text != "0") refreshTimer.start()
+                    if (refresh.text != "0") refreshTimer.start()
                 }
                 onPressedChanged: {
                     if (pressed == true) {
@@ -301,18 +310,11 @@ Page {
         }
     }
 
-    Item {     // grid rect
-        id: infoRect
-        anchors.top: headerButtons.bottom
-        anchors.topMargin: 10
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
         ListView {  // stop info list
             id: list
             visible: false
             anchors.fill: parent
-            anchors.topMargin: 10
+            anchors.topMargin: 110
             delegate:  scheduleDelegate
             model: scheduleModel
             header: scheduleHeader
@@ -325,13 +327,12 @@ Page {
             visible: true
             spacing: 10
             anchors.fill: parent
-            anchors.topMargin: 10
+            anchors.topMargin: 60
             delegate:  recentDelegate
             model: recentModel
             currentIndex: 0
             clip: true
         }
-    }
 
 
 //---------------------------------------------------------------------------//

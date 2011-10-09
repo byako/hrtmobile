@@ -1,4 +1,5 @@
 general:
+* add db init on first run
 * use WorkerScript to provide threading in lineInfo, stopInfo, settings, realtimeSchedule,  mainPage (route - loading done)
 * finish networking config in settings and lineInfo - make possible to search online using dialog to ask
 * pinch anction on map
@@ -44,8 +45,6 @@ settings:
 realtime:
 * schedule countdown timer visualize
 * add context menu to propose show selected stop on map
-* refresh request after lines amount has been changed 
-* move all buttons lower, leave all headline for stop name
 * add busy indicator while loading stop schedule
 * when moving to stopInfo search - push also search flag to open search dialog
 
@@ -58,6 +57,8 @@ Done:
 * make sure after search lines\stops list has currentIndex of new stop, it will be used in route/map page: after moving index show line info
 * fix stop name fetch: use from 1st model fill. now works only after moving to other page
 * fetch schedule in working script
+* move all buttons lower, leave all headline for stop name
+* refresh request after lines amount has been changed 
 
 2011 09 27
 * lineInfo: add settings "group same line with diff directions"
