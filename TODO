@@ -22,7 +22,6 @@ lineInfo:
 * check for schedule in DB. show saved schedule
 * save schedule to database
 * after search fill data in search result model so main model is untouched and can be shown again. Allow switch between models
-* fix schedule parsing
 
 stopInfo:
 * check if came from schedule - open search dialog
@@ -59,6 +58,7 @@ Done:
 * fetch schedule in working script
 * move all buttons lower, leave all headline for stop name
 * refresh request after lines amount has been changed 
+* fix schedule parsing
 
 2011 09 27
 * lineInfo: add settings "group same line with diff directions"

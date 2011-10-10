@@ -479,11 +479,7 @@ Page {
         Item {
             width: schedule.cellWidth
             height: schedule.cellHeight
-            Row {
-                spacing: 5
-                anchors.horizontalCenter: parent.horizontalCenter
-                Text{ text: departTime; font.pixelSize: 25; color: config.textColor}
-            }
+            Text{ anchors.left: parent.left; text: departTime; font.pixelSize: 25; color: config.textColor}
         }
     }
 //--                        --------------------------------------------------//
