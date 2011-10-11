@@ -11,7 +11,7 @@ Page {
     Config {
         id: config
     }
-    Component.onCompleted: { JS.loadConfig(config)}
+    Component.onCompleted: { refreshConfig() }
     Rectangle{    // dark background
         color: config.bgColor;
         anchors.fill: parent
@@ -95,5 +95,9 @@ Page {
             }
         }
         Image { source: ":/images/icon_transport.png"; fillMode: Image.Center; anchors.fill: parent; opacity: 50 }
+    }
+
+    function refreshConfig() {
+        JS.loadConfig(config)
     }
 }

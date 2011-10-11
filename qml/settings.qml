@@ -19,7 +19,7 @@ Page {
         opacity: 1.0
     }
 
-    Component.onCompleted: { JS.loadConfig(config); currentTheme =  JS.getCurrent("theme"); offlineSwitchInit() }
+    Component.onCompleted: { refreshConfig(); currentTheme =  JS.getCurrent("theme"); offlineSwitchInit() }
     Rectangle {     // dark background
         color: config.bgColor;
         anchors.fill: parent
@@ -27,7 +27,7 @@ Page {
         height:  parent.height
         Image { source: config.bgImage ; fillMode: Image.Center; anchors.fill: parent; }
     }
-    Button {
+    TumblerButton {
         id: themeButton
         text: "Theme"
         anchors.top: parent.top
@@ -40,24 +40,10 @@ Page {
             themeDialog.open()
         }
     }
-    Button {
-        id: resetButton
-        text: "Reset database"
-        anchors.top: themeButton.bottom
-        anchors.topMargin: 20
-        anchors.left: parent.left
-        anchors.leftMargin: 20
-        onClicked: {
-            JS.cleanAll()
-            JS.initDB()
-            JS.loadConfig(config)
-            showError("Database cleaned")
-        }
-    }
-    Button {
+    TumblerButton {
         id: networkingButton
         text: "Networking"
-        anchors.top : resetButton.bottom
+        anchors.top: themeButton.bottom
         anchors.topMargin: 20
         anchors.left: parent.left
         anchors.leftMargin: 20
@@ -65,10 +51,24 @@ Page {
             networkingDialog.open()
         }
     }
+    Button {
+        id: resetButton
+        anchors.top : networkingButton.bottom
+        anchors.topMargin: 20
+        anchors.left: parent.left
+        anchors.leftMargin: 20
+        text: "Reset database"
+        onClicked: {
+            JS.cleanAll()
+            JS.initDB()
+            JS.loadConfig(config)
+            showError("Database cleaned")
+        }
+    }
     Row {
         id: lineGroupRow
         height: 40
-        anchors.top : networkingButton.bottom
+        anchors.top : resetButton.bottom
         anchors.topMargin: 20
         anchors.left: parent.left
         anchors.leftMargin: 20
@@ -91,8 +91,14 @@ Page {
             onCheckedChanged: {
                 if (checked == true) {
                     JS.setCurrent("lineGroup", "true")
+                    pageStack.find(function(page) {
+                                       page.refreshConfig();
+                    })
                 } else {
                     JS.setCurrent("lineGroup", "false")
+                    pageStack.find(function(page) {
+                                       page.refreshConfig();
+                    })
                 }
             }
         }
@@ -111,7 +117,9 @@ Page {
              if (currentTheme != selectedIndex) {
                 currentTheme = themesModel.get(selectedIndex).name
                 JS.setTheme(currentTheme)
-                JS.loadConfig(config)
+                pageStack.find(function(page) {
+                                   page.refreshConfig();
+                })
              }
          }
     }
@@ -165,5 +173,8 @@ Page {
         if (offlineSwitchState == "true") {
             switchComponent.checked = true
         }
+    }
+    function refreshConfig() {
+        JS.loadConfig(config)
     }
 }

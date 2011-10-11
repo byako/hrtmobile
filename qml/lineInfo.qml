@@ -103,7 +103,7 @@ Page {
             MenuItem {
                 text: "Stop Info"
                 onClicked : {
-                    pageStack.push(Qt.resolvedUrl("stopInfo.qml"),{"loadStop":stopReachModel.get(grid.currentIndex).stopIdLong});
+                    pageStack.push(Qt.resolvedUrl("stopInfo.qml"),{"searchString":stopReachModel.get(grid.currentIndex).stopIdLong});
                 }
             }
             MenuItem {
@@ -149,7 +149,7 @@ Page {
     }
 
     Component.onCompleted: { // load config and recent lines
-        JS.loadConfig(config)
+        refreshConfig()
         checkLineLoadRequest()
         fillModel()
     }
@@ -369,7 +369,7 @@ Page {
                 anchors.rightMargin: 20
                 anchors.verticalCenter: parent.verticalCenter
                 text: section;
-                font.pixelSize: 25;
+                font.pixelSize: 35;
                 color: config.textColor
             }
         }
@@ -498,7 +498,7 @@ Page {
             section.property: config.lineGroup == "true" ? "lineTypeName": ""
             section.delegate: config.lineGroup == "true" ? lineInfoSectionHeader : {} ;
             model: lineInfoModel
-            spacing: 10
+            spacing: 5
             highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
             currentIndex: -1
             clip: true
@@ -799,6 +799,8 @@ Page {
                  }
         )
     }
-
+    function refreshConfig() {
+        JS.loadConfig(config)
+    }
 /*<----------------------------------------------------------------------->*/
 }

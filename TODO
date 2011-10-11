@@ -53,12 +53,14 @@ route
 * show stops from database and request near-by stops
 
 Done:
-* make sure after search lines\stops list has currentIndex of new stop, it will be used in route/map page: after moving index show line info
-* fix stop name fetch: use from 1st model fill. now works only after moving to other page
-* fetch schedule in working script
-* move all buttons lower, leave all headline for stop name
-* refresh request after lines amount has been changed 
-* fix schedule parsing
+* stopInfo: make sure after search lines\stops list has currentIndex of new stop, it will be used in route/map page: after moving index show line info
+* lineInfo: fix stop name fetch: use from 1st model fill. now works only after moving to other page
+* lineInfo: fetch schedule in working script
+* realtime: move all buttons lower, leave all headline for stop name
+* realtime: refresh request after lines amount has been changed 
+* lineInfo: fix schedule parsing
+* realtime: change buttons to tumblerbuttons
+* settings: apply changes to all pages in stack
 
 2011 09 27
 * lineInfo: add settings "group same line with diff directions"

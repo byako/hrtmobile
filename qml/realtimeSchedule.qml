@@ -14,7 +14,7 @@ Page {
     property string linesCount: "10"
     orientationLock: PageOrientation.LockPortrait
 
-    Component.onCompleted: { JS.loadConfig(config); fillModel(); }
+    Component.onCompleted: { refreshConfig(); fillModel(); }
 
     InfoBanner {
         id: errorBanner
@@ -385,7 +385,10 @@ Page {
                      }
                  }
              )
-         }
+    }
+    function refreshConfig() {
+        JS.loadConfig(config)
+    }
 
 }
 

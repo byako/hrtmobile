@@ -5,6 +5,7 @@ PageStackWindow {
     id: appWindow
 
     initialPage: mainPage
+//    property String refreshConfig: "false"
     MainPage{id: mainPage}
     Dialog{
         id: searchDialog

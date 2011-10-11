@@ -11,12 +11,11 @@ Page {
     }
     objectName: "stopInfoPage"
     property string stopAddString: ""
-    property string loadStop: ""
     property string searchString: ""    // keep stopIdLong here. If stopIdShort supplied (request from lineInfo) -> remove and place stopIdLong
     property int selectedStopIndex: -1
     orientationLock: PageOrientation.LockPortrait
 
-    Component.onCompleted: { JS.loadConfig(config); infoModel.clear(); fillModel(); setCurrent(); }
+    Component.onCompleted: { refreshConfig(); infoModel.clear(); fillModel(); setCurrent(); }
     Item {                   // busy indicator
         id: loading
         visible: false
@@ -137,7 +136,7 @@ Page {
                     text: "M"
                     visible: false
                     onClicked: {
-                        pageStack.push(Qt.resolvedUrl("route.qml"),{"loadStop":recentModel.get(selectedStopIndex).stopIdLong})
+                        pageStack.push(Qt.resolvedUrl("route.qml"),{"loadStop":searchString})
                     }
                 }
                 BusyIndicator{    // loading spinner
@@ -206,15 +205,7 @@ Page {
             font.pixelSize: 25
         }
     }
-/*    Rectangle {              // HR separator 2
-        id: hrLineSeparator2
-        anchors.left: parent.left
-        anchors.top: dataRect.bottom
-        anchors.topMargin: 5
-        width: parent.width
-        height:  2
-        color: config.textColor
-    }*/
+
     ButtonRow {              // tabs rect
         id: tabRect
         width: parent.width
@@ -337,7 +328,7 @@ Page {
                         selectedStopIndex = index
                         recentList.focus = true
                         recentList.currentIndex = index
-                        searchString = recentModel.get(index).stopIdShort
+                        searchString = recentModel.get(index).stopIdLong
                         showMapButtonButton.visible = true
                         fillInfoModel()
                         fillLinesModel()
@@ -682,10 +673,10 @@ Page {
         doc.send();
     }
     function buttonClicked() {  // SearchBox actioncommander keen
-        if (searchString == "" || searchString.length > 7 || searchString.length < 4) {
+/*        if (searchString == "" || searchString.length > 7 || searchString.length < 4) {
             showError("Wrong stop ID:"+searchString+".\nStop ID is 4 digit or 1 letter & 4 digits. Example: E3127")
             return;
-        }
+        }*/
         if (config.networking < 1) {
             offlineModeOff.open();
             return
@@ -742,18 +733,16 @@ Page {
         )
     }
     function setCurrent() {     // stop info request from lineInfo:stopReach
-        if (loadStop != "") {
+        if (searchString != "") {
              JS.__db().transaction(
                  function(tx) {
-                        try { var rs = tx.executeSql("SELECT * FROM Stops WHERE stopIdLong=?", [loadStop]) }
+                        try { var rs = tx.executeSql("SELECT * FROM Stops WHERE stopIdLong=?", [searchString]) }
                         catch(e) { console.log("exception : "+e) }
                         if (rs.rows.length > 0) {
-                            searchString = rs.rows.item(0).stopIdShort
                             showMapButtonButton.visible = true
                             infoModel.clear()
                             updateSchedule()
                         } else {
-                            searchString = loadStop
                             buttonClicked()
                         }
                  }
@@ -783,6 +772,8 @@ Page {
             pageStack.push(Qt.resolvedUrl("route.qml"),{"loadLine":trafficModel.get(grid.currentIndex).departCode});
         }
     }
-
+    function refreshConfig() {
+        JS.loadConfig(config)
+    }
 /*<----------------------------------------------------------------------->*/
 }
