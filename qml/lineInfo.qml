@@ -71,6 +71,18 @@ Page {
             }
         }
     }
+    WorkerScript {  // lineInfoLoadLines
+        id: lineInfoLoadLines
+        source: "lineInfoLoadLines.js"
+
+        onMessage: {
+            lineInfoModel.append({"lineIdLong" : messageObject.lineIdLong, "lineIdShort" : messageObject.lineIdShort,
+                                     "lineStart" : messageObject.lineStart, "lineEnd" : messageObject.lineEnd,
+                                     "lineName" : messageObject.lineName, "lineType" : messageObject.lineType,
+                                "lineTypeName" : JS.getLineType(messageObject.lineType) + messageObject.lineIdShort
+                                 })
+        }
+    }
 
     ContextMenu {   // line info context menu
         id: linesContextMenu
@@ -79,7 +91,8 @@ Page {
                 text: "Delete"
                 onClicked: {
                     if (JS.deleteLine(lineInfoModel.get(linesList.currentIndex).lineIdLong) == 0) {
-                        fillModel();
+                        lineInfoModel.clear()
+                        lineInfoLoadLines.sendMessage("")
                     }
                     showLineInfo()
                 }
@@ -89,7 +102,8 @@ Page {
                 onClicked: {
                     loading.visible = true
                     if (JS.deleteLine("*") == 0) {
-                        fillModel();
+                        lineInfoModel.clear()
+                        lineInfoLoadLines.sendMessage("")
                     }
                     loading.visible = false
                     showLineInfo()
@@ -151,7 +165,8 @@ Page {
     Component.onCompleted: { // load config and recent lines
         refreshConfig()
         checkLineLoadRequest()
-        fillModel()
+        lineInfoModel.clear()
+        lineInfoLoadLines.sendMessage("")
     }
     Rectangle{      // dark background
         color: config.bgColor
@@ -785,19 +800,6 @@ Page {
             linesList.currentIndex = 0
             showLineInfo()
         }
-    }
-    function fillModel() {      // checkout recent stops from database
-        lineInfoModel.clear();
-        JS.__db().transaction(
-            function(tx) {
-                     var rs = tx.executeSql("SELECT lineIdLong, lineIdShort, lineName, lineStart, lineEnd, lineType FROM Lines ORDER BY lineIdShort ASC");
-                     for (var i=0; i<rs.rows.length; ++i) {
-                         lineInfoModel.append({"lineIdLong":rs.rows.item(i).lineIdLong, "lineIdShort":rs.rows.item(i).lineIdShort, "lineName":rs.rows.item(i).lineName,
-                                              "lineStart":rs.rows.item(i).lineStart, "lineEnd":rs.rows.item(i).lineEnd, "lineType":rs.rows.item(i).lineType,
-                                                  "lineTypeName" : JS.getLineType(rs.rows.item(i).lineType) + " " + rs.rows.item(i).lineIdShort})
-                     }
-                 }
-        )
     }
     function refreshConfig() {
         JS.loadConfig(config)

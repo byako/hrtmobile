@@ -19,5 +19,6 @@
         <file>qml/Config.qml</file>
         <file>qml/route.js</file>
         <file>qml/lineInfoSchedule.js</file>
+        <file>qml/lineInfoLoadLines.js</file>
     </qresource>
 </RCC>

@@ -65,6 +65,7 @@ Done:
 * realtime: change buttons to tumblerbuttons
 * settings: apply changes to all pages in stack
 * settings: fix themes selection/set
+* lineInfo: fill lineInfoModel in workerscript
 
 2011 09 27
 * lineInfo: add settings "group same line with diff directions"
