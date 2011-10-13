@@ -19,7 +19,7 @@ Page {
         opacity: 1.0
     }
 
-    Component.onCompleted: { refreshConfig(); currentTheme =  JS.getCurrent("theme"); offlineSwitchInit() }
+    Component.onCompleted: { refreshConfig(); currentTheme =  JS.getCurrent("theme"); console.log("set currentTheme: " + currentTheme); offlineSwitchInit() }
     Rectangle {     // dark background
         color: config.bgColor;
         anchors.fill: parent
@@ -114,11 +114,12 @@ Page {
          selectedIndex: 0
          model: themesModel
          onSelectedIndexChanged: {
+             console.log("selectedIndex: " + selectedIndex + "; previous currentTheme value: " + currentTheme)
              if (currentTheme != selectedIndex) {
                 currentTheme = themesModel.get(selectedIndex).name
                 JS.setTheme(currentTheme)
                 pageStack.find(function(page) {
-                                   page.refreshConfig();
+                    page.refreshConfig();
                 })
              }
          }
@@ -151,7 +152,7 @@ Page {
         JS.__db().transaction(
             function(tx) {
                 try {
-                    var rs = tx.executeSql("SELECT DISTINCT theme FROM Config");
+                    var rs = tx.executeSql("SELECT DISTINCT theme FROM Config ORDER BY theme ASC");
                 }
                 catch(e) {
                     console.log("EXCEPTION: " + e);
@@ -161,6 +162,7 @@ Page {
                         console.log("found " + rs.rows.item(i).theme)
                         themesModel.append({"name" : rs.rows.item(i).theme})
                         if (rs.rows.item(i).theme == currentTheme) {
+                            console.log("THEME: currentIndex is" + i + "; themeName is " + currentTheme)
                             themeDialog.selectedIndex = i
                         }
                     }

@@ -27,7 +27,7 @@ WorkerScript.onMessage = function (message) {
         }
     )
     if (scheduleURL == "") {
-        console.log("didn't find URL in database");
+        console.log("didn't find URL for line " + message.lineIdLong + " in database");
         WorkerScript.sendMessage({"result": "error"})
         return
     }

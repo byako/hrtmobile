@@ -1,3 +1,7 @@
+//-------------------------------------- ** --------------------------------------------
+//  WorkerScript to build line shape on map
+//
+//-------------------------------------- ** --------------------------------------------
 WorkerScript.onMessage = function (message) {
         __db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
         __db.transaction(
@@ -12,11 +16,6 @@ WorkerScript.onMessage = function (message) {
                         lonlat = coords[ii].split(",")
                         WorkerScript.sendMessage({"longitude" : lonlat[0], "latitude" : lonlat[1]})
                     }
-/*                    lonlat = coords[0].split(",")
-                    map.center.longitude = lonlat[0]
-                    map.center.latitude = lonlat[1]
-                    circle.center.longitude = lonlat[0]
-                    circle.center.latitude = lonlat[1]*/
                 }
             }
         )

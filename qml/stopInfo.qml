@@ -324,7 +324,6 @@ Page {
                 anchors.fill:  parent
                 onClicked: {
                     if (selectedStopIndex != index) {
-                        console.log("Clicked!")
                         selectedStopIndex = index
                         recentList.focus = true
                         recentList.currentIndex = index

@@ -78,7 +78,7 @@ Page {
             MenuItem {
                 text: "Delete"
                 onClicked: {
-                    if (JS.deleteLine(lineInfoModel.get(list.currentIndex).lineIdLong) == 0) {
+                    if (JS.deleteLine(lineInfoModel.get(linesList.currentIndex).lineIdLong) == 0) {
                         fillModel();
                     }
                     showLineInfo()
@@ -139,7 +139,7 @@ Page {
                 saveLine(selectedIndexes[i])
             }
             if (lineInfoModel.count > tempCount) {
-                list.currentIndex = tempCount
+                linesList.currentIndex = tempCount
                 showLineInfo()
             }
          }
@@ -238,15 +238,7 @@ Page {
             font.pixelSize: 25
         }
     }
-/*    Rectangle {     // decorative horizontal line
-        id: hrLineSeparator2
-        anchors.left: parent.left
-        anchors.top: dataRect.bottom
-        anchors.topMargin: 5
-        width: parent.width
-        height:  2
-        color: config.textColor
-    }*/
+
     ButtonRow {     // tabs rect
         id: tabRect
         anchors.top: dataRect.bottom
@@ -254,28 +246,28 @@ Page {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.right: parent.right
         width: (parent.width-10)
-            Button {
+            Button {  // recent lines
                 id: linesButton
                 text: "Lines"
                 onClicked: {
-                    if (list.visible == false) {
-                        list.visible = true
+                    if (linesList.visible == false) {
+                        linesList.visible = true
                         grid.visible = false
                         schedule.visible = false
                         scheduleButtons.visible = false
                         focus = true
-                        if (list.currentIndex != selectedLineIndex) {
-                            list.currentIndex = selectedLineIndex
+                        if (linesList.currentIndex != selectedLineIndex) {
+                            linesList.currentIndex = selectedLineIndex
                         }
                     }
                 }
             }
-            Button {
+            Button {  // line stops
                 id: stopsButton
                 text: "Stops"
                 onClicked: {
                     if (grid.visible == false) {
-                        list.visible = false
+                        linesList.visible = false
                         grid.visible = true
                         schedule.visible = false
                         scheduleButtons.visible = false
@@ -283,16 +275,16 @@ Page {
                     }
                 }
             }
-            Button {
+            Button {  // line schedule
                 id: scheduleButton
                 text: "Schedule"
                 onClicked: {
                     if (schedule.visible == false) {
-                        list.visible = false
+                        linesList.visible = false
                         grid.visible = false
                         schedule.visible = true
                         scheduleButtons.visible = true
-                        if (scheduleLoaded == 0 && list.currentIndex != -1) {
+                        if (scheduleLoaded == 0 && linesList.currentIndex != -1) {
                             scheduleLoader.sendMessage({"lineIdLong":searchString})
                             scheduleLoaded = 1
                         }
@@ -362,7 +354,7 @@ Page {
     Component {     // lineInfo section header
         id:lineInfoSectionHeader
         Item {
-            width: list.width;
+            width: linesList.width;
             height: 35
             Text{
                 anchors.horizontalCenter:  parent.horizontalCenter
@@ -377,7 +369,7 @@ Page {
     Component {     // lineInfo short delegate
         id:lineInfoShortDelegate
         Item {
-            width: list.width;
+            width: linesList.width;
             height: 45
             Text{
                 anchors.verticalCenter: parent.verticalCenter
@@ -398,8 +390,8 @@ Page {
                 }
                 onPressedChanged: {
                     if (pressed == true) {
-                        list.focus = true
-                        list.currentIndex = index
+                        linesList.focus = true
+                        linesList.currentIndex = index
                     }
                 }
                 onPressAndHold: {
@@ -411,7 +403,7 @@ Page {
     Component {     // lineInfo delegate
         id:lineInfoDelegate
         Item {
-            width: list.width;
+            width: linesList.width;
             height: 70
             Column {
                 height: parent.height
@@ -445,8 +437,8 @@ Page {
                 }
                 onPressedChanged: {
                     if (pressed == true) {
-                        list.focus = true
-                        list.currentIndex = index
+                        linesList.focus = true
+                        linesList.currentIndex = index
                     }
                 }
                 onPressAndHold: {
@@ -492,7 +484,7 @@ Page {
         anchors.bottom: parent.bottom
         visible: true;
         ListView {  // Lines list
-            id: list
+            id: linesList
             anchors.fill:  parent
             delegate: config.lineGroup == "true" ? lineInfoShortDelegate : lineInfoDelegate
             section.property: config.lineGroup == "true" ? "lineTypeName": ""
@@ -587,7 +579,7 @@ Page {
         var temp_name
         JS.__db().transaction(
             function(tx) {
-                var rs = tx.executeSql('SELECT * FROM LineStops WHERE lineIdLong=?', [lineInfoModel.get(list.currentIndex).lineIdLong]);
+                var rs = tx.executeSql('SELECT * FROM LineStops WHERE lineIdLong=?', [searchString]);
                 for (var ii=0; ii<rs.rows.length; ++ii) {
                     temp_name = JS.getStopName(rs.rows.item(ii).stopIdLong)
                     if (temp_name == "") {
@@ -619,7 +611,14 @@ Page {
             saveLine(ii)
         }
         if (lineInfoModel.count > tempCount) {
-            list.currentIndex = tempCount
+            if (tempCount >= 0) {
+                linesList.currentIndex = tempCount
+                selectedLineIndex = tempCount
+            } else {
+                linesList.currentIndex = 0
+                selectedLineIndex = 0
+            }
+            searchString = lineInfoModel.get(tempCount).lineIdLong
             showLineInfo()
         }
         console.log ("spinner invisible")
@@ -709,13 +708,11 @@ Page {
         }
     }
     function showMap() {        // push Map page or replace current with Map page
-        if (list.currentIndex >= 0) {
             if (loadLineMap != "") {
-                pageStack.replace(Qt.resolvedUrl("route.qml"),{"loadLine":lineInfoModel.get(list.currentIndex).lineIdLong})
+                pageStack.replace(Qt.resolvedUrl("route.qml"),{"loadLine":searchString})
             } else {
-                pageStack.push(Qt.resolvedUrl("route.qml"),{"loadLine":lineInfoModel.get(list.currentIndex).lineIdLong})
+                pageStack.push(Qt.resolvedUrl("route.qml"),{"loadLine":searchString})
             }
-        }
     }
     function checkLineLoadRequest() {
         if (loadLine != "") {
@@ -753,8 +750,9 @@ Page {
         return retVal
     }
     function showLineInfo() {
-        if (list.currentIndex >= 0) {
-            list.visible = false
+        if (linesList.currentIndex >= 0) {
+            console.log("ShowLineInfo:  current index is " + linesList.currentIndex)
+            linesList.visible = false
             grid.visible = true
             dataRect.visible = true
             showMapButtonButton.visible = true
@@ -762,10 +760,11 @@ Page {
             scheduleClear()
             stopReachModel.clear()
             getStops()
-            lineShortCodeName.text = lineInfoModel.get(list.currentIndex).lineIdShort
-            lineStart.text = "From : " + lineInfoModel.get(list.currentIndex).lineStart
-            lineEnd.text = "To : " + lineInfoModel.get(list.currentIndex).lineEnd
-            lineType.text = JS.getLineType(lineInfoModel.get(list.currentIndex).lineType)
+            lineShortCodeName.text = lineInfoModel.get(linesList.currentIndex).lineIdShort
+            lineStart.text = "From : " + lineInfoModel.get(linesList.currentIndex).lineStart
+            lineEnd.text = "To : " + lineInfoModel.get(linesList.currentIndex).lineEnd
+            lineType.text = JS.getLineType(lineInfoModel.get(linesList.currentIndex).lineType)
+            searchString = lineInfoModel.get(linesList.currentIndex).lineIdLong
         } else {
             dataRect.visible = false
             stopReachModel.clear()
@@ -775,14 +774,15 @@ Page {
     function gotLinesInfo() {  // after offline search is succeded
         infoRect.visible = true;
         if (loadLineMap != "") {
-            list.currentIndex = 0
+            linesList.currentIndex = 0
+            selectedLineIndex = 0
             showMap()
         }
         if (lineInfoModel.count == 1) {
-            list.visible = false
+            linesList.visible = false
             grid.visible = true
             dataRect.visible = true
-            list.currentIndex = 0
+            linesList.currentIndex = 0
             showLineInfo()
         }
     }

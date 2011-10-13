@@ -1,11 +1,14 @@
 .pragma library
-
+//-------------------------------------- ** --------------------------------------------
+// In this file everything concerning DB work to be used from QML pages
+//
+//-------------------------------------- ** --------------------------------------------
 var response
 function __db(){
     return openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
 }
 function setTheme(themeName) {
-    var currentTheme = getCurrent("currentTheme")
+    var currentTheme = getCurrent("theme")
     __db().transaction(
         function(tx) {
             if (themeName != currentTheme && themeName != "") {
@@ -89,7 +92,7 @@ function createDefaultConfig() {
         function(tx) {
             try {
                 tx.executeSql("INSERT INTO Current VALUES(?, ?)",["networking","1"])
-                tx.executeSql("INSERT INTO Current VALUES(?, ?)",["currentTheme","black"])
+                tx.executeSql("INSERT INTO Current VALUES(?, ?)",["theme","black"])
                 tx.executeSql("INSERT INTO Current VALUES(?, ?)",["lineGroup","false"])
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'bgColor', '#000000' , "black"]);
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'textColor', '#cdd9ff', "black"]);

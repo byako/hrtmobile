@@ -1,4 +1,7 @@
 general:
+
+INVESTIGATE SEGFAULT DURING LINESHAPE SHOW IN MAP SESSION FROM STOP INFO
+
 * add db init on first run
 * use WorkerScript to provide threading in lineInfo, stopInfo, settings, realtimeSchedule,  mainPage (route - loading done)
 * finish networking config in settings and lineInfo - make possible to search online using dialog to ask
@@ -61,6 +64,7 @@ Done:
 * lineInfo: fix schedule parsing
 * realtime: change buttons to tumblerbuttons
 * settings: apply changes to all pages in stack
+* settings: fix themes selection/set
 
 2011 09 27
 * lineInfo: add settings "group same line with diff directions"

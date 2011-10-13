@@ -1,3 +1,8 @@
+//-------------------------------------- ** --------------------------------------------
+//   this workerscript fetches the stop schedule to get stop nape
+//   used to substitute stop IDs with the real stop names on stops section of lineInfo
+//-------------------------------------- ** --------------------------------------------
+
 WorkerScript.onMessage = function (message) {
     var doc = new XMLHttpRequest()
     var schedule = new Array;
