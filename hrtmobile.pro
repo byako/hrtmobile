@@ -49,7 +49,8 @@ OTHER_FILES += \
     qml/lineInfo.js \
     qml/route.js \
     qml/lineInfoSchedule.js \
-    qml/lineInfoLoadLines.js
+    qml/lineInfoLoadLines.js \
+    qml/mapStopsSearch.js
 
 RESOURCES += \
     res.qrc
@@ -70,6 +71,7 @@ contains(MEEGO_EDITION,harmattan) {
     icon.path = /usr/share/icons/hicolor/80x80/apps
     INSTALLS += icon
 }
+
 
 
 

@@ -20,6 +20,34 @@ Page {
         }
     }
 
+    WorkerScript {
+        id: stopsSearch
+        source: "mapStopsSearch.js"
+
+        onMessage: {
+            console.log("route.qml: stop: " + messageObject.stopIdLong + "; distance: " + messageObject.distance);
+            map.addMapObject(MapCircle({"id":messageObject.stopIdLong
+                                        //"center" : Coordinate({"longitude" : messageObject.longitude, "latitude" : messageObject.latitude})
+                                        }))
+
+        }
+    }
+
+    PositionSource {
+        id: positionSource
+        updateInterval: 10000
+        active: true
+        onPositionChanged: {
+            console.log("position chhanged. distance from previous: " + position.coordinate.distanceTo(circle.center) );
+            stopsSearch.sendMessage({"longitude" : position.coordinate.longitude, "latitude" : position.coordinate.latitude})
+            if (position.coordinate.distanceTo(circle.center) > 100) {
+                console.log("New position: lon: " + position.coordinate.longitude + "; lan: " + position.coordinate.latitude)
+                circle.center = position.coordinate
+            }
+
+        }
+    }
+
     Component.onCompleted: { loader.sendMessage({"lineIdLong" : loadLine}); setCurrent(); }
     Coordinate {
         id: temp
@@ -190,31 +218,4 @@ Page {
             )
         }
     }
-/*    function setLineShape() {
-        if (loadLine != "") {
-            console.log("loading line shape #" + loadLine)
-            JS.__db().transaction(
-                function(tx) {
-                    try { var rs = tx.executeSql("SELECT lineShape FROM Lines WHERE lineIdLong=?", [loadLine]) }
-                    catch(e) { console.log("EXCEPTION " + e) }
-                    if (rs.rows.length > 0) {
-                        var coords = new Array
-                        var lonlat = new Array
-                        coords = rs.rows.item(0).lineShape.split("|")
-                        for (var ii=0;ii<coords.length;++ii) {
-                            lonlat = coords[ii].split(",")
-                            temp.longitude = lonlat[0]
-                            temp.latitude = lonlat[1]
-                            lineShape.addCoordinate(temp)
-                        }
-                        lonlat = coords[0].split(",")
-                        map.center.longitude = lonlat[0]
-                        map.center.latitude = lonlat[1]
-                        circle.center.longitude = lonlat[0]
-                        circle.center.latitude = lonlat[1]
-                    }
-                }
-            )
-        }
-    }*/
 }
