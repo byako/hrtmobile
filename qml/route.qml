@@ -2,13 +2,19 @@ import QtQuick 1.1
 import com.meego 1.0
 import QtMobility.location 1.2
 import "database.js" as JS
+import com.nokia.extras 1.0
 
 Page {
     id: routePage
     anchors.fill: parent
     tools: commonTools
     orientationLock: PageOrientation.LockPortrait
-
+    InfoBanner {             // info banner
+        id: infoBanner
+        text: "info description here"
+        z: 10
+        opacity: 1.0
+    }
     WorkerScript {
         id: loader
         source: "route.js"
@@ -26,10 +32,13 @@ Page {
 
         onMessage: {
             console.log("route.qml: stop: " + messageObject.stopIdLong + "; distance: " + messageObject.distance);
-            map.addMapObject(MapCircle({"id":messageObject.stopIdLong
-                                        //"center" : Coordinate({"longitude" : messageObject.longitude, "latitude" : messageObject.latitude})
-                                        }))
-
+            map.addMapObject(Qt.createQmlObject('import Qt 4.7; import QtMobility.location 1.2;' +
+                                                'MapCircle{ id: stop' + messageObject.stopIdLong +
+                                                '; center : Coordinate { longitude : ' + messageObject.longitude +
+                                                '; latitude : ' + messageObject.latitude +
+                                                '} color : "#80FF0000"; radius: 30.0; property string stopIdLong : "" +' + messageObject.stopIdLong +
+                                                '; MouseArea { anchors.fill: parent; onClicked: { infoBanner.text = stopIdLong; infoBanner.show() } }' +
+                                                '}', map) )
         }
     }
 
@@ -39,10 +48,11 @@ Page {
         active: true
         onPositionChanged: {
             console.log("position chhanged. distance from previous: " + position.coordinate.distanceTo(circle.center) );
-            stopsSearch.sendMessage({"longitude" : position.coordinate.longitude, "latitude" : position.coordinate.latitude})
             if (position.coordinate.distanceTo(circle.center) > 100) {
                 console.log("New position: lon: " + position.coordinate.longitude + "; lan: " + position.coordinate.latitude)
+                stopsSearch.sendMessage({"longitude" : position.coordinate.longitude, "latitude" : position.coordinate.latitude})
                 circle.center = position.coordinate
+                map.center = position.coordinate
             }
 
         }
@@ -81,7 +91,7 @@ Page {
                 latitude : 60.1636
                 longitude : 24.9167
             }
-            color : "#80FF0000"
+            color : "#80FF00"
             radius : 30.0
             MapMouseArea {
                 onPositionChanged: {
@@ -158,7 +168,8 @@ Page {
             }
             onDoubleClicked: {
                 map.center = mouse.coordinate
-                map.zoomLevel -= 1
+                map.zoomLevel += 1
+                console.log("MAP: zoom level : " + map.zoomLevel)
                 lastX = -1
                 lastY = -1
             }
