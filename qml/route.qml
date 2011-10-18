@@ -9,13 +9,14 @@ Page {
     anchors.fill: parent
     tools: commonTools
     orientationLock: PageOrientation.LockPortrait
+    property bool firstRun: true
     InfoBanner {             // info banner
         id: infoBanner
         text: "info description here"
         z: 10
         opacity: 1.0
     }
-    WorkerScript {
+    WorkerScript {  // line shape loader
         id: loader
         source: "route.js"
 
@@ -26,12 +27,19 @@ Page {
         }
     }
 
-    WorkerScript {
+    WorkerScript {  // nearby stops loader
         id: stopsSearch
         source: "mapStopsSearch.js"
 
         onMessage: {
             console.log("route.qml: stop: " + messageObject.stopIdLong + "; distance: " + messageObject.distance);
+            for (var ii=0; ii < map.objects.list; ++i) {
+                if (map.objects[ii].id == "stop" + messageOvject.stopIdLong) {
+                    console.log("Stop " + messageObject.stopIdLong + " is already on map. Skipping")
+                    return
+                }
+            }
+            console.log("MAP: CREATING STOP " + messageObject.stopIdLong);
             map.addMapObject(Qt.createQmlObject('import Qt 4.7; import QtMobility.location 1.2;' +
                                                 'MapCircle{ id: stop' + messageObject.stopIdLong +
                                                 '; center : Coordinate { longitude : ' + messageObject.longitude +
@@ -48,7 +56,8 @@ Page {
         active: true
         onPositionChanged: {
             console.log("position chhanged. distance from previous: " + position.coordinate.distanceTo(circle.center) );
-            if (position.coordinate.distanceTo(circle.center) > 100) {
+            if (position.coordinate.distanceTo(circle.center) > 100 || firstRun == true) {
+                firstRun = false
                 console.log("New position: lon: " + position.coordinate.longitude + "; lan: " + position.coordinate.latitude)
                 stopsSearch.sendMessage({"longitude" : position.coordinate.longitude, "latitude" : position.coordinate.latitude})
                 circle.center = position.coordinate
@@ -167,15 +176,17 @@ Page {
                 }
             }
             onDoubleClicked: {
+                console.log("MAP: doubleclicked!");
                 map.center = mouse.coordinate
-                map.zoomLevel += 1
-                console.log("MAP: zoom level : " + map.zoomLevel)
+//                map.zoomLevel += 1
+//                console.log("MAP: zoom level : " + map.zoomLevel)
                 lastX = -1
                 lastY = -1
             }
         }
-/*        PinchArea {
+        PinchArea {
            id: pincharea
+           pinch.target: map
            property double __oldZoom
            anchors.fill: parent
 
@@ -183,22 +194,28 @@ Page {
               return zoom + Math.log(percent)/Math.log(2)
            }
            onPinchStarted: {
-              __oldZoom = map.zoomLevel
+                console.log("MAP: PINCH STARTED")
+                __oldZoom = 1
            }
            onPinchUpdated: {
-              map.zoomLevel = calcZoomDelta(__oldZoom, pinch.scale)
+             if (Math.abs(__oldZoom - pinch.scale) > 0.1) {
+//                map.zoomLevel += (pinch.sczle - __oldZoom)/0.1
+                console.log("MA: PINCH UPDATE: " + (pinch.scale - __oldZoom)/0.1)
+             }
            }
            onPinchFinished: {
-              map.zoomLevel = calcZoomDelta(__oldZoom, pinch.scale)
+               console.log("MAP: PINCH FINISHED")
+//              map.zoomLevel = calcZoomDelta(__oldZoom, pinch.scale)
            }
-        }*/
+        }
 
         MapPolyline {
             id: lineShape
             border { color: "#ff0000"; width: 4; }
         }
     }
-    Keys.onPressed: {
+
+/*    Keys.onPressed: {
         if (event.key == Qt.Key_Plus) {
             map.zoomLevel += 1
         } else if (event.key == Qt.Key_Minus) {
@@ -210,7 +227,7 @@ Page {
                 map.mapType = Map.StreetMap
             }
         }
-    }
+    }*/
 //----------------------------------------------------------------------------//
     function setCurrent() {
         if (loadStop != "") {
