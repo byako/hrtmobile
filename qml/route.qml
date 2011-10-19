@@ -10,6 +10,7 @@ Page {
     tools: commonTools
     orientationLock: PageOrientation.LockPortrait
     property bool firstRun: true
+
     InfoBanner {             // info banner
         id: infoBanner
         text: "info description here"
@@ -26,41 +27,73 @@ Page {
             lineShape.addCoordinate(temp)
         }
     }
-
     WorkerScript {  // nearby stops loader
         id: stopsSearch
         source: "mapStopsSearch.js"
-
-        onMessage: {
-            console.log("route.qml: stop: " + messageObject.stopIdLong + "; distance: " + messageObject.distance);
-            for (var ii=0; ii < map.objects.list; ++i) {
-                if (map.objects[ii].id == "stop" + messageOvject.stopIdLong) {
+        onMessage: {                  // check if stop is already on the map before adding; leave if found
+            for (var ii=0; ii < stopsLoaded.count; ++ii) {
+                if (stopsLoaded.get(ii).stopIdLong == "" + messageObject.stopIdLong) {
                     console.log("Stop " + messageObject.stopIdLong + " is already on map. Skipping")
                     return
                 }
             }
-            console.log("MAP: CREATING STOP " + messageObject.stopIdLong);
+            stopsLoaded.append({"stopIdLong" : messageObject.stopIdLong,
+                                "longitude" : messageObject.longitude,
+                                "latitude" : messageObject.latitude,
+                                "status" : 0 })
+            console.log("MAP: CREATING STOP " + messageObject.stopIdLong + "; Coords: " + messageObject.longitude + ":" + messageObject.latitude + " ; Distance: " + messageObject.distance);
+            stopInfoLoad.sendMessage({"stopIdLong" : messageObject.stopIdLong})
             map.addMapObject(Qt.createQmlObject('import Qt 4.7; import QtMobility.location 1.2;' +
-                                                'MapCircle{ id: stop' + messageObject.stopIdLong +
+                                                'MapCircle{ id: mapStop' + messageObject.stopIdLong +
                                                 '; center : Coordinate { longitude : ' + messageObject.longitude +
                                                 '; latitude : ' + messageObject.latitude +
-                                                '} color : "#80FF0000"; radius: 30.0; property string stopIdLong : "" +' + messageObject.stopIdLong +
-                                                '; MouseArea { anchors.fill: parent; onClicked: { infoBanner.text = stopIdLong; infoBanner.show() } }' +
-                                                '}', map) )
+                                                '} color : "#80FF0000"; radius: 30.0' +
+                                                '; signal pupUp()' +
+                                                '; property string stopIdLong : "" +' + messageObject.stopIdLong +
+                                                '; property string distance : "" + ' + messageObject.distance +
+                                                '; MapMouseArea { anchors.fill: parent; onClicked: { routePage.pupUp(stopIdLong) } }' +
+                                                '}', map))
+
+        }
+    }
+    WorkerScript {
+        id: stopInfoLoad
+        source: "lineInfo.js"
+        onMessage: {
+            for (var ii=0; ii < stopsLoaded.count; ++ii) {
+                if (stopsLoaded.get(ii).stopIdLong == "" + messageObject.stopIdLong) {
+                    console.log("received info about " + messageObject.stopIdLong)
+                    if (messageObject.stopName == "Error") { // in case if server returned an error, don't repeat queries
+                        stopsLoaded.set(ii, {"status" : "-1"})
+                        return
+                    }
+                    stopsLoaded.set(ii,{"stopAddress" : messageObject.stopAddress, "stopName" : messageObject.stopName})
+                    if (stopsLoaded.get(ii).status == "2") {
+                        stopsLoaded.set(ii, {"status" : "1"})
+                        infoBanner.text = "Name: " + messageObject.stopName + " Address: " + messageObject.stopAddress
+                        infoBanner.show()
+                    }
+                    break
+                }
+            }
         }
     }
 
-    PositionSource {
+    ListModel {
+        id: stopsLoaded
+    }
+
+    PositionSource {// gps data receiver
         id: positionSource
         updateInterval: 10000
         active: true
         onPositionChanged: {
-            console.log("position chhanged. distance from previous: " + position.coordinate.distanceTo(circle.center) );
-            if (position.coordinate.distanceTo(circle.center) > 100 || firstRun == true) {
+            console.log("position chhanged. distance from previous: " + position.coordinate.distanceTo(positionCircle.center) );
+            if (position.coordinate.distanceTo(positionCircle.center) > 100 || firstRun == true) {
                 firstRun = false
                 console.log("New position: lon: " + position.coordinate.longitude + "; lan: " + position.coordinate.latitude)
                 stopsSearch.sendMessage({"longitude" : position.coordinate.longitude, "latitude" : position.coordinate.latitude})
-                circle.center = position.coordinate
+                positionCircle.center = position.coordinate
                 map.center = position.coordinate
             }
 
@@ -74,13 +107,6 @@ Page {
     property string loadStop: ""
     property string loadLine: ""
 
-/*    Rectangle {
-        id: background
-        anchors.fill: parent
-        width: parent.width
-        height:  parent.height
-        color: config.bgColor
-    }*/
     Map {
         id: map
         z : 1
@@ -95,7 +121,7 @@ Page {
             longitude: 24.9167
         }
         MapCircle {
-            id : circle
+            id : positionCircle
             center : Coordinate {
                 latitude : 60.1636
                 longitude : 24.9167
@@ -103,12 +129,12 @@ Page {
             color : "#80FF00"
             radius : 30.0
             MapMouseArea {
-                onPositionChanged: {
-                    if (mouse.button == Qt.LeftButton)
-                        circle.center = mouse.coordinate
-                    if (mouse.button == Qt.RightButton)
-                        circle.radius = circle.center.distanceTo(mouse.coordinate)
+                onClicked: {
+                    console.log("Me touched!");
                 }
+/*                onPositionChanged: {
+                    positionCircle.center = mouse.coordinate
+                }*/
             }
         }
         Landmark {
@@ -121,38 +147,6 @@ Page {
             }
         }
 
-/*        MouseArea {
-            id: mousearea
-            property bool __isPanning: false
-            property int __lastX: -1
-            property int __lastY: -1
-
-            anchors.fill : parent
-
-            onPressed: {
-                __isPanning = true
-                __lastX = mouse.x
-                __lastY = mouse.y
-            }
-
-            onReleased: {
-                __isPanning = false
-            }
-
-            onPositionChanged: {
-                if (__isPanning) {
-                    var dx = mouse.x - __lastX
-                    var dy = mouse.y - __lastY
-                    map.pan(-dx, -dy)
-                    __lastX = mouse.x
-                    __lastY = mouse.y
-                }
-            }
-
-            onCanceled: {
-                __isPanning = false;
-            }
-        } */
         MapMouseArea {
             property int lastX : -1
             property int lastY : -1
@@ -178,13 +172,11 @@ Page {
             onDoubleClicked: {
                 console.log("MAP: doubleclicked!");
                 map.center = mouse.coordinate
-//                map.zoomLevel += 1
-//                console.log("MAP: zoom level : " + map.zoomLevel)
                 lastX = -1
                 lastY = -1
             }
         }
-        PinchArea {
+/*        PinchArea {
            id: pincharea
            pinch.target: map
            property double __oldZoom
@@ -212,23 +204,62 @@ Page {
         MapPolyline {
             id: lineShape
             border { color: "#ff0000"; width: 4; }
+        }*/
+
+        ButtonRow {
+            z: 5
+            opacity: 0.8
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 20
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: 200
+            height: 45
+            Button {
+                id: zoomIn
+                checkable: false
+                text: "+"
+                onClicked: {
+                    map.zoomLevel += 1
+                }
+            }
+            Button {
+                id: zoomOut
+                checkable: false
+                text: "-"
+                onClicked: {
+                    map.zoomLevel -= 1
+                }
+            }
+            Button {
+                id: findMe
+                checkable: false
+                text: "Me"
+                onClicked: {
+                    map.center = positionCircle.center
+                }
+            }
         }
     }
 
-/*    Keys.onPressed: {
-        if (event.key == Qt.Key_Plus) {
-            map.zoomLevel += 1
-        } else if (event.key == Qt.Key_Minus) {
-            map.zoomLevel -= 1
-        } else if (event.key == Qt.Key_T) {
-            if (map.mapType == Map.StreetMap) {
-                map.mapType = Map.SatelliteMapDay
-            } else if (map.mapType == Map.SatelliteMapDay) {
-                map.mapType = Map.StreetMap
+//----------------------------------------------------------------------------//
+    function pupUp(stopIdLong_) {
+        for (var ii=0; ii < stopsLoaded.count; ++ii) {
+            if (stopsLoaded.get(ii).stopIdLong == "" + stopIdLong_) {
+                if (stopsLoaded.get(ii).status == 0 || stopsLoaded.get(ii).status == 2) { // [2] : waiting status: if still in waiting status - repeat request
+                    stopsLoaded.set(ii,{"status" : 2})
+                    console.log("STATUS WAS 2")
+                    stopInfoLoad.sendMessage({"stopIdLong" : stopIdLong_})
+                } else if (stopsLoaded.get(ii).status == -1) {  // [-1] : invalid stop ID, no info on server, got an error from it
+                    infoBanner.text = "Error: no info on server"
+                    infoBanner.show()
+                } else  { // print current ifo
+                    infoBanner.text = "Name: " + stopsLoaded.get(ii).stopName + " Address: " + stopsLoaded.get(ii).stopAddress
+                    infoBanner.show()
+                }
             }
         }
-    }*/
-//----------------------------------------------------------------------------//
+    }
+
     function setCurrent() {
         if (loadStop != "") {
             console.log("loading stop #" + loadStop)
@@ -238,9 +269,9 @@ Page {
                     catch (e) { console.log("route: setCurrent EXCEPTION: "+ e) }
                     if (rs.rows.length > 0) {
                         map.center.longitude = rs.rows.item(0).stopLongitude
-                        circle.center.longitude = rs.rows.item(0).stopLongitude
+                        positionCircle.center.longitude = rs.rows.item(0).stopLongitude
                         map.center.latitude = rs.rows.item(0).stopLatitude
-                        circle.center.latitude = rs.rows.item(0).stopLatitude
+                        positionCircle.center.latitude = rs.rows.item(0).stopLatitude
                     }
                 }
             )

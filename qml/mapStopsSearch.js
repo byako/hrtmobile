@@ -20,6 +20,6 @@ WorkerScript.onMessage = function (message) {
         }
     }
 //              API 1.0 (XML)
-    doc.open("GET", "http://api.reittiopas.fi/public-ytv/fi/api/?closest_stops=1&lon=" + message.longitude + "&lat=" + message.latitude + "&user=byako&pass=gfccdjhl&radius=150")
+    doc.open("GET", "http://api.reittiopas.fi/public-ytv/fi/api/?closest_stops=1&lon=" + message.longitude + "&lat=" + message.latitude + "&user=byako&pass=gfccdjhl&radius=250")
     doc.send();
 }

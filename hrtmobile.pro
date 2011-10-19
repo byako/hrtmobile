@@ -72,15 +72,10 @@ contains(MEEGO_EDITION,harmattan) {
     INSTALLS += icon
 }
 
-
-
-
-
-
-
-
-
-
+contains(MEEGO_EDITION,harmattan) {
+    target.path = /opt/hrtmobile/bin
+    INSTALLS += target
+}
 
 
 

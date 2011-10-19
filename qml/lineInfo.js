@@ -10,6 +10,8 @@ WorkerScript.onMessage = function (message) {
     doc.onreadystatechange = function() {
         if (doc.readyState == XMLHttpRequest.DONE) {
             if (doc.responseText.slice(0,5) == "Error") {
+                // check what happens if return stopname equal to "Error" aroung lineInfo.qml
+                WorkerScript.sendMessage({"stopIdLong" : message.stopIdLong, "stopName" : "Error"});
             } else {
                 schedule = doc.responseText.split("\n")
                 lines = schedule[0].split("|")
