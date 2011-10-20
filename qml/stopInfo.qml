@@ -15,19 +15,38 @@ Page {
     property int selectedStopIndex: -1
     orientationLock: PageOrientation.LockPortrait
 
+    WorkerScript {
+        id: loadStopSchedule
+        source: "stopInfoScheduleLoad.js"
+        onMessage: {
+            if (messageObject.departName == "STOPNAME") {
+                stopName.text = messageObject.stopName
+                stopAddress.text = messageObject.stopAddress
+                stopCity.text = messageObject.stopCity
+            } else if (messageObject.departName == "ERROR") {
+                showError("Server returned ERROR")
+                loading.visible = false
+                loadingMap.visible = false
+                dataRect.visible = false
+            } else if (messageObject.departName == "FINISHED"){
+                loading.visible = false
+            } else {
+                trafficModel.append({"departTime" : messageObject.departTime,
+                                     "departLine" : messageObject.departLine,
+                                     "departDest" : messageObject.departDest,
+                                     "departCode" : messageObject.departCode,})
+            }
+        }
+    }
+
     Component.onCompleted: { refreshConfig(); infoModel.clear(); fillModel(); setCurrent(); }
     Item {                   // busy indicator
         id: loading
         visible: false
-        anchors.fill: parent
-        width: parent.width
-        height: parent.height
+        anchors.fill: infoRect
         z: 8
         Rectangle {
-            width: parent.width
-            height: parent.height
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.fill: parent
             color:"#FFFFFF"
             opacity: 0.7
         }
@@ -144,6 +163,7 @@ Page {
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
                     running: true
+                    visible: false
                     z: 8
                 }
             }
@@ -208,6 +228,7 @@ Page {
 
     ButtonRow {              // tabs rect
         id: tabRect
+        enabled: loading.visible == true ? false : true
         width: parent.width
         anchors.top: dataRect.bottom
         anchors.topMargin: 5
@@ -325,7 +346,7 @@ Page {
                 onClicked: {
                     if (selectedStopIndex != index) {
                         selectedStopIndex = index
-                        recentList.focus = true
+//                        recentList.focus = true
                         recentList.currentIndex = index
                         searchString = recentModel.get(index).stopIdLong
                         showMapButtonButton.visible = true
@@ -338,7 +359,6 @@ Page {
                             stopAddress.text = recentModel.get(recentList.currentIndex).stopAddress
                             stopCity.text = recentModel.get(recentList.currentIndex).stopCity
                             dataRect.visible = true
-                            loadingMap.visible = false
                             showMapButtonButton.visible = true
                         } else {
                             updateSchedule()
@@ -367,7 +387,7 @@ Page {
             departCode: "JORE code"
         }
     }
-    Component {     // traffic delegate
+    Component {              // traffic delegate
         id:trafficDelegate
         Item {
             width: grid.cellWidth; height:  grid.cellHeight;
@@ -399,14 +419,14 @@ Page {
             }
         }
     }
-    ListModel {     // stop info model
+    ListModel {              // stop info model
         id:infoModel
         ListElement {
             propName: ""
             propValue: ""
         }
     }
-    Component {     // stop info delegate
+    Component {              // stop info delegate
         id: infoDelegate
         Item {
             width: list.width
@@ -429,14 +449,14 @@ Page {
             }
         }
     }
-    ListModel {     // lines passing model
+    ListModel {              // lines passing model
         id: linesModel
         ListElement {
             lineNumber: ""
             lineDest: ""
         }
     }
-    Component {     // lines passing delegate
+    Component {              // lines passing delegate
         id: linesDelegate
         Item {
             width: list.width
@@ -459,7 +479,7 @@ Page {
             }
         }
     }
-    Component {     // lines passing header Header
+    Component {              // lines passing header Header
         id: linesHeader
         Item {
             width: recentList.width
@@ -481,7 +501,7 @@ Page {
             }
         }
     }
-    Item {     // grid rect
+    Item {                   // grid rect
         id: infoRect
         anchors.top: tabRect.bottom
         anchors.topMargin: 10
@@ -548,139 +568,27 @@ Page {
         infoBanner.text = errorText
         infoBanner.show()
     }
-    function parseResponse(a) { // parsing plaintext table | fetching schedule
-        var schedText = new String;
-        schedText = a;
-        var schedule = new Array;
-        var lines = new Array;
-        var time_ = Array
-
+    function getSchedule() {
+        loading.visible = true
+        loadStopSchedule.sendMessage({"searchString" : searchString})
         grid.currentIndex = 0
-        schedule = schedText.split("\n")
-        lines = schedule[0].split("|")
-        stopName.text = lines[1]
-        stopAddress.text = lines[2]
-        stopCity.text = lines[3]
-        for (var ii = 1; ii < schedule.length-1; ii++) {
-            lines = schedule[ii].split("|")
-            time_[0] = lines[0].slice(0,lines[0].length -2)
-            time_[1] = lines[0].slice(lines[0].length-2,lines[0].length)
-            if (time_[0] > 23) time_[0]-=24
-            trafficModel.append({ "departTime" : ""+time_[0]+":"+time_[1], "departLine" : "" + lines[1], "departDest" : lines[2], "departCode" : lines[3] })
-        }
-        loading.visible = false
         grid.focus = true
         grid.visible = true
         list.visible = false
         recentList.visible = false
         dataRect.visible = true
     }
-    function getSchedule() {    // Use Api v1.0 to get just schedule - less data traffic, more departures in one reply
-        var doc = new XMLHttpRequest()
-        doc.onreadystatechange = function() {
-            if (doc.readyState == XMLHttpRequest.DONE) {
-                if (doc.responseText.slice(0,5) == "Error") {
-                    showError("Schedule ERROR. Server returned error for Stop ID:"+searchString)
-                    return
-                } else {
-                    parseResponse(doc.responseText)
-                }
-            } else if (doc.readyState == XMLHttpRequest.ERROR) {
-                showError("Request error. Is Network available?")
-            }
-        }
-        //              API 1.0 (plaintext) : faster, more informative
-        doc.open("GET", "http://api.reittiopas.fi/public-ytv/fi/api/?stop="+ searchString+"&user=byako&pass=gfccdjhl");
-        loading.visible = true
-        doc.send();
-    }
-    function parseInfo(a) {     // Stop info parsing
-        var lonlat = Array
-        var coords = String
-        infoModel.clear()
-        for (var ii = 0; ii < a.childNodes.length; ++ii) {
-            stopAddString += a.childNodes[ii].childNodes[0].firstChild.nodeValue
-            stopAddString += ";"
-            stopAddString += a.childNodes[ii].childNodes[1].firstChild.nodeValue
-            stopAddString += ";"
-            stopAddString += a.childNodes[ii].childNodes[2].firstChild.nodeValue
-            stopAddString += ";"
-            stopAddString += stopAddress.text
-            stopAddString += ";"
-            stopAddString += a.childNodes[ii].childNodes[4].firstChild.nodeValue
-            stopAddString += ";"
-            coords = a.childNodes[ii].childNodes[8].firstChild.nodeValue
-            lonlat = coords.split(",")
-            stopAddString += lonlat[0]
-            stopAddString += ";"
-            stopAddString += lonlat[1]
-            stopAddString += ";"
-            linesModel.clear()
-            JS.__db().transaction(  // stop lines
-                function(tx) {
-                    for (var cc=0;cc<a.childNodes[ii].childNodes[6].childNodes.length;++cc) {
-                       try {
-                           lonlat = a.childNodes[ii].childNodes[6].childNodes[cc].firstChild.nodeValue.split(":");
-                           tx.executeSql("INSERT INTO stopLines VALUES(?,?,?)", [a.childNodes[ii].childNodes[0].firstChild.nodeValue,
-                                                                                 lonlat[0],lonlat[1]])
-                           linesModel.append({"lineNumber":lonlat[0],"lineDest":lonlat[1]})
-                        }
-                        catch(e) {
-                            console.log("stopInfo: Exception during pushing stopLines: CC = " + cc)
-                        }
-                    }
-                }
-            )
-            JS.__db().transaction(  // stop info
-                function(tx) {
-                    for (var oo=0;oo<a.childNodes[ii].childNodes[9].childNodes.length;++oo) {
-                        try{
-                            infoModel.append({"propName" : a.childNodes[ii].childNodes[9].childNodes[oo].nodeName,
-                                         "propValue" : a.childNodes[ii].childNodes[9].childNodes[oo].firstChild.nodeValue})
-                            tx.executeSql("INSERT INTO stopInfo VALUES(?,?,?)", [a.childNodes[ii].childNodes[0].firstChild.nodeValue,
-                                                                                 a.childNodes[ii].childNodes[9].childNodes[oo].nodeName,
-                                                                                 a.childNodes[ii].childNodes[9].childNodes[oo].firstChild.nodeValue])
-                        }
-                        catch(e) { console.log("stopInfo: parsing stop info : " + e) }
-                    }
-                 }
-            )
-            searchString = a.childNodes[ii].childNodes[0].firstChild.nodeValue
-            showMapButtonButton.visible = true
-            coords = JS.addStop(stopAddString)
-            stopAddString = ""
-            if (coords == 1) {
-                showError("Saved stop info: " + stopName.text)
-                fillModel()
-            } else if (coords == -1) {
-                showError("ERROR. Stop is not added. Sorry")
-            }
-        }
-        loadingMap.visible = false
-    }
-    function getInfo() {        // Use Api v2.0 - more informative about the stop itself, conditions, coordinates
-        var doc = new XMLHttpRequest()
-        doc.onreadystatechange = function() {
-            if (doc.readyState == XMLHttpRequest.DONE) {
-                parseInfo(doc.responseXML.documentElement)
-            } else if (doc.readyState == XMLHttpRequest.ERROR) {
-                showError("Request error. Is Network available?")
-            }
-        }
-//              API 2.0 (XML) : slower
-        doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=stop&code=" + searchString + "&user=byako&pass=gfccdjhl&format=xml")
-        doc.send();
-    }
+
     function buttonClicked() {  // SearchBox actioncommander keen
-/*        if (searchString == "" || searchString.length > 7 || searchString.length < 4) {
+        if (searchString == "" || searchString.length > 7 || searchString.length < 4) {
             showError("Wrong stop ID:"+searchString+".\nStop ID is 4 digit or 1 letter & 4 digits. Example: E3127")
-            return;
-        }*/
+        }
         if (config.networking < 1) {
             offlineModeOff.open();
             return
         }
         infoModel.clear()
+        loadingMap.visible = true
         getInfo()
         updateSchedule()
         fillModel()

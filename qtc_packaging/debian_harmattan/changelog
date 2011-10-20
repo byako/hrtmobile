@@ -10,7 +10,7 @@ hrtmobile (0.2.0) unstable; urgency=low
 
  -- Alexey Fomenko <alexey.fomenko@gmail.com>  Sun, 21 Aug 2011 20:59:15 +0300
 
-hrtmobile (0.2.0) unstable; urgency=low
+hrtmobile (0.1.0) unstable; urgency=low
 
   * Initial Release.
 

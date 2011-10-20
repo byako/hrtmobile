@@ -21,5 +21,6 @@
         <file>qml/lineInfoSchedule.js</file>
         <file>qml/lineInfoLoadLines.js</file>
         <file>qml/mapStopsSearch.js</file>
+        <file>qml/stopInfoScheduleLoad.js</file>
     </qresource>
 </RCC>

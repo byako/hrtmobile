@@ -33,7 +33,6 @@ stopInfo:
 * add networking config support
 * add confirmation on delete all stops action
 * save schedule in DB
-* show nearest available stops based on GPS data
 * split depart schedule to hours
 * merge same stops, show all line types in drop down or so
 * fix showLine map action in context of stopInfo
@@ -54,7 +53,6 @@ route
 * check where threading can be enabled more (i.e. surrounding stops and all passing routes load)
 * use landmarks from Location API on route page
 * show stops from database
-* check if nearby stop is already on the map
 
 Done:
 * stopInfo: make sure after search lines\stops list has currentIndex of new stop, it will be used in route/map page: after moving index show line info
@@ -68,6 +66,8 @@ Done:
 * settings: fix themes selection/set
 * lineInfo: fill lineInfoModel in workerscript
 * route:    show nearby stops
+* show nearest available stops based on GPS data
+* check if nearby stop is already on the map
 
 2011 09 27
 * lineInfo: add settings "group same line with diff directions"

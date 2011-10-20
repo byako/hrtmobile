@@ -46,7 +46,7 @@ Page {
             platformStyle: BusyIndicatorStyle { size: "large" }
         }
     }
-    WorkerScript {  // stopReach loader
+    WorkerScript {  // stop name loader
         id: stopReachLoader
         source: "lineInfo.js"
 
@@ -586,11 +586,11 @@ Page {
         }
     }
 /*<-------------------------------------------------------------------------->*/
-    function showError(errorText) {  // show popup splash window with error
+    function showError(errorText) {   // show popup splash window with error
         infoBanner.text = errorText
         infoBanner.show()
     }
-    function getStops() {             // parse stops from dox.responseXML
+    function getStops() {             // load stops from LineStops database table
         var temp_name
         JS.__db().transaction(
             function(tx) {
@@ -672,7 +672,7 @@ Page {
                 }
             )
     }
-    function getXML() {              // xml http request                 : TODO : switch to use local var instead of JS.doc
+    function getXML() {               // xml http request                 : TODO : switch to use local var instead of JS.doc
       var doc = new XMLHttpRequest()
         doc.onreadystatechange = function() {
             if (doc.readyState == XMLHttpRequest.HEADERS_RECEIVED) {
@@ -703,7 +703,7 @@ Page {
         scheduleModel1.clear()
         scheduleModel2.clear()
     }
-    function buttonClicked() {  // entry point after search dialog: searchString is set now to what user has entered to search
+    function buttonClicked() {        // entry point after search dialog: searchString is set now to what user has entered to search
         if (searchString == "Enter LineID" || searchString == "") {
             showError("Enter search criteria\nline number/line code/Key place\ni.e. 156A or Tapiola")
             return
@@ -714,7 +714,7 @@ Page {
             gotLinesInfo()
         }
     }
-    function updateStopReachModel() {
+    function updateStopReachModel() { // use workerScript to load stops names
         for (var ii=0;ii<stopReachModel.count;++ii) {
             stopReachModel.set(ii,{"stopName" : JS.getStopName(stopReachModel.get(ii).stopIdLong)});
             if (stopReachModel.get(ii).stopName == "") {
@@ -722,7 +722,7 @@ Page {
             }
         }
     }
-    function showMap() {        // push Map page or replace current with Map page
+    function showMap() {              // push Map page or replace current with Map page
             if (loadLineMap != "") {
                 pageStack.replace(Qt.resolvedUrl("route.qml"),{"loadLine":searchString})
             } else {
@@ -786,7 +786,7 @@ Page {
             scheduleClear()
         }
     }
-    function gotLinesInfo() {  // after offline search is succeded
+    function gotLinesInfo() {         // after offline search is succeded
         infoRect.visible = true;
         if (loadLineMap != "") {
             linesList.currentIndex = 0
@@ -801,7 +801,7 @@ Page {
             showLineInfo()
         }
     }
-    function refreshConfig() {
+    function refreshConfig() {        // reload config from database - same function on every page
         JS.loadConfig(config)
     }
 /*<----------------------------------------------------------------------->*/
