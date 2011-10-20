@@ -10,6 +10,8 @@ Page {
     tools: commonTools
     orientationLock: PageOrientation.LockPortrait
     property bool firstRun: true
+    property string loadStop: ""
+    property string loadLine: ""
 
     InfoBanner {             // info banner
         id: infoBanner
@@ -56,7 +58,7 @@ Page {
 
         }
     }
-    WorkerScript {
+    WorkerScript {  // nearby stops info load
         id: stopInfoLoad
         source: "lineInfo.js"
         onMessage: {
@@ -86,7 +88,7 @@ Page {
     PositionSource {// gps data receiver
         id: positionSource
         updateInterval: 10000
-        active: true
+        active: (loadStop == loadLine) ? true : false
         onPositionChanged: {
             console.log("position chhanged. distance from previous: " + position.coordinate.distanceTo(positionCircle.center) );
             if (position.coordinate.distanceTo(positionCircle.center) > 100 || firstRun == true) {
@@ -101,11 +103,10 @@ Page {
     }
 
     Component.onCompleted: { loader.sendMessage({"lineIdLong" : loadLine}); setCurrent(); }
+
     Coordinate {
         id: temp
     }
-    property string loadStop: ""
-    property string loadLine: ""
 
     Map {
         id: map
@@ -199,12 +200,12 @@ Page {
                console.log("MAP: PINCH FINISHED")
 //              map.zoomLevel = calcZoomDelta(__oldZoom, pinch.scale)
            }
-        }
+        }*/
 
         MapPolyline {
             id: lineShape
             border { color: "#ff0000"; width: 4; }
-        }*/
+        }
 
         ButtonRow {
             z: 5
