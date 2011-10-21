@@ -22,6 +22,7 @@ Page {
             if (messageObject.departName == "STOPNAME") {
                 stopName.text = messageObject.stopName
                 stopAddress.text = messageObject.stopAddress
+                loadStopInfo.sendMessage({"searchString" : searchString,"stopAddress" : messageObject.stopAddress})
                 stopCity.text = messageObject.stopCity
             } else if (messageObject.departName == "ERROR") {
                 showError("Server returned ERROR")
