@@ -1,60 +1,72 @@
 general:
-
-INVESTIGATE SEGFAULT DURING LINESHAPE SHOW IN MAP SESSION FROM STOP INFO
-
-* add db init on first run
-* use WorkerScript to provide threading in lineInfo, stopInfo, settings, realtimeSchedule,  mainPage (route - loading done)
-* finish networking config in settings and lineInfo - make possible to search online using dialog to ask
-* pinch anction on map
-* lazy pages load
-* use NetworkInfo API to check if online\offline http://doc.qt.nokia.com/qtmobility-1.2/qml-networkinfo.html
-* check if the page is in stack before pushing so we can prevent loops
-* fix models names and views names
-* split all data into favorites and just DB
-* koolah
+ - To fix
+	* add db init on first run
+	* use WorkerScript to provide threading in lineInfo, settings, realtimeSchedule,  mainPage (route - loading done, stopInfo - done)
+	* check if the page is in stack before pushing so we can prevent loops
+	* fix models names and views names
+ - To implement
+	* finish networking config in settings and lineInfo - make possible to search online using dialog to ask
+	* pinch anction on map
+	* lazy pages load
+	* use NetworkInfo API to check if online\offline http://doc.qt.nokia.com/qtmobility-1.2/qml-networkinfo.html
+	* split all data into favorites and just DB
+	* koolah
 
 lineInfo:
-* when moving to stop info pass the line number to highlight
-* add networking config support
-* add possibility to search online even when offline data found
-* add confirmation on delete all lines action
-* remove exceeding fields in lineInfoModel
-* add checkboxes to multiselectiong dialog lines
-* on stops tab if stop selected - show on map (if showMapButton triggered)
-* show saved stops on map, ask to download all stops info
-* check for schedule in DB. show saved schedule
-* save schedule to database
-* after search fill data in search result model so main model is untouched and can be shown again. Allow switch between models
+ - To fix
+	* remove exceeding fields in lineInfoModel
+	* on stops tab if stop selected - show on map (if showMapButton triggered)
+	* show saved stops on map, ask to download all stops info
+	* when moving to stop info pass the line number to highlight
+	* after search fill data in search result model so main model is untouched and can be shown again. Allow switch between models
+ - To implement
+	* schedule to database
+	* check for schedule in DB. show saved schedule
+	* add networking config support
+	* add possibility to search online even when offline data found
+	* add confirmation on delete all lines action
+	* add checkboxes to multiselectiong dialog lines
 
 stopInfo:
-* check if came from schedule - open search dialog
-* if moved from line info - highlight retrieved line number
-* move lines parsing to worker script
-* add networking config support
-* add confirmation on delete all stops action
-* save schedule in DB
-* split depart schedule to hours
-* merge same stops, show all line types in drop down or so
-* fix showLine map action in context of stopInfo
+ - To fix
+        * if stop is saved but no time schedule returned - show rest of the data
+	* check if came from schedule - open search dialog
+	* split depart schedule to hours
+
+ - To implement
+	* if moved from line info - highlight retrieved line number
+	* add networking config support
+	* add confirmation on delete all stops action
+	* save schedule in DB
+	* merge same stops, show all line types in drop down or so
 
 settings:
-* add networking mode variants:
+ - To fix
+ - To implement
+
+realtime:
+ - To fix
+	* schedule countdown timer visualize
+	* when moving to stopInfo search - push also search flag to open search dialog
+ - To implement
+	* add context menu to propose show selected stop on map
+	* add busy indicator while loading stop schedule
+
+route
+ - To fix
+ - To implement
+	* use landmarks from Location API on route page
+	* show stops from database
+
+Done:
+* route: check where threading can be enabled more (i.e. surrounding stops and all passing routes load)
+* settings: add networking mode variants:
  - full offline
  - full online
  - info offline\schedule online
-
-realtime:
-* schedule countdown timer visualize
-* add context menu to propose show selected stop on map
-* add busy indicator while loading stop schedule
-* when moving to stopInfo search - push also search flag to open search dialog
-
-route
-* check where threading can be enabled more (i.e. surrounding stops and all passing routes load)
-* use landmarks from Location API on route page
-* show stops from database
-
-Done:
+* stopInfo: fix showLine map action in context
+* stopInfo: when moving to line map from schedule delegate don't check line offline availability, just move to map with line ID, map will check or fetch line data
+* stopInfo: move all data fetch to workerScripts
 * stopInfo: make sure after search lines\stops list has currentIndex of new stop, it will be used in route/map page: after moving index show line info
 * lineInfo: fix stop name fetch: use from 1st model fill. now works only after moving to other page
 * lineInfo: fetch schedule in working script

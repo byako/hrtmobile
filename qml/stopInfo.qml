@@ -15,15 +15,41 @@ Page {
     property int selectedStopIndex: -1
     orientationLock: PageOrientation.LockPortrait
 
-    WorkerScript {
+    WorkerScript {           // load stop info in database
+        id: loadStopInfo
+        source: "stopInfoLoadInfo.js"
+        onMessage: {
+            if (messageObject.action == "SAVED") {
+                loadingMap.visible = false
+                searchString = messageObject.stopIdLong
+                console.log("WORKER SENT stopIdLong: setting searchString = " + messageObject.stopIdLong)
+                infoModel.clear()
+                linesModel.clear()
+                fillModel()
+                fillLinesModel()
+                fillInfoModel()
+                showError("Saved stop information")
+            } else if (messageObject.action == "ERROR") {
+                showError("Server returned ERROR");
+            } else if (messageObject.action == "FAILED") {
+                showError("Couldn't open information")
+            }
+        }
+    }
+    WorkerScript {           // fast schedule loader
         id: loadStopSchedule
         source: "stopInfoScheduleLoad.js"
         onMessage: {
             if (messageObject.departName == "STOPNAME") {
                 stopName.text = messageObject.stopName
                 stopAddress.text = messageObject.stopAddress
-                loadStopInfo.sendMessage({"searchString" : searchString,"stopAddress" : messageObject.stopAddress})
+                if (recentModel.get(selectedStopIndex).stopIdLong != searchString) {
+                    loadStopInfo.sendMessage({"searchString" : searchString,"stopAddress" : messageObject.stopAddress})
+                } else {
+                    loadingMap.visible = false
+                }
                 stopCity.text = messageObject.stopCity
+                loadingMap.visible = true
             } else if (messageObject.departName == "ERROR") {
                 showError("Server returned ERROR")
                 loading.visible = false
@@ -113,11 +139,29 @@ Page {
             MenuItem {
                 text: "Line Map"
                 onClicked : {
-                    switchToMap()
+                    pageStack.push(Qt.resolvedUrl("route.qml"),{"loadLine":trafficModel.get(grid.currentIndex).departCode, "loadStop":searchString});
                 }
             }
         }
     }
+    ContextMenu {            // passing line context menu
+        id: linesPassingContext
+        MenuLayout {
+            MenuItem {
+                text: "Line Info"
+                onClicked : {
+                    pageStack.push(Qt.resolvedUrl("lineInfo.qml"),{"loadLine":linesModel.get(linesList.currentIndex).lineNumber});
+                }
+            }
+            MenuItem {
+                text: "Line Map"
+                onClicked : {
+                    pageStack.push(Qt.resolvedUrl("route.qml"),{"loadLine":linesModel.get(linesList.currentIndex).lineNumber, "loadStop":searchString});
+                }
+            }
+        }
+    }
+
     Rectangle {              // dark background
         color: config.bgColor;
         anchors.fill: parent
@@ -140,7 +184,7 @@ Page {
         height: 120
         width: parent.width
         visible: false
-        Rectangle { // showMapButton
+        Rectangle {          // showMapButton
                 id: showMapButton
                 anchors.top: parent.top
                 anchors.right: parent.right
@@ -154,12 +198,12 @@ Page {
                     id: showMapButtonButton
                     anchors.fill: parent
                     text: "M"
-                    visible: false
+                    visible: loadingMap.visible == true ? false: true
                     onClicked: {
                         pageStack.push(Qt.resolvedUrl("route.qml"),{"loadStop":searchString})
                     }
                 }
-                BusyIndicator{    // loading spinner
+                BusyIndicator{// loading spinner
                     id: loadingMap
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
@@ -478,6 +522,11 @@ Page {
                     color: config.textColor
                 }
             }
+            MouseArea{
+                anchors.fill: parent
+                onPressAndHold: { linesPassingContext.open() }
+                onClicked: { linesList.currentIndex = index }
+            }
         }
     }
     Component {              // lines passing header Header
@@ -588,12 +637,7 @@ Page {
             offlineModeOff.open();
             return
         }
-        infoModel.clear()
-        loadingMap.visible = true
-        getInfo()
         updateSchedule()
-        fillModel()
-        showMapButtonButton.visible = false
     }
     function updateSchedule() { // update only schedule
         trafficModel.clear()
@@ -601,20 +645,24 @@ Page {
         tabRect.checkedButton = stopSchedule
     }
     function fillModel() {      // checkout recent stops from database
+        console.log("Fill model started")
         recentModel.clear();
         JS.__db().transaction(
             function(tx) {
                      var rs = tx.executeSql("SELECT * FROM Stops ORDER BY stopName ASC");
-                     recentModel.clear();
-                     if (rs.rows.length > 0) {
                          for (var i=0; i<rs.rows.length; ++i) {
-                                 recentModel.append(rs.rows.item(i))
+                            recentModel.append(rs.rows.item(i))
+                             console.log("recentModel: add "  + rs.rows.item(i).stopIdLong)
+                             if (rs.rows.item(i).stopIdLong == searchString) {
+                                 console.log("fillModel: found index:" + i + " : " + rs.rows.item(i).stopIdLong)
+                                 selectedStopIndex = i
+                             }
                          }
-                     }
                  }
         )
     }
     function fillInfoModel() {  // checkout stop info from database
+        console.log("Fill info model started")
         JS.__db().transaction(
             function(tx) {
                 try { var rs = tx.executeSql("SELECT option,value FROM StopInfo WHERE stopIdLong=?",[recentModel.get(selectedStopIndex).stopIdLong]); }
@@ -631,7 +679,7 @@ Page {
         JS.__db().transaction(
             function(tx) {  // TODO
                 try { var rs = tx.executeSql("SELECT lineIdLong, lineEnd FROM StopLines WHERE stopIdLong=?",[recentModel.get(selectedStopIndex).stopIdLong]); }
-                catch(e) { console.log("FillInfoModel EXCEPTION: " + e) }
+                catch(e) { console.log("FillLinesModel EXCEPTION: " + e) }
                 linesModel.clear();
                 for (var i=0; i<rs.rows.length; ++i) {
                     linesModel.append({"lineNumber" : rs.rows.item(i).lineIdLong,
@@ -655,29 +703,6 @@ Page {
                         }
                  }
              )
-        }
-    }
-    function switchToMap() {    // ContextMenu map item action
-        var retVal = 0
-        JS.__db().transaction(
-            function(tx) {
-                try {
-                    var rs = tx.executeSql("SELECT lineIdLong FROM Lines where lineIdLong=?",[trafficModel.get(grid.currentIndex).departCode])
-                    if (rs.rows.length > 0) {
-                        showError("Loading line info...")
-                    } else {
-                        retVal = 1
-                    }
-                }
-                catch(e) {
-                    console.log("stopInfo: " + e)
-                }
-            }
-        )
-        if (retVal != 0) { // get new line info
-            pageStack.push(Qt.resolvedUrl("lineInfo.qml"),{"loadLineMap":trafficModel.get(grid.currentIndex).departCode});
-        } else { // just open map
-            pageStack.push(Qt.resolvedUrl("route.qml"),{"loadLine":trafficModel.get(grid.currentIndex).departCode});
         }
     }
     function refreshConfig() {

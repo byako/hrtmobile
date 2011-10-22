@@ -263,7 +263,6 @@ Page {
 
     function setCurrent() {
         if (loadStop != "") {
-            console.log("loading stop #" + loadStop)
             JS.__db().transaction(
                 function(tx) {
                     try {var rs = tx.executeSql("SELECT stopLongitude,stopLatitude FROM Stops WHERE stopIdLong=?", [loadStop]) }
@@ -273,6 +272,8 @@ Page {
                         positionCircle.center.longitude = rs.rows.item(0).stopLongitude
                         map.center.latitude = rs.rows.item(0).stopLatitude
                         positionCircle.center.latitude = rs.rows.item(0).stopLatitude
+                    } else {
+
                     }
                 }
             )

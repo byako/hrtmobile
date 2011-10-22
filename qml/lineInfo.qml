@@ -9,7 +9,6 @@ Page {
     objectName: "lineInfoPage"
     orientationLock: PageOrientation.LockPortrait
     property string loadLine: ""
-    property string loadLineMap: ""
     property int scheduleLoaded : 0
     property int currentSchedule : -1
     property string searchString: ""
@@ -723,8 +722,8 @@ Page {
         }
     }
     function showMap() {              // push Map page or replace current with Map page
-            if (loadLineMap != "") {
-                pageStack.replace(Qt.resolvedUrl("route.qml"),{"loadLine":searchString})
+            if (grid.currentIndex >= 0) {
+                pageStack.push(Qt.resolvedUrl("route.qml"),{"loadLine":searchString,"loadStop":stopReachModel.get(grid.currentIndex).stopIdLong})
             } else {
                 pageStack.push(Qt.resolvedUrl("route.qml"),{"loadLine":searchString})
             }
@@ -732,9 +731,6 @@ Page {
     function checkLineLoadRequest() {
         if (loadLine != "") {
             searchString = loadLine
-            buttonClicked()
-        } else if (loadLineMap != "") {
-            searchString = loadLineMap
             buttonClicked()
         }
     }
@@ -788,11 +784,6 @@ Page {
     }
     function gotLinesInfo() {         // after offline search is succeded
         infoRect.visible = true;
-        if (loadLineMap != "") {
-            linesList.currentIndex = 0
-            selectedLineIndex = 0
-            showMap()
-        }
         if (lineInfoModel.count == 1) {
             linesList.visible = false
             grid.visible = true
