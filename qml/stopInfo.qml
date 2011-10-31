@@ -629,7 +629,8 @@ Page {
         dataRect.visible = true
     }
 
-    function buttonClicked() {  // SearchBox actioncommander keen
+    function buttonClicked() {  // SearchBox action
+        console.log("Button clicked: " + searchString)
         if (searchString == "" || searchString.length > 7 || searchString.length < 4) {
             showError("Wrong stop ID:"+searchString+".\nStop ID is 4 digit or 1 letter & 4 digits. Example: E3127")
         }

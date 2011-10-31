@@ -3,11 +3,10 @@ import com.meego 1.0
 import "database.js" as JS
 import com.nokia.extras 1.0
 
-Page {
-    id: lineInfoPage
-//    tools: commonTools
+Item {
+    anchors.fill: parent
     objectName: "lineInfoPage"
-    orientationLock: PageOrientation.LockPortrait
+
     property string loadLine: ""
     property int scheduleLoaded : 0
     property int currentSchedule : -1
@@ -164,7 +163,6 @@ Page {
     Component.onCompleted: { // load config and recent lines
         refreshConfig()
         checkLineLoadRequest()
-        lineInfoModel.clear()
         lineInfoLoadLines.sendMessage("")
     }
     Rectangle{      // dark background
@@ -181,76 +179,55 @@ Page {
     Item{           // data rect: info labels
         id: dataRect
         anchors.left: parent.left
-        anchors.leftMargin: 10
         anchors.top:  parent.top
-        anchors.topMargin: 10
         anchors.right: parent.right
-        anchors.rightMargin: 10
         visible: false
         height: 110
-        width: parent.width
-        Rectangle { // showMapButton
-                id: showMapButton
+        Button {    // showMapButton
+                id: showMapButtonButton
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.right: parent.right
                 anchors.rightMargin: 20
-                color: "#777777"
                 height: 60
                 width: 60
-                radius: 10
-                Button {
-                    id: showMapButtonButton
-                    anchors.fill: parent
-                    text: "M"
-                    visible: false
-                    onClicked: {
-                        if (searchString != "") {
-                            showError("Building line shape")
-                            showMap()
-                        }
+                text: "M"
+                visible: false
+                onClicked: {
+                    if (searchString != "") {
+                        showError("Building line shape")
+                        showMap()
                     }
                 }
         }
-        Label {
-            id: lineType;
-            anchors.left: parent.left;
-            anchors.leftMargin: 10
-            anchors.top: parent.top
-            anchors.topMargin: 5
-            text: qsTr("Line type")
-            color: config.textColor
-            font.pixelSize: 25
-        }
-        Label {
-            id: lineShortCodeName;
-            anchors.left: lineType.right
-            anchors.leftMargin: 10
-            anchors.top: parent.top
-            anchors.topMargin: 5
-            text: qsTr("line")
-            color: config.textColor
-            font.pixelSize: 25
-        }
-        Label {
-            id: lineStart
-            anchors.top: lineShortCodeName.bottom
-            anchors.topMargin: 5
-            anchors.left: parent.left
-            anchors.leftMargin: 10
-            text: qsTr("lineStart")
-            color: config.textColor
-            font.pixelSize: 25
-        }
-        Label {
-            id: lineEnd
-            anchors.top: lineStart.bottom
-            anchors.topMargin: 5
-            anchors.left: parent.left
-            anchors.leftMargin: 10
-            text: qsTr("lineEnd")
-            color: config.textColor
-            font.pixelSize: 25
-        }
+        Column {
+            Row {
+                Label {
+                    id: lineType;
+                    text: qsTr("Line type")
+                    color: config.textColor
+                    font.pixelSize: 25
+                }
+                Label {
+                    id: lineShortCodeName;
+                    text: qsTr("line")
+                    color: config.textColor
+                    font.pixelSize: 25
+                }
+            }
+            Label {
+                id: lineStart
+                text: qsTr("lineStart")
+                color: config.textColor
+                font.pixelSize: 25
+            }
+            Label {
+                id: lineEnd
+                text: qsTr("lineEnd")
+                color: config.textColor
+                font.pixelSize: 25
+            }
+
+        } // column
     }
 
     ButtonRow {     // tabs rect
@@ -258,7 +235,6 @@ Page {
         anchors.top: dataRect.bottom
         anchors.topMargin: 10
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.right: parent.right
         width: (parent.width-10)
             Button {  // recent lines
                 id: linesButton
@@ -310,11 +286,6 @@ Page {
 //--  Lists and delegates  ---------------------------------------------------//
     ListModel {     // stops reach model
         id:stopReachModel
-        ListElement {
-            stopIdLong: "Stop"
-            stopName: "Name"
-            reachTime: "Time"
-        }
     }
     Component {     // stops reach delegate
         id:stopReachDelegate
@@ -349,21 +320,9 @@ Page {
 
     ListModel {     // lineInfo list model
         id:lineInfoModel
-        ListElement{
-            lineIdLong: "lineId"
-            lineIdShort: "lineCode"
-            lineName: "name"
-            lineStart: "from"
-            lineEnd: "dest"
-            lineType: "0"
-            lineTypeName: "type"
-        }
     }
     ListModel {     // search result lineInfo list model
         id:searchResultLineInfoModel
-        ListElement{
-            name: "lineId"
-        }
     }
     Component {     // lineInfo section header
         id:lineInfoSectionHeader
@@ -464,21 +423,12 @@ Page {
 
     ListModel {     // schedule list Mon - Fri model
         id:scheduleModel
-        ListElement {
-            departTime: "Time"
-        }
     }
     ListModel {     // schedule list Sat model
         id:scheduleModel1
-        ListElement {
-            departTime: "Time"
-        }
     }
     ListModel {     // schedule list Sun model
         id:scheduleModel2
-        ListElement {
-            departTime: "Time"
-        }
     }
     Component{      // schedule delegate
         id:scheduleDelegate
@@ -533,10 +483,8 @@ Page {
         ButtonRow { // scheduleButtons week period choose
             id: scheduleButtons
             anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.leftMargin: 10
-            anchors.right: parent.right
-            anchors.rightMargin: 10
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: 350
             visible: false
             Button {
                 id: scheduleButton0
@@ -563,9 +511,7 @@ Page {
         GridView {  // schedule list
             id: schedule
             anchors.left: parent.left
-            anchors.leftMargin:10
             anchors.right: parent.right
-            anchors.rightMargin: 10
             anchors.top: scheduleButtons.bottom
             anchors.topMargin: 10
             anchors.bottom: parent.bottom
@@ -703,6 +649,7 @@ Page {
         scheduleModel2.clear()
     }
     function buttonClicked() {        // entry point after search dialog: searchString is set now to what user has entered to search
+        console.log("Button clicked: " + searchString)
         if (searchString == "Enter LineID" || searchString == "") {
             showError("Enter search criteria\nline number/line code/Key place\ni.e. 156A or Tapiola")
             return

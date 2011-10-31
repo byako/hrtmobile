@@ -5,9 +5,9 @@ PageStackWindow {
     id: appWindow
 
     initialPage: mainPage
-//    property String refreshConfig: "false"
-    MainPage{id: mainPage}
+    MainPage {id: mainPage}
     Dialog{
+        property Item page: NULL
         id: searchDialog
         title: Text {
             anchors.horizontalCenter: parent.horizontalCenter
@@ -60,9 +60,9 @@ PageStackWindow {
 
         onAccepted: {
             searchInput.focus = false
-            console.log("Starting search")
-            pageStack.currentPage.searchString = searchInput.text
-            pageStack.currentPage.buttonClicked()
+            console.log("searchDialog: starting search: " + searchInput.text)
+            page.searchString = searchInput.text
+            page.buttonClicked()
         }
         onRejected: {
             searchInput.focus = false
