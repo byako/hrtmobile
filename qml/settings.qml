@@ -5,7 +5,7 @@ import com.nokia.extras 1.0
 
 Page {
     id: settingsPage
-    tools: commonTools
+//    tools: commonTools
     orientationLock: PageOrientation.LockPortrait
     property string currentTheme: ""
 

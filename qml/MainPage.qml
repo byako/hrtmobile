@@ -4,100 +4,60 @@ import "database.js" as JS
 
 Page {
     id: mainPage
-    tools: commonTools
+    tools: ToolBarLayout {
+        id: toolBar;
+        ButtonRow {
+            style: TabButtonStyle { }
+            TabButton { tab: lineInfoPage; text: "lines" }
+            TabButton { tab: stopInfoPage; text: "stops" }
+            TabButton { tab: mapPage; text: "map" }
+            TabButton { tab: settingsPage; text: "opts" }
+        }
+    }
+
     objectName: "mainPage"
     orientationLock: PageOrientation.LockPortrait
 
-    Config {
-        id: config
-    }
-    Component.onCompleted: { refreshConfig() }
+    Component.onCompleted: { }
     Rectangle{    // dark background
-        color: config.bgColor;
+        color: "#000000"
         anchors.fill: parent
         width: parent.width
         height:  parent.height
-        Image { source: config.bgImage; fillMode: Image.Center; anchors.fill: parent; }
-    }
-    Label {
-        id: label
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top:  parent.top
-        anchors.topMargin: 100
-        font.pixelSize: 36
-        text: qsTr("Helsinki Regional Transport")
-        color: config.textColor;
-        visible: true
-    }
-    Button{
-        id: lineInfoButton
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: label.bottom
-        height: 100
-        anchors.topMargin: 50
-        text: qsTr("Line info")
-        onClicked: {
-            searchTool.visible = true
-            pageStack.push(Qt.resolvedUrl("lineInfo.qml"))
-            backTool.visible=true
-        }
-    }
-    Button{
-        id:stopInfoButton
-        anchors.horizontalCenter : parent.horizontalCenter
-        anchors.top : lineInfoButton.bottom
-        anchors.topMargin: 10
-        text: qsTr("Stop info")
-        height: 100
-        onClicked: {
-            searchTool.visible = true
-            pageStack.push(Qt.resolvedUrl("stopInfo.qml"))
-            backTool.visible=true
-        }
-    }
-    Button{
-        id:routeButton
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: stopInfoButton.bottom
-        anchors.topMargin: 10
-        text: qsTr("Map")
-        height: 100
-        onClicked: {
-            pageStack.push(Qt.resolvedUrl("route.qml"))
-            backTool.visible=true
-        }
-    }
-    Button{
-        id:realtimeButton
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: routeButton.bottom
-        anchors.topMargin: 10
-        text: qsTr("Realtime schedule")
-        height: 100
-        onClicked: {
-            pageStack.push(Qt.resolvedUrl("realtimeSchedule.qml"))
-            backTool.visible=true
-        }
-    }
-    Item {  // lines page icon
-        anchors.right: parent.right
-        anchors.rightMargin: 10
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.topMargin: 10
-        height: 274
-        width: 80
-        visible: false
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                pageStack.push(Qt.resolvedUrl("lineInfo.qml"))
-                backTool.visible=true
-            }
-        }
-        Image { source: ":/images/icon_transport.png"; fillMode: Image.Center; anchors.fill: parent; opacity: 50 }
     }
 
-    function refreshConfig() {
-        JS.loadConfig(config)
+    TabGroup {
+        id: tabGroup
+        anchors.fill: parent
+        currentTab: lineInfoPage
+
+        Page {
+            id: lineInfoPage
+            Loader {
+                id: lineInfoLoader
+                source: "lineInfo.qml"
+            }
+        }
+        Page {
+            id: stopInfoPage
+            Loader {
+                id: stopInfoLoader
+                source: "stopInfo.qml"
+            }
+        }
+        Page {
+            id: mapPage
+            Loader {
+                id: mapLoader
+//                source: "route.qml"
+            }
+        }
+        Page {
+            id: settingsPage
+            Loader {
+                id: settingsLoader
+                source: "settings.qml"
+            }
+        }
     }
 }

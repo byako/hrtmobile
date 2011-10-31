@@ -5,7 +5,7 @@ import com.nokia.extras 1.0
 
 Page {
     id: lineInfoPage
-    tools: commonTools
+//    tools: commonTools
     objectName: "lineInfoPage"
     orientationLock: PageOrientation.LockPortrait
     property string loadLine: ""

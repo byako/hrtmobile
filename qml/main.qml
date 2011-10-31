@@ -70,7 +70,7 @@ PageStackWindow {
         }
     }
 
-    ToolBarLayout {
+/*    ToolBarLayout {
         id: commonTools
         visible: true
         ToolIcon {
@@ -113,18 +113,6 @@ PageStackWindow {
 //                 (myMenu.status == DialogStatus.Closed) ? myMenu.open() : myMenu.close()
              }
         }
-    }
+    }*/
 
-    Menu {
-        id: myMenu
-        MenuLayout {
-            MenuItem {
-                text: "Options"
-                onClicked:  {
-                    pageStack.push(Qt.resolvedUrl("settings.qml"))
-                    backTool.visible=true
-                }
-            }
-        }
-    }
 }

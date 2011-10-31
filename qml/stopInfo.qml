@@ -5,7 +5,7 @@ import com.nokia.extras 1.0
 
 Page {
     id: stopInfoPage
-    tools: commonTools
+//    tools: commonTools
     Config {  // config
         id: config
     }
