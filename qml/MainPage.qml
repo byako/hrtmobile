@@ -7,38 +7,26 @@ Page {
     tools: ToolBarLayout {
         id: toolBar;
         ToolIcon {
-             id: backTool
-             platformIconId: "toolbar-back"
-             onClicked: {
-                 tabGroup.currentTab.pop()
-             }
-        }
-        ToolIcon {
             id: searchTool
             platformIconId: "toolbar-search"
             onClicked: {
                 searchDialog.page = tabGroup.currentTab.currentPage
                 searchDialog.open()
-//                searchInput.focus = true
+                searchInput.focus = true
             }
         }
         ButtonRow {
             style: TabButtonStyle { }
-            TabButton { tab: lineInfoPage; text: "line" }
-            TabButton { tab: stopInfoPage; text: "stop" }
-            TabButton { tab: routePage; text: "map" }
-            TabButton { tab: settingsPage; text: "opts" }
+            TabButton { tab: lineInfoPage; text: "line"; onClicked: { lineInfoLoader.source = "lineInfo.qml"} }
+            TabButton { tab: stopInfoPage; text: "stop"; onClicked: { stopInfoLoader.source = "stopInfo.qml"} }
+            TabButton { tab: routePage;    text: "map";  onClicked: { mapLoader.source = "route.qml" } }
+            TabButton { tab: settingsPage; text: "opts"; onClicked: { settingsLoader.source = "settings.qml"} } //platformIconId: "toolbar-view-menu";}
         }
     }
 
     objectName: "mainPage"
     orientationLock: PageOrientation.LockPortrait
 
-    Component.onCompleted: {
-        lineInfoPage.push(Qt.resolvedUrl("lineInfo.qml"));
-        stopInfoPage.push(Qt.resolvedUrl("stopInfo.qml"));
-        settingsPage.push(Qt.resolvedUrl("settings.qml"));
-    }
     Rectangle{    // dark background
         color: "#000000"
         anchors.fill: parent
@@ -50,17 +38,49 @@ Page {
         id: tabGroup
         anchors.fill: parent
         currentTab: lineInfoPage
-        PageStack {
+        Page {
             id: lineInfoPage
+            Loader {
+                id: lineInfoLoader
+                onStatusChanged: {
+                    if (status == Loader.Ready) {
+                        console.log("lineInfoLoader: page loaded: " + item.objectName + ".")
+                    }
+                }
+            }
         }
-        PageStack {
+        Page {
             id: stopInfoPage
+            Loader {
+                id: stopInfoLoader
+                onStatusChanged: {
+                    if (status == Loader.Ready) {
+                        console.log("stopInfoLoader: page loaded: " + item.objectName + ".")
+                    }
+                }
+            }
         }
-        PageStack {
+        Page{
             id: routePage
+            Loader {
+                id: mapLoader
+                onStatusChanged: {
+                    if (status == Loader.Ready) {
+                        console.log("mapLoader: page loaded: " + item.objectName + ".")
+                    }
+                }
+            }
         }
-        PageStack {
+        Page {
             id: settingsPage
+            Loader {
+                id: settingsLoader
+                onStatusChanged: {
+                    if (status == Loader.Ready) {
+                        console.log("settingsLoader: page loaded: " + item.objectName + ".")
+                    }
+                }
+            }
         }
     }
 }

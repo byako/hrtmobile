@@ -4,9 +4,8 @@ import "database.js" as JS
 import com.nokia.extras 1.0
 
 Item {
-    anchors.fill: parent
     objectName: "lineInfoPage"
-
+    id: lineInfoPageItem
     property string loadLine: ""
     property int scheduleLoaded : 0
     property int currentSchedule : -1

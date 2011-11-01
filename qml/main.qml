@@ -7,7 +7,7 @@ PageStackWindow {
     initialPage: mainPage
     MainPage {id: mainPage}
     Dialog{
-        property Item page: NULL
+        property Item page: null
         id: searchDialog
         title: Text {
             anchors.horizontalCenter: parent.horizontalCenter

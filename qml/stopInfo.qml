@@ -3,9 +3,8 @@ import com.meego 1.0
 import "database.js" as JS
 import com.nokia.extras 1.0
 
-Page {
+Item{
     id: stopInfoPage
-//    tools: commonTools
     Config {  // config
         id: config
     }
@@ -13,7 +12,6 @@ Page {
     property string stopAddString: ""
     property string searchString: ""    // keep stopIdLong here. If stopIdShort supplied (request from lineInfo) -> remove and place stopIdLong
     property int selectedStopIndex: -1
-    orientationLock: PageOrientation.LockPortrait
 
     WorkerScript {           // load stop info in database
         id: loadStopInfo

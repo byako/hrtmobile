@@ -3,10 +3,9 @@ import com.meego 1.0
 import "database.js" as JS
 import com.nokia.extras 1.0
 
-Page {
+Item {
     id: settingsPage
-//    tools: commonTools
-    orientationLock: PageOrientation.LockPortrait
+    objectName: "SettingsPageItem"
     property string currentTheme: ""
 
     Config {
@@ -19,7 +18,12 @@ Page {
         opacity: 1.0
     }
 
-    Component.onCompleted: { refreshConfig(); currentTheme =  JS.getCurrent("theme"); console.log("set currentTheme: " + currentTheme); offlineSwitchInit() }
+    Component.onCompleted: {
+        refreshConfig();
+        currentTheme =  JS.getCurrent("theme");
+        console.log("set currentTheme: " + currentTheme);
+        offlineSwitchInit()
+    }
     Rectangle {     // dark background
         color: config.bgColor;
         anchors.fill: parent

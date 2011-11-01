@@ -4,11 +4,8 @@ import QtMobility.location 1.2
 import "database.js" as JS
 import com.nokia.extras 1.0
 
-Page {
+Item {
     id: routePage
-    anchors.fill: parent
-    tools: commonTools
-    orientationLock: PageOrientation.LockPortrait
     property bool firstRun: true
     property string loadStop: ""
     property string loadLine: ""
@@ -88,7 +85,7 @@ Page {
     PositionSource {// gps data receiver
         id: positionSource
         updateInterval: 10000
-        active: (loadStop == loadLine) ? true : false
+        active: false //(loadStop == loadLine) ? true : false
         onPositionChanged: {
             console.log("position chhanged. distance from previous: " + position.coordinate.distanceTo(positionCircle.center) );
             if (position.coordinate.distanceTo(positionCircle.center) > 100 || firstRun == true) {
