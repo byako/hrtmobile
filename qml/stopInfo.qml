@@ -42,11 +42,11 @@ Item {
                 stopAddress.text = messageObject.stopAddress
                 if (selectedStopIndex == -1 || recentModel.get(selectedStopIndex).stopIdLong != searchString) {
                     loadStopInfo.sendMessage({"searchString" : searchString,"stopAddress" : messageObject.stopAddress})
+                    loadingMap.visible = true
                 } else {
                     loadingMap.visible = false
                 }
                 stopCity.text = messageObject.stopCity
-                loadingMap.visible = true
             } else if (messageObject.departName == "ERROR") {
                 showError("Server returned ERROR")
                 loading.visible = false
@@ -175,17 +175,14 @@ Item {
         id: dataRect
         anchors.left: parent.left
         anchors.top:  parent.top
-//        anchors.topMargin: 10
         anchors.right: parent.right
-        height: 120
-//        width: parent.width
+        height: 110
         visible: false
         Rectangle {          // showMapButton
                 id: showMapButton
-                anchors.top: parent.top
                 anchors.right: parent.right
                 anchors.rightMargin: 20
-                anchors.topMargin: 30
+                anchors.verticalCenter: parent.verticalCenter
                 color: "#777777"
                 height: 60
                 width: 60
@@ -194,7 +191,7 @@ Item {
                     id: showMapButtonButton
                     anchors.fill: parent
                     text: "M"
-                    visible: loadingMap.visible == true ? false: true
+                    visible: (loadingMap.visible) ? false : true
                     onClicked: {
                         pageStack.push(Qt.resolvedUrl("route.qml"),{"loadStop":searchString})
                     }
@@ -208,68 +205,60 @@ Item {
                     z: 8
                 }
             }
-        Label {
-            id: stopNameLabel
-            anchors.top: parent.top
-            anchors.topMargin: 3
-            anchors.left: parent.left
-            text: qsTr("Name")
-            color: config.textColor
-            font.pixelSize: 30
-        }
-        Label {
-            id: stopName;
-            anchors.top: parent.top
-            anchors.topMargin: 5
-            anchors.right: showMapButton.left
-            anchors.rightMargin: 20
-            text: qsTr("Name")
-            color: config.textColor
-            font.pixelSize: 25
-        }
-        Label {
-            id: stopAddressLabel
-            anchors.top: stopNameLabel.bottom
-            anchors.topMargin: 2
-            anchors.left: parent.left
-            text: qsTr("Address")
-            color: config.textColor
-            font.pixelSize: 30
-        }
-        Label {
-            id: stopAddress;
-            anchors.top: stopName.bottom
-            anchors.topMargin: 8
-            anchors.right: showMapButton.left
-            anchors.rightMargin: 20
-            text: qsTr("Address")
-            color: config.textColor
-            font.pixelSize: 25
-        }
-        Label {
-            id: stopCityLabel;
-            anchors.top: stopAddressLabel.bottom
-            anchors.topMargin: 2
-            anchors.left: parent.left
-            text: qsTr("City")
-            color: config.textColor
-            font.pixelSize: 30
-        }
-        Label {
-            id: stopCity;
-            anchors.top: stopAddress.bottom
-            anchors.topMargin: 8
-            anchors.right: showMapButton.left
-            anchors.rightMargin: 20
-            text: qsTr("City")
-            color: config.textColor
-            font.pixelSize: 25
+        Column {
+//            spacing: 5
+            Row {
+                Label {
+                    id: stopNameLabel
+                    text: qsTr("Name")
+                    color: config.textColor
+                    font.pixelSize: 25
+                    width: 100
+                }
+                Label {
+                    id: stopName;
+                    text: qsTr("Name")
+                    color: config.textColor
+                    font.pixelSize: 30
+                }
+            }
+            Row {
+                Label {
+                    id: stopAddressLabel
+                    text: qsTr("Address")
+                    color: config.textColor
+                    font.pixelSize: 25
+                    width: 100
+                }
+                Label {
+                    id: stopAddress;
+                    text: qsTr("Address")
+                    color: config.textColor
+                    font.pixelSize: 30
+                }
+            }
+            Row {
+                Label {
+                    id: stopCityLabel;
+                    text: qsTr("City")
+                    color: config.textColor
+                    font.pixelSize: 25
+                    width: 100
+                }
+                Label {
+                    id: stopCity;
+                    text: qsTr("City")
+                    color: config.textColor
+                    font.pixelSize: 30
+                }
+            }
         }
     }
     ButtonRow {              // tabs rect
         id: tabRect
         enabled: loading.visible == true ? false : true
         anchors.top: dataRect.bottom
+        anchors.topMargin: 10
         anchors.right: parent.right
         anchors.left: parent.left
             Button {

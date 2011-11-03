@@ -200,33 +200,33 @@ Item {
                 }
         }
         Column {
+//            spacing: 5
             Row {
                 Label {
                     id: lineType;
                     text: qsTr("Line type")
                     color: config.textColor
-                    font.pixelSize: 25
+                    font.pixelSize: 30
                 }
                 Label {
                     id: lineShortCodeName;
                     text: qsTr("line")
                     color: config.textColor
-                    font.pixelSize: 25
+                    font.pixelSize: 30
                 }
             }
             Label {
                 id: lineStart
                 text: qsTr("lineStart")
                 color: config.textColor
-                font.pixelSize: 25
+                font.pixelSize: 30
             }
             Label {
                 id: lineEnd
                 text: qsTr("lineEnd")
                 color: config.textColor
-                font.pixelSize: 25
+                font.pixelSize: 30
             }
-
         } // column
     }
 

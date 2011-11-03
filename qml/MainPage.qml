@@ -12,20 +12,68 @@ Page {
     }
 
     tools: ToolBarLayout {
-        ToolIcon {
+/*        ToolIcon {
             id: searchTool
             platformIconId: "toolbar-search"
             onClicked: {
                 searchDialog.page = tabGroup.currentTab.loader.item
                 searchDialog.open()
             }
-        }
+        }*/
         ButtonRow {
             style: TabButtonStyle { }
-            TabButton { tab: lineInfoPageContainer; text: "line"; onClicked: { lineInfoLoader.source = "lineInfo.qml"} }
-            TabButton { tab: stopInfoPageContainer; text: "stop"; onClicked: { stopInfoLoader.source = "stopInfo.qml"} }
-            TabButton { tab: routePageContainer;    text: "map";  onClicked: { mapLoader.source = "route.qml" } }
-            TabButton { tab: settingsPageContainer; text: "opts"; onClicked: { settingsLoader.source = "settings.qml"} } //platformIconId: "toolbar-view-menu";}
+            TabButton {
+                tab: lineInfoPageContainer;
+                text: (checked) ? "" : "line";
+                iconSource: (checked) ? "image://theme/icon-m-toolbar-search" : ""
+                onClicked: {
+                     if (tabGroup.lastTab == 0 && lineInfoLoader.status == Loader.Ready) {
+                         searchDialog.page = lineInfoLoader.item
+                         searchDialog.open()
+                     } else if (lineInfoLoader.status != Loader.Ready){
+                        lineInfoLoader.source = "lineInfo.qml"
+                     }
+                     tabGroup.lastTab = 0
+                }
+            }
+            TabButton {
+                tab: stopInfoPageContainer;
+                text: (checked) ? "" : "stop";
+                iconSource: (checked) ? "image://theme/icon-m-toolbar-search" : ""
+                onClicked: {
+                    if (tabGroup.lastTab == 1 && stopInfoLoader.status == Loader.Ready) {
+                        searchDialog.page = stopInfoLoader.item
+                        searchDialog.open()
+                    } else if (stopInfoLoader.status != Loader.Ready){
+                        stopInfoLoader.source = "stopInfo.qml"
+                    }
+                    tabGroup.lastTab = 1
+                }
+            }
+            TabButton {
+                tab: routePageContainer
+                text: (checked) ? "" : "map";
+                iconSource: (checked) ? "image://theme/icon-m-toolbar-search" : ""
+                onClicked: {
+                    if (tabGroup.lastTab == 2 && mapLoader.status == Loader.Ready) {
+                        searchDialog.page = mapLoader.item
+                        searchDialog.open()
+                    } else if (mapLoader.status != Loader.Ready){
+                        mapLoader.source = "route.qml"
+                    }
+                    tabGroup.lastTab = 2
+                }
+            }
+            TabButton {
+                tab: settingsPageContainer;
+                text: "opts";
+                onClicked: {
+                    if (settingsLoader.status != Loader.Ready){
+                        settingsLoader.source = "settings.qml"
+                    }
+                    tabGroup.lastTab = 3
+                }
+            }
         }
     }
 
@@ -33,13 +81,13 @@ Page {
         id: tabGroup
         anchors.fill: parent
         currentTab: lineInfoPageContainer
+        property int lastTab: 0
         Page {
             id: lineInfoPageContainer
             property Item loader: Loader {
                 id: lineInfoLoader
                 onStatusChanged: {
                     if (status == Loader.Ready) {
-                        console.log("lineInfoLoader: page loaded: " + item.objectName + ".")
                         item.parent = lineInfoPageContainer
                     }
                 }
@@ -51,7 +99,6 @@ Page {
                 id: stopInfoLoader
                 onStatusChanged: {
                     if (status == Loader.Ready) {
-                        console.log("stopInfoLoader: page loaded: " + item.objectName + ".")
                         item.parent = stopInfoPageContainer
                     }
                 }
@@ -63,7 +110,6 @@ Page {
                 id: mapLoader
                 onStatusChanged: {
                     if (status == Loader.Ready) {
-                        console.log("mapLoader: page loaded: " + item.objectName + ".")
                         item.parent = routePageContainer
                     }
                 }
@@ -75,7 +121,6 @@ Page {
                 id: settingsLoader
                 onStatusChanged: {
                     if (status == Loader.Ready) {
-                        console.log("settingsLoader: page loaded: " + item.objectName + ".")
                         item.parent = settingsPageContainer
                     }
                 }

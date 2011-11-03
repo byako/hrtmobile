@@ -9,7 +9,7 @@ WorkerScript.onMessage = function (message) {
         if (doc.readyState == XMLHttpRequest.DONE) {
             if (doc.responseText.slice(0,5) == "Error") {
                 WorkerScript.sendMessage({"departName" : "ERROR"})
-                console.log("stopInfoScheduleLoad.js : ERROR received from server for: " + messageObject.searchString)
+                console.log("stopInfoScheduleLoad.js : ERROR received from server for: " + message.searchString)
                 return
             } else {
                 var schedText = doc.responseText
