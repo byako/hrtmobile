@@ -23,5 +23,6 @@
         <file>qml/mapStopsSearch.js</file>
         <file>qml/stopInfoScheduleLoad.js</file>
         <file>qml/stopInfoLoadInfo.js</file>
+        <file>qml/SearchDialog.qml</file>
     </qresource>
 </RCC>

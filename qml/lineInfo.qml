@@ -11,6 +11,7 @@ Item {
     property int currentSchedule : -1
     property string searchString: ""
     property int selectedLineIndex : -1
+    anchors.fill: parent
 
     Config {
         id: config

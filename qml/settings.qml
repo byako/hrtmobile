@@ -7,17 +7,15 @@ Item {
     id: settingsPage
     objectName: "SettingsPageItem"
     property string currentTheme: ""
+    anchors.fill: parent
 
-    Config {
-        id: config
-    }
+    Config { id: config }
     InfoBanner {// info banner
         id: infoBanner
         text: "info description here"
         z: 10
         opacity: 1.0
     }
-
     Component.onCompleted: {
         refreshConfig();
         currentTheme =  JS.getCurrent("theme");

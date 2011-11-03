@@ -3,16 +3,15 @@ import com.meego 1.0
 import "database.js" as JS
 import com.nokia.extras 1.0
 
-Item{
+Item {
     id: stopInfoPage
-    Config {  // config
-        id: config
-    }
     objectName: "stopInfoPage"
     property string stopAddString: ""
     property string searchString: ""    // keep stopIdLong here. If stopIdShort supplied (request from lineInfo) -> remove and place stopIdLong
     property int selectedStopIndex: -1
+    anchors.fill: parent
 
+    Config { id: config }
     WorkerScript {           // load stop info in database
         id: loadStopInfo
         source: "stopInfoLoadInfo.js"
@@ -41,7 +40,7 @@ Item{
             if (messageObject.departName == "STOPNAME") {
                 stopName.text = messageObject.stopName
                 stopAddress.text = messageObject.stopAddress
-                if (recentModel.get(selectedStopIndex).stopIdLong != searchString) {
+                if (selectedStopIndex == -1 || recentModel.get(selectedStopIndex).stopIdLong != searchString) {
                     loadStopInfo.sendMessage({"searchString" : searchString,"stopAddress" : messageObject.stopAddress})
                 } else {
                     loadingMap.visible = false
@@ -64,11 +63,11 @@ Item{
         }
     }
 
-    Component.onCompleted: { refreshConfig(); infoModel.clear(); fillModel(); setCurrent(); }
+    Component.onCompleted: { refreshConfig(); infoModel.clear(); fillModel(); setCurrent();    }
     Item {                   // busy indicator
         id: loading
         visible: false
-        anchors.fill: infoRect
+        anchors.fill: parent
         z: 8
         Rectangle {
             anchors.fill: parent
@@ -159,7 +158,6 @@ Item{
             }
         }
     }
-
     Rectangle {              // dark background
         color: config.bgColor;
         anchors.fill: parent
@@ -177,10 +175,10 @@ Item{
         id: dataRect
         anchors.left: parent.left
         anchors.top:  parent.top
-        anchors.topMargin: 10
+//        anchors.topMargin: 10
         anchors.right: parent.right
         height: 120
-        width: parent.width
+//        width: parent.width
         visible: false
         Rectangle {          // showMapButton
                 id: showMapButton
@@ -268,14 +266,12 @@ Item{
             font.pixelSize: 25
         }
     }
-
     ButtonRow {              // tabs rect
         id: tabRect
         enabled: loading.visible == true ? false : true
-        width: parent.width
         anchors.top: dataRect.bottom
-        anchors.topMargin: 5
-        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.right: parent.right
+        anchors.left: parent.left
             Button {
                 id: recentButton
                 text: "Recent"
@@ -331,15 +327,15 @@ Item{
 /*<----------------------------------------------------------------------->*/
     ListModel {              // recent stops list
         id: recentModel
-        ListElement {
-            stopIdLong: ""
-            stopIdShort: ""
-            stopName: ""
-            stopAddress: ""
-            stopCity: ""
-            stopLongitude: ""
-            stopLatitude: ""
-        }
+//        ListElement {
+//            stopIdLong: ""
+//            stopIdShort: ""
+//            stopName: ""
+//            stopAddress: ""
+//            stopCity: ""
+//            stopLongitude: ""
+//            stopLatitude: ""
+//        }
     }
     Component {              // recent stops delegate
         id: recentDelegate
@@ -395,17 +391,17 @@ Item{
                         showMapButtonButton.visible = true
                         fillInfoModel()
                         fillLinesModel()
-                        if (config.networking < 1) {
-                            showError("Offline networking mode enabled. Change networking mode in settings.")
-                            console.log("stop: " + recentModel.get(recentList.currentIndex).stopName+ "; id:" + recentList.currentIndex)
-                            stopName.text = recentModel.get(recentList.currentIndex).stopName
-                            stopAddress.text = recentModel.get(recentList.currentIndex).stopAddress
-                            stopCity.text = recentModel.get(recentList.currentIndex).stopCity
-                            dataRect.visible = true
-                            showMapButtonButton.visible = true
-                        } else {
+//                        if (config.networking < 1) {
+//                            showError("Offline networking mode enabled. Change networking mode in settings.")
+//                            console.log("stop: " + recentModel.get(recentList.currentIndex).stopName+ "; id:" + recentList.currentIndex)
+                        stopName.text = recentModel.get(recentList.currentIndex).stopName
+                        stopAddress.text = recentModel.get(recentList.currentIndex).stopAddress
+                        stopCity.text = recentModel.get(recentList.currentIndex).stopCity
+                        dataRect.visible = true
+                        showMapButtonButton.visible = true
+//                        } else {
                             updateSchedule()
-                        }
+//                        }
                     }
                 }
                 onPressedChanged: {
@@ -423,12 +419,12 @@ Item{
     }
     ListModel {              // traffic Model (Time depart; Line No)
         id:trafficModel
-        ListElement {
-            departTime: "Time"
-            departLine: "Line"
-            departDest: "Destination"
-            departCode: "JORE code"
-        }
+//        ListElement {
+//            departTime: "Time"
+//            departLine: "Line"
+//            departDest: "Destination"
+//            departCode: "JORE code"
+//        }
     }
     Component {              // traffic delegate
         id:trafficDelegate
@@ -464,10 +460,10 @@ Item{
     }
     ListModel {              // stop info model
         id:infoModel
-        ListElement {
-            propName: ""
-            propValue: ""
-        }
+//        ListElement {
+//            propName: ""
+//            propValue: ""
+//        }
     }
     Component {              // stop info delegate
         id: infoDelegate
@@ -494,10 +490,10 @@ Item{
     }
     ListModel {              // lines passing model
         id: linesModel
-        ListElement {
-            lineNumber: ""
-            lineDest: ""
-        }
+//        ListElement {
+//            lineNumber: ""
+//            lineDest: ""
+//        }
     }
     Component {              // lines passing delegate
         id: linesDelegate
@@ -609,9 +605,6 @@ Item{
         }
     }
 /*<----------------------------------------------------------------------->*/
-    function checkFavorites() { // database API use here TODO
-        removeFavoriteTool.visible = true;
-    }
     function showError(errorText) {  // show popup splash window with error
         infoBanner.text = errorText
         infoBanner.show()
@@ -626,7 +619,6 @@ Item{
         recentList.visible = false
         dataRect.visible = true
     }
-
     function buttonClicked() {  // SearchBox action
         console.log("Button clicked: " + searchString)
         if (searchString == "" || searchString.length > 7 || searchString.length < 4) {
