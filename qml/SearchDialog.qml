@@ -45,6 +45,9 @@ Dialog {
     }
 
     buttons: Button {
+        style: ButtonStyle {
+            inverted: true
+        }
         anchors.horizontalCenter: parent.horizontalCenter
         text: "Search"
         onClicked: { searchDialog.accept(); }

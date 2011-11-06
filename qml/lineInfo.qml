@@ -11,11 +11,15 @@ Item {
     property int currentSchedule : -1
     property string searchString: ""
     property int selectedLineIndex : -1
+
+    signal showLineMap(string lineIdLong)
+    signal showLineMapStop(string lineIdLong, string stopIdLong)
+    signal showStopMap(string stopIdLong)
+    signal showStopInfo(string stopIdLong)
+
     anchors.fill: parent
 
-    Config {
-        id: config
-    }
+    Config { id: config }
     InfoBanner {    // info banner
         id: infoBanner
         text: "info description here"
@@ -34,14 +38,14 @@ Item {
             height: parent.height
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
-            color:"#FFFFFF"
+            color:"#333333"
             opacity: 0.7
         }
         BusyIndicator {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
             running: true
-            platformStyle: BusyIndicatorStyle { size: "large" }
+            platformStyle: BusyIndicatorStyle { size: "large"; inverted: true }
         }
     }
     WorkerScript {  // stop name loader
@@ -84,6 +88,9 @@ Item {
 
     ContextMenu {   // line info context menu
         id: linesContextMenu
+        style: ContextMenuStyle {
+            inverted: true
+        }
         MenuLayout {
             MenuItem {
                 text: "Delete"
@@ -110,18 +117,23 @@ Item {
         }
     }
     ContextMenu {   // stop reach context menu
+        style: ContextMenuStyle {
+            inverted: true
+        }
         id: stopContextMenu
         MenuLayout {
             MenuItem {
                 text: "Stop Info"
                 onClicked : {
-                    pageStack.push(Qt.resolvedUrl("stopInfo.qml"),{"searchString":stopReachModel.get(grid.currentIndex).stopIdLong});
+//                    pageStack.push(Qt.resolvedUrl("stopInfo.qml"),{"searchString":stopReachModel.get(grid.currentIndex).stopIdLong});
+                    showStopInfo(stopReachModel.get(grid.currentIndex).stopIdLong)
                 }
             }
             MenuItem {
                 text: "Map"
                 onClicked : {
-//                    switchToMap()
+                    // send stopIdLong and lineIdLong to map page to show both
+                    showLineMapStop(searchString, stopReachModel.get(searchString, grid.currentIndex).stopIdLong)
                 }
             }
         }
@@ -166,11 +178,11 @@ Item {
         lineInfoLoadLines.sendMessage("")
     }
     Rectangle{      // dark background
-        color: config.bgColor
+        color: "#000000"
         anchors.fill: parent
         width: parent.width
         height:  parent.height
-        Image { source: config.bgImage; fillMode: Image.Center; anchors.fill: parent; }
+//        Image { source: config.bgImage; fillMode: Image.Center; anchors.fill: parent; }
         MouseArea {
             anchors.fill: parent
             onClicked: focus = true
@@ -185,6 +197,9 @@ Item {
         height: 110
         Button {    // showMapButton
                 id: showMapButtonButton
+                style: ButtonStyle {
+                    inverted: true
+                }
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.right: parent.right
                 anchors.rightMargin: 20
@@ -205,26 +220,26 @@ Item {
                 Label {
                     id: lineType;
                     text: qsTr("Line type")
-                    color: config.textColor
+                    color: "#cdd9ff"
                     font.pixelSize: 30
                 }
                 Label {
                     id: lineShortCodeName;
                     text: qsTr("line")
-                    color: config.textColor
+                    color: "#cdd9ff"
                     font.pixelSize: 30
                 }
             }
             Label {
                 id: lineStart
                 text: qsTr("lineStart")
-                color: config.textColor
+                color: "#cdd9ff"
                 font.pixelSize: 30
             }
             Label {
                 id: lineEnd
                 text: qsTr("lineEnd")
-                color: config.textColor
+                color: "#cdd9ff"
                 font.pixelSize: 30
             }
         } // column
@@ -236,6 +251,9 @@ Item {
         anchors.topMargin: 10
         anchors.horizontalCenter: parent.horizontalCenter
         width: (parent.width-10)
+        style: TabButtonStyle {
+            inverted: true
+        }
             Button {  // recent lines
                 id: linesButton
                 text: "Lines"
@@ -297,8 +315,8 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 height: parent.height
                 spacing: 15
-                Text{ text: stopName == "" ? stopIdLong:stopName; font.pixelSize: 30; color: config.textColor; anchors.verticalCenter : parent.verticalCenter}
-                Text{ text: reachTime; font.pixelSize: 30; color: config.textColor; anchors.verticalCenter : parent.verticalCenter}
+                Text{ text: stopName == "" ? stopIdLong:stopName; font.pixelSize: 30; color: "#cdd9ff"; anchors.verticalCenter : parent.verticalCenter}
+                Text{ text: reachTime; font.pixelSize: 30; color: "#cdd9ff"; anchors.verticalCenter : parent.verticalCenter}
             }
             MouseArea {
                 anchors.fill:  parent
@@ -335,7 +353,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: section;
                 font.pixelSize: 35;
-                color: config.textColor
+                color: "#cdd9ff"
             }
         }
     }
@@ -350,7 +368,7 @@ Item {
                 anchors.leftMargin: 10
                 text: lineStart + " -> " + lineEnd;
                 font.pixelSize: 25;
-                color: config.textColor
+                color: "#cdd9ff"
             }
             MouseArea {
                 anchors.fill:  parent
@@ -389,14 +407,14 @@ Item {
                     anchors.leftMargin: 10
                     text: lineTypeName
                     font.pixelSize: 25
-                    color: config.textColor
+                    color: "#cdd9ff"
                 }
                 Text{
                     anchors.left: parent.left
                     anchors.leftMargin: 10
                     text: lineStart + " -> " + lineEnd;
                     font.pixelSize: 25;
-                    color: config.textColor
+                    color: "#cdd9ff"
                 }
             }
             MouseArea {
@@ -435,7 +453,7 @@ Item {
         Item {
             width: schedule.cellWidth
             height: schedule.cellHeight
-            Text{ anchors.left: parent.left; text: departTime; font.pixelSize: 25; color: config.textColor}
+            Text{ anchors.left: parent.left; text: departTime; font.pixelSize: 25; color: "#cdd9ff"}
         }
     }
 //--                        --------------------------------------------------//
@@ -455,7 +473,7 @@ Item {
             section.delegate: config.lineGroup == "true" ? lineInfoSectionHeader : {} ;
             model: lineInfoModel
             spacing: 5
-            highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
+            highlight: Rectangle { color: "#666666"; radius:  5 }
             currentIndex: -1
             clip: true
             visible: true
@@ -470,7 +488,7 @@ Item {
             anchors.fill:  parent
             delegate: stopReachDelegate
             model: stopReachModel
-            highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
+            highlight: Rectangle { color: "#666666"; radius:  5 }
             currentIndex: -1
             clip: true
             visible: false;
@@ -486,6 +504,10 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             width: 350
             visible: false
+            style: TabButtonStyle {
+                inverted: true
+            }
+
             Button {
                 id: scheduleButton0
                 text: "Mon-Fri"
@@ -519,7 +541,7 @@ Item {
             model: scheduleModel
             cellWidth: 115
             cellHeight: 30
-            highlight: Rectangle { color: config.highlightColorBg; radius:  5 }
+            highlight: Rectangle { color: "#666666"; radius:  5 }
             currentIndex: -1
             clip: true
             visible: false;
@@ -668,11 +690,13 @@ Item {
             }
         }
     }
-    function showMap() {              // push Map page or replace current with Map page
+    function showMap() { // push lineIdLong page or
             if (grid.currentIndex >= 0) {
-                pageStack.push(Qt.resolvedUrl("route.qml"),{"loadLine":searchString,"loadStop":stopReachModel.get(grid.currentIndex).stopIdLong})
+//                pageStack.push(Qt.resolvedUrl("route.qml"),{"loadLine":searchString,"loadStop":stopReachModel.get(grid.currentIndex).stopIdLong})
+                showLineMapStop(searchString, stopReachModel.get(grid.currentIndex).stopIdLong)
             } else {
-                pageStack.push(Qt.resolvedUrl("route.qml"),{"loadLine":searchString})
+//                pageStack.push(Qt.resolvedUrl("route.qml"),{"loadLine":searchString})
+                showLineMap(searchString)
             }
     }
     function checkLineLoadRequest() {

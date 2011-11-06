@@ -9,6 +9,10 @@ Item {
     property bool firstRun: true
     property string loadStop: ""
     property string loadLine: ""
+    property string loadedLine: ""
+    anchors.fill: parent
+
+    Component.onCompleted: { checkLoadStop(); checkLoadLine(); }
 
     InfoBanner {             // info banner
         id: infoBanner
@@ -21,9 +25,13 @@ Item {
         source: "route.js"
 
         onMessage: {
-            temp.longitude = messageObject.longitude
-            temp.latitude = messageObject.latitude
-            lineShape.addCoordinate(temp)
+            if (messageObject.longitude == "finish") {
+                loadedLine = messageObject.latitude
+            } else {
+                temp.longitude = messageObject.longitude
+                temp.latitude = messageObject.latitude
+                lineShape.addCoordinate(temp)
+            }
         }
     }
     WorkerScript {  // nearby stops loader
@@ -99,17 +107,21 @@ Item {
         }
     }
 
-    Component.onCompleted: { loader.sendMessage({"lineIdLong" : loadLine}); setCurrent(); }
-
     Coordinate {
         id: temp
     }
 
-    Map {
+    Map {        
         id: map
         z : 1
         plugin : Plugin {
             name : "nokia"
+//            parameters: PluginParameter {
+//                name: "mapping.app_id"
+//                value: WrBja0-QSlb_Ei59BA6s
+//                mapping.token: kAwbj6b1hMhgcPfFR148lQ%3D%3D
+//                mapping.secret: MosYa80xjv5tZQmoAN6N
+//            }
         }
         size.width: parent.width
         size.height: parent.height
@@ -258,7 +270,7 @@ Item {
         }
     }
 
-    function setCurrent() {
+    function checkLoadStop() {
         if (loadStop != "") {
             JS.__db().transaction(
                 function(tx) {
@@ -274,6 +286,14 @@ Item {
                     }
                 }
             )
+        }
+    }
+
+    function checkLoadLine() {
+        if (loadLine != "" && loadLine != loadedLine) {
+            while (lineShape.path.length) lineShape.removeCoordinate(lineShape.path[0])
+            console.log("Map Cleaned line")
+            loader.sendMessage({"lineIdLong" : loadLine});
         }
     }
 }

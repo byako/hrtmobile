@@ -8,8 +8,8 @@ Item {
     objectName: "SettingsPageItem"
     property string currentTheme: ""
     anchors.fill: parent
+    signal updateConfig()
 
-    Config { id: config }
     InfoBanner {// info banner
         id: infoBanner
         text: "info description here"
@@ -17,115 +17,102 @@ Item {
         opacity: 1.0
     }
     Component.onCompleted: {
-        refreshConfig();
-        currentTheme =  JS.getCurrent("theme");
-        console.log("set currentTheme: " + currentTheme);
         offlineSwitchInit()
     }
     Rectangle {     // dark background
-        color: config.bgColor;
+        color: "#000000";
         anchors.fill: parent
         width: parent.width
         height:  parent.height
-        Image { source: config.bgImage ; fillMode: Image.Center; anchors.fill: parent; }
+//        Image { source: config.bgImage ; fillMode: Image.Center; anchors.fill: parent; }
     }
-    TumblerButton {
-        id: themeButton
-        text: "Theme"
-        anchors.top: parent.top
-        anchors.topMargin: 20
-        anchors.left: parent.left
-        anchors.leftMargin: 20
-        onClicked: {
-            themesModel.clear()
-            loadThemesNames()
-            themeDialog.open()
-        }
-    }
-    TumblerButton {
-        id: networkingButton
-        text: "Networking"
-        anchors.top: themeButton.bottom
-        anchors.topMargin: 20
-        anchors.left: parent.left
-        anchors.leftMargin: 20
-        onClicked: {
-            networkingDialog.open()
-        }
-    }
-    Button {
-        id: resetButton
-        anchors.top : networkingButton.bottom
-        anchors.topMargin: 20
-        anchors.left: parent.left
-        anchors.leftMargin: 20
-        text: "Reset database"
-        onClicked: {
-            JS.cleanAll()
-            JS.initDB()
-            JS.loadConfig(config)
-            showError("Database cleaned")
-        }
-    }
-    Row {
-        id: lineGroupRow
-        height: 40
-        anchors.top : resetButton.bottom
-        anchors.topMargin: 20
-        anchors.left: parent.left
-        anchors.leftMargin: 20
-        anchors.right: parent.right
-        anchors.rightMargin: 20
-        spacing: 20
-        Text {
-            width: 350
-            height: parent.height
-            verticalAlignment: Text.AlignVCenter
-            text: "Groupe same line directions"
-            font.pixelSize: 25
-            color: config.textColor
-        }
 
-        Switch {
-            id: lineGroupSwitch
-            anchors.verticalCenter: parent.verticalCenter
-            checked: config.lineGroup
-            onCheckedChanged: {
-                if (checked == true) {
-                    JS.setCurrent("lineGroup", "true")
-                    pageStack.find(function(page) {
-                                       page.refreshConfig();
-                    })
-                } else {
-                    JS.setCurrent("lineGroup", "false")
-                    pageStack.find(function(page) {
-                                       page.refreshConfig();
-                    })
+    Column {
+        spacing: 20
+/*        TumblerButton {
+            style: TumblerButtonStyle {
+                inverted: true
+            }
+            id: themeButton
+            text: "Theme"
+            onClicked: {
+                if (themesModel.count == 0) loadThemesNames()
+                themeDialog.open()
+            }
+        }*/
+        TumblerButton {
+            style: TumblerButtonStyle {
+                inverted: true
+            }
+            id: networkingButton
+            text: "Networking"
+            onClicked: {
+                networkingDialog.open()
+            }
+        }
+        Button {
+            style: ButtonStyle {
+                inverted: true
+            }
+            id: resetButton
+            text: "Reset database"
+            onClicked: {
+                JS.cleanAll()
+                JS.initDB()
+                settingsPage.updateConfig()
+                showError("Database cleaned")
+            }
+        }
+        Row {
+            id: lineGroupRow
+            height: 40
+            Text {
+                width: 350
+                height: parent.height
+                verticalAlignment: Text.AlignVCenter
+                text: "Groupe same line directions"
+                font.pixelSize: 25
+                color: "#cdd9ff"
+            }
+
+            Switch {
+                style: SwitchStyle {
+                    inverted: true
+                }
+                id: lineGroupSwitch
+                anchors.verticalCenter: parent.verticalCenter
+                checked: config.lineGroup
+                onCheckedChanged: {
+                    if (checked == true) {
+                        JS.setCurrent("lineGroup", "true")
+                    } else {
+                        JS.setCurrent("lineGroup", "false")
+                    }
+                    settingsPage.updateConfig()
                 }
             }
         }
     }
 //----------------------------------------------------------------------------//
-    ListModel {
+/*    ListModel {
         id: themesModel
-        ListElement { name: "" }
+//        ListElement { name: "" }
     }
     SelectionDialog {
          id: themeDialog
-         titleText: "Theme"
-         selectedIndex: 0
+         titleText: "Themes"
+//         selectedIndex: -1
          model: themesModel
          onSelectedIndexChanged: {
-             console.log("selectedIndex: " + selectedIndex + "; previous currentTheme value: " + currentTheme)
-             if (currentTheme != selectedIndex) {
+             console.log("selectedIndex: " + selectedIndex + "; previous currentTheme value: " + currentTheme + ": in model: " + themesModel.count)
+             if (currentTheme != themesModel.get(selectedIndex).name) {
                 currentTheme = themesModel.get(selectedIndex).name
+                titleText = "Current: " + currentTheme
                 JS.setTheme(currentTheme)
-                pageStack.find(function(page) {
-                    page.refreshConfig();
-                })
+                settingsPage.updateConfig()
              }
          }
-    }
+    }*/
     ListModel {
         id: networkingModel
         ListElement { name: "Full offline: don't use network" }
@@ -149,7 +136,6 @@ Item {
         infoBanner.text = errorText
         infoBanner.show()
     }
-
     function loadThemesNames() {
         JS.__db().transaction(
             function(tx) {
@@ -163,10 +149,6 @@ Item {
                     for (var i=0;i<rs.rows.length;++i) {
                         console.log("found " + rs.rows.item(i).theme)
                         themesModel.append({"name" : rs.rows.item(i).theme})
-                        if (rs.rows.item(i).theme == currentTheme) {
-                            console.log("THEME: currentIndex is" + i + "; themeName is " + currentTheme)
-                            themeDialog.selectedIndex = i
-                        }
                     }
                 }
             }

@@ -9,6 +9,10 @@ Item {
     property string stopAddString: ""
     property string searchString: ""    // keep stopIdLong here. If stopIdShort supplied (request from lineInfo) -> remove and place stopIdLong
     property int selectedStopIndex: -1
+    signal showStopMap(string stopIdLong)
+    signal showStopMapLine(string stopIdLong, string lineIdLong)
+    signal showLineMap(string lineIdLong)
+    signal showLineInfo(string lineIdLong)
     anchors.fill: parent
 
     Config { id: config }
@@ -105,6 +109,9 @@ Item {
     }
     ContextMenu {            // recent stops context menu
         id: recentStopsContextMenu
+        style: ContextMenuStyle {
+            inverted: true
+        }
         MenuLayout {
             MenuItem {
                 text: "Delete"
@@ -126,44 +133,50 @@ Item {
     }
     ContextMenu {            // depart line context menu
         id: lineContext
+        style: ContextMenuStyle {
+            inverted: true
+        }
         MenuLayout {
             MenuItem {
                 text: "Line Info"
                 onClicked : {
-                    pageStack.push(Qt.resolvedUrl("lineInfo.qml"),{"loadLine":trafficModel.get(grid.currentIndex).departCode});
+                    stopInfoPage.showLineInfo(trafficModel.get(grid.currentIndex).departCode);
                 }
             }
             MenuItem {
                 text: "Line Map"
                 onClicked : {
-                    pageStack.push(Qt.resolvedUrl("route.qml"),{"loadLine":trafficModel.get(grid.currentIndex).departCode, "loadStop":searchString});
+                    stopInfoPage.showStopMapLine(searchString, trafficModel.get(grid.currentIndex).departCode)
                 }
             }
         }
     }
     ContextMenu {            // passing line context menu
         id: linesPassingContext
+        style: ContextMenuStyle {
+            inverted: true
+        }
         MenuLayout {
             MenuItem {
                 text: "Line Info"
                 onClicked : {
-                    pageStack.push(Qt.resolvedUrl("lineInfo.qml"),{"loadLine":linesModel.get(linesList.currentIndex).lineNumber});
+                    stopInfoPage.showLineInfo(linesModel.get(linesList.currentIndex).lineNumber);
                 }
             }
             MenuItem {
                 text: "Line Map"
                 onClicked : {
-                    pageStack.push(Qt.resolvedUrl("route.qml"),{"loadLine":linesModel.get(linesList.currentIndex).lineNumber, "loadStop":searchString});
+                    stopInfoPage.showStopMapLine(searchString, linesModel.get(linesList.currentIndex).lineNumber);
                 }
             }
         }
     }
     Rectangle {              // dark background
-        color: config.bgColor;
+        color: "#000000";
         anchors.fill: parent
         width: parent.width
         height:  parent.height
-        Image { source: config.bgImage ; fillMode: Image.Center; anchors.fill: parent; }
+//        Image { source: config.bgImage ; fillMode: Image.Center; anchors.fill: parent; }
         MouseArea {
             anchors.fill: parent
             onClicked: {
@@ -188,12 +201,15 @@ Item {
                 width: 60
                 radius: 10
                 Button {
+                    style: ButtonStyle {
+                        inverted: true
+                    }
                     id: showMapButtonButton
                     anchors.fill: parent
                     text: "M"
                     visible: (loadingMap.visible) ? false : true
                     onClicked: {
-                        pageStack.push(Qt.resolvedUrl("route.qml"),{"loadStop":searchString})
+                        stopInfoPage.showStopMap(searchString)
                     }
                 }
                 BusyIndicator{// loading spinner
@@ -211,14 +227,14 @@ Item {
                 Label {
                     id: stopNameLabel
                     text: qsTr("Name")
-                    color: config.textColor
+                    color: "#cdd9ff"
                     font.pixelSize: 25
                     width: 100
                 }
                 Label {
                     id: stopName;
                     text: qsTr("Name")
-                    color: config.textColor
+                    color: "#cdd9ff"
                     font.pixelSize: 30
                 }
             }
@@ -226,14 +242,14 @@ Item {
                 Label {
                     id: stopAddressLabel
                     text: qsTr("Address")
-                    color: config.textColor
+                    color: "#cdd9ff"
                     font.pixelSize: 25
                     width: 100
                 }
                 Label {
                     id: stopAddress;
                     text: qsTr("Address")
-                    color: config.textColor
+                    color: "#cdd9ff"
                     font.pixelSize: 30
                 }
             }
@@ -241,14 +257,14 @@ Item {
                 Label {
                     id: stopCityLabel;
                     text: qsTr("City")
-                    color: config.textColor
+                    color: "#cdd9ff"
                     font.pixelSize: 25
                     width: 100
                 }
                 Label {
                     id: stopCity;
                     text: qsTr("City")
-                    color: config.textColor
+                    color: "#cdd9ff"
                     font.pixelSize: 30
                 }
             }
@@ -261,6 +277,9 @@ Item {
         anchors.topMargin: 10
         anchors.right: parent.right
         anchors.left: parent.left
+        style: TabButtonStyle {
+            inverted: true
+        }
             Button {
                 id: recentButton
                 text: "Recent"
@@ -342,13 +361,13 @@ Item {
                     Text{
                         text: stopName
                         font.pixelSize: 35
-                        color: config.textColor
+                        color: "#cdd9ff"
                         width: 340
                     }
                     Text{
                         text: stopIdShort
                         font.pixelSize: 35
-                        color: config.textColor
+                        color: "#cdd9ff"
                     }
                 }
                 Row {
@@ -359,13 +378,13 @@ Item {
                     Text{
                         text: stopAddress
                         font.pixelSize: 20
-                        color: config.textColor
+                        color: "#cdd9ff"
                         width: 340
                     }
                     Text{
                         text: stopCity
                         font.pixelSize: 20
-                        color: config.textColor
+                        color: "#cdd9ff"
                     }
                 }
             }
@@ -425,12 +444,12 @@ Item {
                 Text{
                     text: departTime
                     font.pixelSize: 25
-                    color: trafficModel.get(grid.currentIndex).departLine == departLine ? (grid.currentIndex == index ? config.highlightColor : config.highlightColor) : config.textColor
+                    color: trafficModel.get(grid.currentIndex).departLine == departLine ? "#00ee10" : "#cdd9ff"
                 }
                 Text{
                     text: departLine
                     font.pixelSize: 25
-                    color: trafficModel.get(grid.currentIndex).departLine == departLine ? (grid.currentIndex == index ? config.highlightColor : config.highlightColor) : config.textColor
+                    color: trafficModel.get(grid.currentIndex).departLine == departLine ? "#00ee10" : "#cdd9ff"
                 }
             }
             MouseArea {
@@ -466,13 +485,13 @@ Item {
                 Text{
                     text: propName
                     font.pixelSize: 30
-                    color: config.textColor
+                    color: "#cdd9ff"
                     width: 400
                 }
                 Text{
                     text: propValue
                     font.pixelSize: 30
-                    color: config.textColor
+                    color: "#cdd9ff"
                 }
             }
         }
@@ -496,13 +515,13 @@ Item {
                 Text{
                     text: lineNumber
                     font.pixelSize: 30
-                    color: config.textColor
+                    color: "#cdd9ff"
                     width: 140
                 }
                 Text{
                     text: lineDest
                     font.pixelSize: 30
-                    color: config.textColor
+                    color: "#cdd9ff"
                 }
             }
             MouseArea{
@@ -523,13 +542,13 @@ Item {
                 Text{  // line
                     text: "Line"
                     font.pixelSize: 35
-                    color: config.textColor
+                    color: "#cdd9ff"
                     width: 140
                 }
                 Text{  // line
                     text: "Destination"
                     font.pixelSize: 35
-                    color: config.textColor
+                    color: "#cdd9ff"
                 }
             }
         }
@@ -551,7 +570,7 @@ Item {
             cellWidth: 160
             cellHeight: 30
             width: parent.width
-            highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
+            highlight: Rectangle { color: "#666666"; radius:  5 }
             currentIndex: 0
             clip: true
             visible: false
@@ -564,7 +583,7 @@ Item {
             anchors.topMargin: 10
             delegate:  infoDelegate
             model: infoModel
-            highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
+            highlight: Rectangle { color:"#666666"; radius:  5 }
             currentIndex: -1
             clip: true
         }
@@ -576,7 +595,7 @@ Item {
             anchors.topMargin: 10
             delegate:  recentDelegate
             model: recentModel
-            highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
+            highlight: Rectangle { color:"#666666"; radius:  5 }
             currentIndex: -1
             clip: true
         }
@@ -588,7 +607,7 @@ Item {
             delegate:  linesDelegate
             model: linesModel
             header: linesHeader
-            highlight: Rectangle { color:config.highlightColorBg; radius:  5 }
+            highlight: Rectangle { color:"#666666"; radius:  5 }
             currentIndex: -1
             clip: true
         }
