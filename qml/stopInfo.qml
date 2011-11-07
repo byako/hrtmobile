@@ -6,9 +6,10 @@ import com.nokia.extras 1.0
 Item {
     id: stopInfoPage
     objectName: "stopInfoPage"
-    property string stopAddString: ""
     property string searchString: ""    // keep stopIdLong here. If stopIdShort supplied (request from lineInfo) -> remove and place stopIdLong
     property int selectedStopIndex: -1
+    property bool exactSearch: false
+
     signal showStopMap(string stopIdLong)
     signal showStopMapLine(string stopIdLong, string lineIdLong)
     signal showLineMap(string lineIdLong)
@@ -16,7 +17,19 @@ Item {
     anchors.fill: parent
 
     Config { id: config }
-    WorkerScript {           // load stop info in database
+    WorkerScript {           // quick search stops by name for non-exact search. Using geocoding.
+        id: stopsLookup
+        source: "stopSearch.js"
+        onMessage: {
+            if (messageObject.stopIdShort != "FINISHED") {
+                console.log("WORKER SENT stopIdShort: " + messageObject.stopIdShort)
+                showError("Got info: " + messageObject.stopIdLong + messageObject.stopIdShort + messageObject.stopName + messageObject.stopCity + messageObject.stopLongitude + messageObject.stopLatitude)
+            } else {
+                console.log("stopInfo geocode API FINISHED request " + searchString);
+            }
+        }
+    }
+    WorkerScript {           // load stop info from wev to database
         id: loadStopInfo
         source: "stopInfoLoadInfo.js"
         onMessage: {
@@ -37,19 +50,13 @@ Item {
             }
         }
     }
-    WorkerScript {           // fast schedule loader
+    WorkerScript {           // fast schedule loader: API 1.0
         id: loadStopSchedule
         source: "stopInfoScheduleLoad.js"
         onMessage: {
             if (messageObject.departName == "STOPNAME") {
                 stopName.text = messageObject.stopName
                 stopAddress.text = messageObject.stopAddress
-                if (selectedStopIndex == -1 || recentModel.get(selectedStopIndex).stopIdLong != searchString) {
-                    loadStopInfo.sendMessage({"searchString" : searchString,"stopAddress" : messageObject.stopAddress})
-                    loadingMap.visible = true
-                } else {
-                    loadingMap.visible = false
-                }
                 stopCity.text = messageObject.stopCity
             } else if (messageObject.departName == "ERROR") {
                 showError("Server returned ERROR")
@@ -68,24 +75,14 @@ Item {
     }
 
     Component.onCompleted: { refreshConfig(); infoModel.clear(); fillModel(); setCurrent();    }
-    Item {                   // busy indicator
+
+    Loading {                   // busy indicator
         id: loading
         visible: false
         anchors.fill: parent
         z: 8
-        Rectangle {
-            anchors.fill: parent
-            color:"#FFFFFF"
-            opacity: 0.7
-        }
-        BusyIndicator{
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.verticalCenter: parent.verticalCenter
-            platformStyle: BusyIndicatorStyle { size : "large" }
-            running: true
-        }
     }
-    QueryDialog {            // offline dialog
+/*    QueryDialog {            // offline dialog
         id: offlineModeOff
         acceptButtonText: "Go online"
         rejectButtonText: "Keep offline"
@@ -100,7 +97,7 @@ Item {
         onRejected: {
             console.log("User declined to go online")
         }
-    }
+    }*/
     InfoBanner {             // info banner
         id: infoBanner
         text: "info description here"
@@ -133,41 +130,29 @@ Item {
     }
     ContextMenu {            // depart line context menu
         id: lineContext
-        style: ContextMenuStyle {
-            inverted: true
-        }
+        style: ContextMenuStyle { inverted: true }
         MenuLayout {
             MenuItem {
                 text: "Line Info"
-                onClicked : {
-                    stopInfoPage.showLineInfo(trafficModel.get(grid.currentIndex).departCode);
-                }
+                onClicked : stopInfoPage.showLineInfo(trafficModel.get(grid.currentIndex).departCode);
             }
             MenuItem {
                 text: "Line Map"
-                onClicked : {
-                    stopInfoPage.showStopMapLine(searchString, trafficModel.get(grid.currentIndex).departCode)
-                }
+                onClicked : stopInfoPage.showStopMapLine(searchString, trafficModel.get(grid.currentIndex).departCode)
             }
         }
     }
     ContextMenu {            // passing line context menu
         id: linesPassingContext
-        style: ContextMenuStyle {
-            inverted: true
-        }
+        style: ContextMenuStyle { inverted: true }
         MenuLayout {
             MenuItem {
                 text: "Line Info"
-                onClicked : {
-                    stopInfoPage.showLineInfo(linesModel.get(linesList.currentIndex).lineNumber);
-                }
+                onClicked : stopInfoPage.showLineInfo(linesModel.get(linesList.currentIndex).lineNumber);
             }
             MenuItem {
                 text: "Line Map"
-                onClicked : {
-                    stopInfoPage.showStopMapLine(searchString, linesModel.get(linesList.currentIndex).lineNumber);
-                }
+                onClicked : stopInfoPage.showStopMapLine(searchString, linesModel.get(linesList.currentIndex).lineNumber);
             }
         }
     }
@@ -191,29 +176,33 @@ Item {
         anchors.right: parent.right
         height: 110
         visible: false
-        Rectangle {          // showMapButton
-                id: showMapButton
+        Item {          // showMapButton
                 anchors.right: parent.right
                 anchors.rightMargin: 20
                 anchors.verticalCenter: parent.verticalCenter
-                color: "#777777"
                 height: 60
                 width: 60
-                radius: 10
-                Button {
+                Button { // showMapButton
                     style: ButtonStyle {
                         inverted: true
                     }
-                    id: showMapButtonButton
+                    id: showMapButton
                     anchors.fill: parent
                     text: "M"
-                    visible: (loadingMap.visible) ? false : true
+                    visible:  ! loadingMap.visible
                     onClicked: {
-                        stopInfoPage.showStopMap(searchString)
+                        if (grid.visible && grid.currentIndex >= 0) {
+                            stopInfoPage.showStopMapLine(searchString, trafficModel.get(grid.currentIndex).departCode)
+                        } else if (linesList.visible && linesList.currentIndex >=0 ) {
+                            stopInfoPage.showStopMapLine(searchString, linesModel.get(linesList.currentIndex).lineNumber)
+                        } else {
+                            stopInfoPage.showStopMap(searchString)
+                        }
                     }
                 }
                 BusyIndicator{// loading spinner
                     id: loadingMap
+                    style: BusyIndicatorStyle { inverted: true }
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
                     running: true
@@ -221,8 +210,7 @@ Item {
                     z: 8
                 }
             }
-        Column {
-//            spacing: 5
+        Column {            // data labels
             Row {
                 Label {
                     id: stopNameLabel
@@ -396,7 +384,7 @@ Item {
 //                        recentList.focus = true
                         recentList.currentIndex = index
                         searchString = recentModel.get(index).stopIdLong
-                        showMapButtonButton.visible = true
+                        showMapButton.visible = true
                         fillInfoModel()
                         fillLinesModel()
 //                        if (config.networking < 1) {
@@ -406,7 +394,7 @@ Item {
                         stopAddress.text = recentModel.get(recentList.currentIndex).stopAddress
                         stopCity.text = recentModel.get(recentList.currentIndex).stopCity
                         dataRect.visible = true
-                        showMapButtonButton.visible = true
+                        showMapButton.visible = true
 //                        } else {
                             updateSchedule()
 //                        }
@@ -440,7 +428,7 @@ Item {
             width: grid.cellWidth; height:  grid.cellHeight;
             Row {
                 spacing: 10;
-                anchors.fill: parent;
+//                anchors.fill: parent;
                 Text{
                     text: departTime
                     font.pixelSize: 25
@@ -629,14 +617,20 @@ Item {
     }
     function buttonClicked() {  // SearchBox action
         console.log("Button clicked: " + searchString)
-        if (searchString == "" || searchString.length > 7 || searchString.length < 4) {
+/*        if (searchString == "" || searchString.length > 7 || searchString.length < 4) {
             showError("Wrong stop ID:"+searchString+".\nStop ID is 4 digit or 1 letter & 4 digits. Example: E3127")
-        }
+        }*/
         if (config.networking < 1) {
             offlineModeOff.open();
             return
         }
-        updateSchedule()
+        if (exactSearch) {
+            updateSchedule()
+            loadStopInfo.sendMessage({"searchString" : searchString})
+            loadingMap.visible = true
+        } else {
+            stopsLookup.sendMessage({"searchString" : searchString})
+        }
     }
     function updateSchedule() { // update only schedule
         trafficModel.clear()
@@ -694,7 +688,7 @@ Item {
                         try { var rs = tx.executeSql("SELECT * FROM Stops WHERE stopIdLong=?", [searchString]) }
                         catch(e) { console.log("exception : "+e) }
                         if (rs.rows.length > 0) {
-                            showMapButtonButton.visible = true
+                            showMapButton.visible = true
                             infoModel.clear()
                             updateSchedule()
                         } else {

@@ -10,6 +10,7 @@ Item {
     property string loadStop: ""
     property string loadLine: ""
     property string loadedLine: ""
+    property string loadedStop: ""
     anchors.fill: parent
 
     Component.onCompleted: { checkLoadStop(); checkLoadLine(); }
@@ -27,6 +28,12 @@ Item {
         onMessage: {
             if (messageObject.longitude == "finish") {
                 loadedLine = messageObject.latitude
+                if (loadedStop == "") {
+                    map.center.longitude = messageObject.longit
+                    map.center.latitude = messageObject.latit
+                    positionCircle.center.longitude = messageObject.longit
+                    positionCircle.center.latitude = messageObject.latit
+                }
             } else {
                 temp.longitude = messageObject.longitude
                 temp.latitude = messageObject.latitude
@@ -124,7 +131,9 @@ Item {
 //            }
         }
         size.width: parent.width
-        size.height: parent.height
+        size.height: 500
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
         zoomLevel: 14
         center: Coordinate {
             latitude: 60.1636
@@ -186,30 +195,6 @@ Item {
                 lastY = -1
             }
         }
-/*        PinchArea {
-           id: pincharea
-           pinch.target: map
-           property double __oldZoom
-           anchors.fill: parent
-
-           function calcZoomDelta(zoom, percent) {
-              return zoom + Math.log(percent)/Math.log(2)
-           }
-           onPinchStarted: {
-                console.log("MAP: PINCH STARTED")
-                __oldZoom = 1
-           }
-           onPinchUpdated: {
-             if (Math.abs(__oldZoom - pinch.scale) > 0.1) {
-//                map.zoomLevel += (pinch.sczle - __oldZoom)/0.1
-                console.log("MA: PINCH UPDATE: " + (pinch.scale - __oldZoom)/0.1)
-             }
-           }
-           onPinchFinished: {
-               console.log("MAP: PINCH FINISHED")
-//              map.zoomLevel = calcZoomDelta(__oldZoom, pinch.scale)
-           }
-        }*/
 
         MapPolyline {
             id: lineShape
@@ -281,11 +266,13 @@ Item {
                         positionCircle.center.longitude = rs.rows.item(0).stopLongitude
                         map.center.latitude = rs.rows.item(0).stopLatitude
                         positionCircle.center.latitude = rs.rows.item(0).stopLatitude
+                        loadedStop = loadStop
                     } else {
 
                     }
                 }
             )
+            loadStop= ""
         }
     }
 
@@ -294,6 +281,7 @@ Item {
             while (lineShape.path.length) lineShape.removeCoordinate(lineShape.path[0])
             console.log("Map Cleaned line")
             loader.sendMessage({"lineIdLong" : loadLine});
+            loadLine = ""
         }
     }
 }

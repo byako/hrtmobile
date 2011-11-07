@@ -5,6 +5,7 @@ Dialog {
     id: searchDialog
 
     property Item page: null
+    property bool exactSearch: false
 
     title: Text {
         anchors.horizontalCenter: parent.horizontalCenter
@@ -12,34 +13,77 @@ Dialog {
         text: "Search"
     }
 
+    QueryDialog {
+        id: infoDialog
+        acceptButtonText: "OK"
+        message: "Use exact search if you know exact ID of the vechile/stop. Example: 1011"
+        titleText: "Exact search"
+    }
+
     content: Item {
-        height: 100
+        height: 350
         width: parent.width
         anchors.fill: parent
-        Rectangle {
-            width: 260
-            height: 40
-            color: "#333333"
-            radius: 20
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
-            anchors.topMargin: 40
-            TextInput{
-                id: searchInput
-                anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 10
-                width: parent.width
-                height: parent.height
-                maximumLength: 16
-                onFocusChanged: {
-                    focus == true ? openSoftwareInputPanel() : closeSoftwareInputPanel()
-                    focus == true ? text = qsTr("") : null
+        Column {
+            id: mainColumnt
+            spacing: 40
+            anchors.fill: parent
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 20
+                Button {
+                    anchors.verticalCenter: parent.verticalCenter
+                    style: ButtonStyle {
+                        inverted: true
+                    }
+                    width: 40
+//                    iconSource: "image://theme/icon-m-toolbar-frequent-used"
+                    text: "i"
+                    onClicked: {
+                        infoDialog.open()
+                    }
                 }
-                onAccepted:  { searchDialog.accept() }
-                font.pixelSize: 30
-                text: "Enter LineID"
-                color: "#FFFFFF"
+                Label {
+                    anchors.verticalCenter: parent.verticalCenter
+                    style: LabelStyle {
+                        inverted: true
+                    }
+                    font.pixelSize: 30
+                    width: 200
+                    height: 40
+                        text: "Exact search"
+                }
+                Switch {
+                    style: SwitchStyle {
+                        inverted: true
+                    }
+                    checked: false
+                    onCheckedChanged: {
+                        exactSearch = checked
+                    }
+                }
+            }
+            Rectangle {  // search field
+                width: 260
+                height: 40
+                color: "#333333"
+                radius: 20
+                anchors.horizontalCenter: parent.horizontalCenter
+                TextInput{
+                    id: searchInput
+                    anchors.fill: parent
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    maximumLength: 64
+                    onFocusChanged: {
+                        focus == true ? openSoftwareInputPanel() : closeSoftwareInputPanel()
+                        focus == true ? text = qsTr("") : null
+                    }
+                    onAccepted:  { searchDialog.accept() }
+                    font.pixelSize: 30
+                    text: "Search"
+                    color: "#FFFFFF"
+                }
             }
         }
     }

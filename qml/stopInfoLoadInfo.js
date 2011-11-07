@@ -30,7 +30,7 @@ WorkerScript.onMessage = function(message) {
                             try { rs = tx.executeSql('INSERT INTO Stops VALUES(?,?,?,?,?,?,?)', [a.childNodes[ii].childNodes[0].firstChild.nodeValue,
                                                                                                  a.childNodes[ii].childNodes[1].firstChild.nodeValue,
                                                                                                  a.childNodes[ii].childNodes[2].firstChild.nodeValue,
-                                                                                                 a.childNodes[ii].childNodes[13].firstChild.nodeValue],
+                                                                                                 a.childNodes[ii].childNodes[13].firstChild.nodeValue,
                                                                                                  a.childNodes[ii].childNodes[4].firstChild.nodeValue,
                                                                                                  lonlat[0],
                                                                                                  lonlat[1]]) }
@@ -95,6 +95,6 @@ WorkerScript.onMessage = function(message) {
         }
     }
 
-    doc.open("GET", "http://api.reittiopas.fi/hsl/1_1_3/?request=stop&code=" + message.searchString + "&user=byako&pass=gfccdjhl&format=xml")
+    doc.open("GET", "http://api.reittiopas.fi/hsl/1_1_3/?request=stop&user=byako&pass=gfccdjhl&format=xml&code=" + message.searchString)
     doc.send();
 }

@@ -26,27 +26,11 @@ Item {
         z: 10
         opacity: 1.0
     }
-    Item {          // busy indicator
+    Loading {          // busy indicator
         id: loading
         visible: false
         anchors.fill: parent
-        width: parent.width
-        height: parent.height
         z: 8
-        Rectangle {
-            width: parent.width
-            height: parent.height
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.verticalCenter: parent.verticalCenter
-            color:"#333333"
-            opacity: 0.7
-        }
-        BusyIndicator {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.verticalCenter: parent.verticalCenter
-            running: true
-            platformStyle: BusyIndicatorStyle { size: "large"; inverted: true }
-        }
     }
     WorkerScript {  // stop name loader
         id: stopReachLoader

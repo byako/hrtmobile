@@ -24,5 +24,7 @@
         <file>qml/stopInfoScheduleLoad.js</file>
         <file>qml/stopInfoLoadInfo.js</file>
         <file>qml/SearchDialog.qml</file>
+        <file>qml/stopSearch.js</file>
+        <file>qml/Loading.qml</file>
     </qresource>
 </RCC>
