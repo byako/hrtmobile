@@ -23,7 +23,12 @@ Item {
         onMessage: {
             if (messageObject.stopIdShort != "FINISHED") {
                 console.log("WORKER SENT stopIdShort: " + messageObject.stopIdShort)
-                showError("Got info: " + messageObject.stopIdLong + messageObject.stopIdShort + messageObject.stopName + messageObject.stopCity + messageObject.stopLongitude + messageObject.stopLatitude)
+                showError("Got info: " + messageObject.stopIdLong + " "
+                          + messageObject.stopIdShort + " "
+                          + messageObject.stopName + " "
+                          + messageObject.stopCity + " "
+                          + messageObject.stopLongitude + " "
+                          + messageObject.stopLatitude)
             } else {
                 console.log("stopInfo geocode API FINISHED request " + searchString);
             }
@@ -106,9 +111,6 @@ Item {
     }
     ContextMenu {            // recent stops context menu
         id: recentStopsContextMenu
-        style: ContextMenuStyle {
-            inverted: true
-        }
         MenuLayout {
             MenuItem {
                 text: "Delete"
@@ -130,7 +132,6 @@ Item {
     }
     ContextMenu {            // depart line context menu
         id: lineContext
-        style: ContextMenuStyle { inverted: true }
         MenuLayout {
             MenuItem {
                 text: "Line Info"
@@ -144,7 +145,6 @@ Item {
     }
     ContextMenu {            // passing line context menu
         id: linesPassingContext
-        style: ContextMenuStyle { inverted: true }
         MenuLayout {
             MenuItem {
                 text: "Line Info"

@@ -37,11 +37,12 @@ WorkerScript.onMessage = function(message) {
                         }
                     )
                 }
-                WorkerScript.sendMessage({"stopIdShort": "FINISHED"});
+            }
+            WorkerScript.sendMessage({"stopIdShort": "FINISHED"});
         } else if (doc.readyState == XMLHttpRequest.ERROR) {
             showError("Request error. Is Network available?")
         }
     }
-    doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=geocode&user=byako&pass=gfccdjhl&format=xml&key=" + message.searchString)
+    doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=geocode&user=byako&epsg_out=wgs84&pass=gfccdjhl&format=xml&key=" + message.searchString)
     doc.send();
 }

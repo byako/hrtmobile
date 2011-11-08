@@ -16,7 +16,7 @@ Item {
     signal showLineMapStop(string lineIdLong, string stopIdLong)
     signal showStopMap(string stopIdLong)
     signal showStopInfo(string stopIdLong)
-
+    signal pushStopToMap(string lineIdLong_, string stopIdShort_, string stopName_, string stopLongitude_, string stopLatitude_)
     anchors.fill: parent
 
     Config { id: config }
@@ -37,11 +37,12 @@ Item {
         source: "lineInfo.js"
 
         onMessage: {
-            for (var i=0;i<stopReachModel.count;++i) {
-                if (stopReachModel.get(i).stopIdLong == messageObject.stopIdLong) {
-                    stopReachModel.set(i, {"stopName" : messageObject.stopName })
-                }
-            }
+            stopReachModel.set(messageObject.lineReachNumber, {"stopName" : messageObject.stopName,
+                                   "stopIdShort" : messageObject.stopIdShort,
+                                   "stopCity" : messageObject.stopCity,
+                                   "stopLongitude" : messageObject.stopLongitude,
+                                   "stopLatitude" : messageObject.stopLatitude,
+                               })
         }
     }
     WorkerScript {  // schedule loader
@@ -72,9 +73,6 @@ Item {
 
     ContextMenu {   // line info context menu
         id: linesContextMenu
-        style: ContextMenuStyle {
-            inverted: true
-        }
         MenuLayout {
             MenuItem {
                 text: "Delete"
@@ -101,15 +99,11 @@ Item {
         }
     }
     ContextMenu {   // stop reach context menu
-        style: ContextMenuStyle {
-            inverted: true
-        }
         id: stopContextMenu
         MenuLayout {
             MenuItem {
                 text: "Stop Info"
                 onClicked : {
-//                    pageStack.push(Qt.resolvedUrl("stopInfo.qml"),{"searchString":stopReachModel.get(grid.currentIndex).stopIdLong});
                     showStopInfo(stopReachModel.get(grid.currentIndex).stopIdLong)
                 }
             }
@@ -549,10 +543,14 @@ Item {
                 for (var ii=0; ii<rs.rows.length; ++ii) {
                     temp_name = JS.getStopName(rs.rows.item(ii).stopIdLong)
                     if (temp_name == "") {
-                        stopReachLoader.sendMessage({"stopIdLong":rs.rows.item(ii).stopIdLong})
+                        stopReachLoader.sendMessage({"stopIdLong":rs.rows.item(ii).stopIdLong, "lineReachNumber" : ii})
                     }
                     stopReachModel.append({"stopIdLong" : rs.rows.item(ii).stopIdLong,
                                   "stopName" : temp_name,
+                                  "stopIdShort" : "",
+                                  "stopLongitude" : "",
+                                  "stopLatitude" : "",
+                                  "stopCity" : "",
                                   "reachTime" : rs.rows.item(ii).stopReachTime });
                 }
             }
@@ -675,13 +673,21 @@ Item {
         }
     }
     function showMap() { // push lineIdLong page or
-            if (grid.currentIndex >= 0) {
-//                pageStack.push(Qt.resolvedUrl("route.qml"),{"loadLine":searchString,"loadStop":stopReachModel.get(grid.currentIndex).stopIdLong})
-                showLineMapStop(searchString, stopReachModel.get(grid.currentIndex).stopIdLong)
-            } else {
-//                pageStack.push(Qt.resolvedUrl("route.qml"),{"loadLine":searchString})
-                showLineMap(searchString)
+        if (grid.currentIndex >= 0) {
+            showLineMapStop(searchString, stopReachModel.get(grid.currentIndex).stopIdLong)
+        } else {
+            showLineMap(searchString)
+        }
+        for (var ii=0; ii < stopReachModel.count; ++ii) {
+            if (stopReachModel.get(ii).stopName != "") {
+                console.log("Sending " + stopReachModel.get(ii).stopName + " to map")
+                pushStopToMap(stopReachModel.get(ii).stopIdLong,
+                              stopReachModel.get(ii).stopIdShort,
+                              stopReachModel.get(ii).stopName,
+                              stopReachModel.get(ii).stopLongitude,
+                              stopReachModel.get(ii).stopLatitude)
             }
+        }
     }
     function checkLineLoadRequest() {
         if (loadLine != "") {

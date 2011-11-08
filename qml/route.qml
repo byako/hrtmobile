@@ -93,10 +93,8 @@ Item {
         }
     }
 
-    ListModel {
-        id: stopsLoaded
-    }
-
+    ListModel { id: stopsLoaded }
+    ListModel { id: lineStops }
     PositionSource {// gps data receiver
         id: positionSource
         updateInterval: 10000
@@ -114,9 +112,7 @@ Item {
         }
     }
 
-    Coordinate {
-        id: temp
-    }
+    Coordinate { id: temp }
 
     Map {        
         id: map
@@ -156,16 +152,20 @@ Item {
                 }*/
             }
         }
-        Landmark {
-            id: busStop
-            name: "Bus Stop 1"
-            description: "Bus Stop 2"
-            coordinate: Coordinate {
-                latitude: 60.1636
-                longitude: 24.9167
+        MapObjectView {
+            id: allLandmarks
+            model: landmarkModelAll
+            delegate: Component {
+                MapCircle {
+                    color: "green"
+                    radius: 1000
+                    center: Coordinate {
+                        latitude: landmark.coordinate.latitude
+                        longitude: landmark.coordinate.longitude
+                    }
+                }
             }
         }
-
         MapMouseArea {
             property int lastX : -1
             property int lastY : -1
@@ -206,7 +206,7 @@ Item {
             opacity: 0.8
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 20
-            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.left: parent.left
             width: 200
             height: 45
             Button {
@@ -254,6 +254,10 @@ Item {
             }
         }
     }
+    function showError(stringToShow) {
+        infoBanner.text = stringToShow
+        infoBanner.show()
+    }
 
     function checkLoadStop() {
         if (loadStop != "") {
@@ -283,5 +287,20 @@ Item {
             loader.sendMessage({"lineIdLong" : loadLine});
             loadLine = ""
         }
+    }
+    function addLineStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_) {
+        console.log("long: " + stopLongitude_ + "; lat: " + stopLatitude_)
+        lineStops.append({ "stopIdlong": stopIdLong_, "mapCircle" : Qt.createQmlObject('import Qt 4.7; import QtMobility.location 1.2;' +
+                                                        'MapCircle{ id: "lineStop' + stopIdLong_ +
+                                                        '"; center : Coordinate { longitude : ' + stopLongitude_ +
+                                                        '; latitude : ' + stopLatitude_ +
+                                                        '} color : "#80FF0000"; radius: 30.0' +
+                                                        '; signal pupUp()' +
+                                                        '; property string stopIdShort : "' + stopIdShort_ +
+                                                        '"; property string stopName : "' + stopName_ +
+                                                        '"; MapMouseArea { anchors.fill: parent; onClicked: { routePage.showError("" + stopIdShort + ": " + stopName) } }' +
+                                                        '}', map)
+                         })
+        map.addMapObject(lineStops.get(lineStops.count-1).mapCircle)
     }
 }

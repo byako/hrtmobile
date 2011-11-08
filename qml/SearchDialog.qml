@@ -29,6 +29,8 @@ Dialog {
             spacing: 40
             anchors.fill: parent
             Row {
+                id: exactRow
+                visible: page.objectName == "stopInfoPage" ? true : false
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 20
                 Button {
@@ -37,7 +39,6 @@ Dialog {
                         inverted: true
                     }
                     width: 40
-//                    iconSource: "image://theme/icon-m-toolbar-frequent-used"
                     text: "i"
                     onClicked: {
                         infoDialog.open()
@@ -101,6 +102,7 @@ Dialog {
         searchInput.focus = false
 //        console.log("searchDialog: starting search: " + searchInput.text)
         page.searchString = searchInput.text
+        if (page.objectName == "stopInfoPage") page.exactSearch = exactSearch
         page.buttonClicked()
     }
 

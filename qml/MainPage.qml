@@ -26,8 +26,7 @@ Page {
             TabButton {
                 id: recentTabButton
                 tab: recentPageContainer;
-                text: (checked) ? "" : "rcnt";
-                iconSource: (checked) ? "image://theme/icon-m-toolbar-search-white" : ""
+                iconSource: (checked) ? "image://theme/icon-m-toolbar-search-white" : "image://theme/icon-m-toolbar-frequent-used-white"
                 onClicked: {
                      tabGroup.lastTab = -1
                 }
@@ -198,6 +197,11 @@ Page {
                 }
                 stopInfoLoader.item.searchString = stopIdLong
                 stopInfoLoader.item.buttonClicked()
+            }
+            onPushStopToMap: {
+                if (mapLoader.status == Loader.Ready) {
+                    mapLoader.item.addLineStop(lineIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_)
+                }
             }
         }
         Connections {
