@@ -81,7 +81,7 @@ function cleanAll() {
             tx.executeSql('DROP TABLE IF EXISTS LineTypes');
             tx.executeSql('DROP TABLE IF EXISTS StopLines');
             tx.executeSql('DROP TABLE IF EXISTS StopInfo');
-            tx.executeSql('DROP TABLE IF EXISTS lineSchedule');
+            tx.executeSql('DROP TABLE IF EXISTS LineSchedule');
         }
     )
 }
@@ -181,32 +181,6 @@ function addLine(string) {
     }
     return returnVal
 }
-function addStop(string) {
-    var returnVal = 0
-    var fields = new Array
-    fields = string.split(";")
-    if (fields.length < 7) {
-        returnVal = -1
-        return returnVal
-    }
-
-    __db().transaction(
-        function(tx) {
-            console.log ("checking if there is already a stop info in DB [" + fields[0] + "]: ")
-            var rs = tx.executeSql('SELECT * FROM Stops WHERE stopIdLong=?', [fields[0]]);
-            if (rs.rows.length > 0) {
-                for (var ii=0; ii<rs.rows.length; ++ii) {
-                    console.log("" + rs.rows.item(ii).stopIdLong +";"+ rs.rows.item(ii).stopName)
-                }
-            } else {
-                returnVal = 1
-                try { rs = tx.executeSql('INSERT INTO Stops VALUES(?,?,?,?,?,?,?)', [fields[0], fields[1], fields[2], fields[3], fields[4], fields[5], fields[6]]) }
-                catch(e) { console.log("EXCEPTION: " + e) }
-            }
-	}
-    )
-    return returnVal
-}
 function addLineStop(string) {
     var returnVal = 0
     var fields = new Array
@@ -254,9 +228,11 @@ function deleteLine(string) {
         function(tx) {
             try {
                 if (string == "*") {
+                    tx.executeSql('DELETE from LineSchedule');
                     tx.executeSql('DELETE from LineStops');
                     tx.executeSql('DELETE from Lines');
                 } else {
+                    tx.executeSql('DELETE from LineSchedule WHERE lineIdLong=?',[string]);
                     tx.executeSql('DELETE from LineStops WHERE lineIdLong=?',[string]);
                     tx.executeSql('DELETE from Lines WHERE lineIdLong=?', [string]);
                 }
@@ -314,22 +290,6 @@ function getLineType(string) {
             } else {
                 console.log("Oops, didn't find line type: " + string)
             }
-        }
-    )
-    return return_v
-}
-function getStopName(stopIdLong) {
-    var return_v = ""
-    __db().transaction(
-        function(tx) {
-           try {
-                var rs = tx.executeSql("SELECT * FROM Stops WHERE stopIdLong=?", [stopIdLong])
-           } catch(e) {
-                console.log("EXCEPTION: " + e)
-           }
-           if (rs.rows.length > 0) {
-               return_v = rs.rows.item(0).stopName
-           }
         }
     )
     return return_v

@@ -200,7 +200,7 @@ Page {
             }
             onPushStopToMap: {
                 if (mapLoader.status == Loader.Ready) {
-                    mapLoader.item.addLineStop(lineIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_)
+                    mapLoader.item.addStop(lineIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_)
                 }
             }
         }

@@ -152,20 +152,6 @@ Item {
                 }*/
             }
         }
-        MapObjectView {
-            id: allLandmarks
-            model: landmarkModelAll
-            delegate: Component {
-                MapCircle {
-                    color: "green"
-                    radius: 1000
-                    center: Coordinate {
-                        latitude: landmark.coordinate.latitude
-                        longitude: landmark.coordinate.longitude
-                    }
-                }
-            }
-        }
         MapMouseArea {
             property int lastX : -1
             property int lastY : -1
@@ -258,9 +244,26 @@ Item {
         infoBanner.text = stringToShow
         infoBanner.show()
     }
+    function newCurrentStop(stopIdLong_) {
+        for (var ii=0; ii < lineStops.count; ++ii) {
+            if (lineStops.get(ii).stopIdLong == loadedStop) {
+                console.log("setting old color for " + lineStops.get(ii).stopName)
+                lineStops.get(ii).mapCircle.color = "#80ff0000"
+                loadedStop = stopIdLong_
+                return 0
+            }
+        }
+        loadedStop = stopIdLong_
+        return 1
+    }
 
     function checkLoadStop() {
-        if (loadStop != "") {
+        if (loadStop != "" && loadStop != loadedStop) {
+            if (! newCurrentStop(loadStop)) {
+                loadedStop = loadStop
+                loadStop = ""
+                return
+            }
             JS.__db().transaction(
                 function(tx) {
                     try {var rs = tx.executeSql("SELECT stopLongitude,stopLatitude FROM Stops WHERE stopIdLong=?", [loadStop]) }
@@ -277,6 +280,8 @@ Item {
                 }
             )
             loadStop= ""
+        } else if (!newCurrentStop(loadStop)) {
+
         }
     }
 
@@ -288,19 +293,24 @@ Item {
             loadLine = ""
         }
     }
-    function addLineStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_) {
-        console.log("long: " + stopLongitude_ + "; lat: " + stopLatitude_)
-        lineStops.append({ "stopIdlong": stopIdLong_, "mapCircle" : Qt.createQmlObject('import Qt 4.7; import QtMobility.location 1.2;' +
+    function addStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_) {
+        try { lineStops.append({ "stopIdLong": stopIdLong_, "mapCircle" : Qt.createQmlObject('import Qt 4.7; import QtMobility.location 1.2;' +
                                                         'MapCircle{ id: "lineStop' + stopIdLong_ +
                                                         '"; center : Coordinate { longitude : ' + stopLongitude_ +
                                                         '; latitude : ' + stopLatitude_ +
                                                         '} color : "#80FF0000"; radius: 30.0' +
                                                         '; signal pupUp()' +
                                                         '; property string stopIdShort : "' + stopIdShort_ +
+                                                        '"; property string stopIdLong : "' + stopIdLong_ +
                                                         '"; property string stopName : "' + stopName_ +
-                                                        '"; MapMouseArea { anchors.fill: parent; onClicked: { routePage.showError("" + stopIdShort + ": " + stopName) } }' +
+                                                        '"; MapMouseArea { anchors.fill: parent; onClicked: { if (routePage.loadedStop != stopIdLong) { routePage.newCurrentStop(stopIdLong); color="#500F0F000"; } routePage.showError("" + stopIdShort + ": " + stopName) } }' +
                                                         '}', map)
-                         })
+                         }) }
+//                                                        '} color : ("lineStop" + routePage.currentStop == id ) ? "#80FF0000" : color="#20bb2000" ; radius: 30.0' +
+        catch (e) {
+            console.log("route.qml: addStop exception " + e)
+        }
+
         map.addMapObject(lineStops.get(lineStops.count-1).mapCircle)
     }
 }

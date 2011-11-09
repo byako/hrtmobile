@@ -19,6 +19,12 @@ Item {
     signal pushStopToMap(string lineIdLong_, string stopIdShort_, string stopName_, string stopLongitude_, string stopLatitude_)
     anchors.fill: parent
 
+    Component.onCompleted: { // load config and recent lines
+        refreshConfig()
+        checkLineLoadRequest()
+        lineInfoLoadLines.sendMessage("")
+    }
+
     Config { id: config }
     InfoBanner {    // info banner
         id: infoBanner
@@ -148,12 +154,6 @@ Item {
          onRejected: {
 
          }
-    }
-
-    Component.onCompleted: { // load config and recent lines
-        refreshConfig()
-        checkLineLoadRequest()
-        lineInfoLoadLines.sendMessage("")
     }
     Rectangle{      // dark background
         color: "#000000"
@@ -535,27 +535,6 @@ Item {
         infoBanner.text = errorText
         infoBanner.show()
     }
-    function getStops() {             // load stops from LineStops database table
-        var temp_name
-        JS.__db().transaction(
-            function(tx) {
-                var rs = tx.executeSql('SELECT * FROM LineStops WHERE lineIdLong=?', [searchString]);
-                for (var ii=0; ii<rs.rows.length; ++ii) {
-                    temp_name = JS.getStopName(rs.rows.item(ii).stopIdLong)
-                    if (temp_name == "") {
-                        stopReachLoader.sendMessage({"stopIdLong":rs.rows.item(ii).stopIdLong, "lineReachNumber" : ii})
-                    }
-                    stopReachModel.append({"stopIdLong" : rs.rows.item(ii).stopIdLong,
-                                  "stopName" : temp_name,
-                                  "stopIdShort" : "",
-                                  "stopLongitude" : "",
-                                  "stopLatitude" : "",
-                                  "stopCity" : "",
-                                  "reachTime" : rs.rows.item(ii).stopReachTime });
-                }
-            }
-        )
-    }
     function fillSearchResultInfoModel() {
         var lineInfo;
         loading.visible = true;
@@ -664,15 +643,7 @@ Item {
             gotLinesInfo()
         }
     }
-    function updateStopReachModel() { // use workerScript to load stops names
-        for (var ii=0;ii<stopReachModel.count;++ii) {
-            stopReachModel.set(ii,{"stopName" : JS.getStopName(stopReachModel.get(ii).stopIdLong)});
-            if (stopReachModel.get(ii).stopName == "") {
-                stopReachLoader.sendMessage({"stopIdLong":stopReachModel.get(ii).stopIdLong})
-            }
-        }
-    }
-    function showMap() { // push lineIdLong page or
+    function showMap() {            // push lineIdLong page or
         if (grid.currentIndex >= 0) {
             showLineMapStop(searchString, stopReachModel.get(grid.currentIndex).stopIdLong)
         } else {
@@ -680,7 +651,6 @@ Item {
         }
         for (var ii=0; ii < stopReachModel.count; ++ii) {
             if (stopReachModel.get(ii).stopName != "") {
-                console.log("Sending " + stopReachModel.get(ii).stopName + " to map")
                 pushStopToMap(stopReachModel.get(ii).stopIdLong,
                               stopReachModel.get(ii).stopIdShort,
                               stopReachModel.get(ii).stopName,
@@ -695,7 +665,7 @@ Item {
             buttonClicked()
         }
     }
-    function checkOffline() {
+    function checkOffline() {        // check if requested line is already in DB
         var retVal = 0
         JS.__db().transaction(
             function(tx) {
@@ -721,7 +691,41 @@ Item {
         )
         return retVal
     }
-    function showLineInfo() {
+    function getStops() {             // load stops from LineStops database table
+        var temp_name
+        JS.__db().transaction(
+            function(tx) {
+                try { var rs = tx.executeSql('SELECT * FROM LineStops WHERE lineIdLong=?', [searchString]); }
+                catch (e) { console.log ("lineInfo.qml: getStops exception 1: " + e) }
+                for (var ii=0; ii<rs.rows.length; ++ii) {
+                    try { //console.log("found 1:" + rs.rows.item(ii).lineIdLong + "; 2: " + rs.rows.item(ii).stopIdLong + ";4: " + rs.rows.item(ii).stopIdShort + ";3: " + rs.rows.item(ii).stopName)
+                        var rs2 = tx.executeSql('SELECT * FROM Stops WHERE stopIdLong=?', [rs.rows.item(ii).stopIdLong]);
+                    }
+                    catch (e) { console.log ("lineInfo.qml: getStops exception 2: " + e) }
+//                    temp_name = JS.getStopName(rs.rows.item(ii).stopIdLong)
+                    if (rs2.rows.length == 0) {
+                        stopReachLoader.sendMessage({"stopIdLong":rs.rows.item(ii).stopIdLong, "lineReachNumber" : ii})
+                        stopReachModel.append({"stopIdLong" : rs.rows.item(0).stopIdLong,
+                                                  "stopName" : "",
+                                                  "stopIdShort" : "",
+                                                  "stopLongitude" : "",
+                                                  "stopLatitude" : "",
+                                                  "stopCity" : "",
+                                                  "reachTime" : rs.rows.item(ii).stopReachTime });
+                    } else {
+                        stopReachModel.append({"stopIdLong" : rs.rows.item(0).stopIdLong,
+                                  "stopName" : rs2.rows.item(0).stopName,
+                                  "stopIdShort" : rs2.rows.item(0).stopIdShort,
+                                  "stopLongitude" : rs2.rows.item(0).stopLongitude,
+                                  "stopLatitude" : rs2.rows.item(0).stopLatitude,
+                                  "stopCity" : rs2.rows.item(0).stopCity,
+                                  "reachTime" : rs.rows.item(ii).stopReachTime });
+                    }
+                }
+            }
+        )
+    }
+    function showLineInfo() {        // triggered when one of saved line selected by user
         if (linesList.currentIndex >= 0) {
             console.log("ShowLineInfo:  current index is " + linesList.currentIndex)
             linesList.visible = false

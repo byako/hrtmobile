@@ -14,7 +14,6 @@ WorkerScript.onMessage = function (message) {
                 var a = doc.responseXML.documentElement
                 var lonlat = new Array
                 lonlat = a.childNodes[0].childNodes[6].firstChild.nodeValue.split(",")
-                console.log("got coordinates: " + lonlat[0] + ":" + lonlat[1] + " for " + a.childNodes[0].childNodes[2].firstChild.nodeValue)
                 WorkerScript.sendMessage({"stopIdLong" : a.childNodes[0].childNodes[7].childNodes[0].firstChild.nodeValue,
                                           "stopIdShort" : a.childNodes[0].childNodes[7].childNodes[1].firstChild.nodeValue,
                                           "stopName" : a.childNodes[0].childNodes[2].firstChild.nodeValue,
