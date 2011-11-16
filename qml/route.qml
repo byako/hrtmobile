@@ -1,5 +1,5 @@
 import QtQuick 1.1
-import com.meego 1.0
+import com.nokia.meego 1.0
 import QtMobility.location 1.2
 import "database.js" as JS
 import com.nokia.extras 1.0
@@ -93,8 +93,8 @@ Item {
         }
     }
 
-    ListModel { id: stopsLoaded }
-    ListModel { id: lineStops }
+    ListModel { id: stops }
+
     PositionSource {// gps data receiver
         id: positionSource
         updateInterval: 10000
@@ -112,6 +112,10 @@ Item {
         }
     }
 
+    MapPolyline {
+        id: lineShape
+        border { color: "#ff0000"; width: 4; }
+    }
     Coordinate { id: temp }
 
     Map {        
@@ -182,11 +186,6 @@ Item {
             }
         }
 
-        MapPolyline {
-            id: lineShape
-            border { color: "#ff0000"; width: 4; }
-        }
-
         ButtonRow {
             z: 5
             opacity: 0.8
@@ -244,57 +243,63 @@ Item {
         infoBanner.text = stringToShow
         infoBanner.show()
     }
-    function newCurrentStop(stopIdLong_) {
-        for (var ii=0; ii < lineStops.count; ++ii) {
-            if (lineStops.get(ii).stopIdLong == loadedStop) {
-                console.log("setting old color for " + lineStops.get(ii).stopName)
-                lineStops.get(ii).mapCircle.color = "#80ff0000"
-                loadedStop = stopIdLong_
-                return 0
+    function setCurrentStop(stopIdLong_) {     // sets normal color to highlighted stop and sets loadedStop to newly highlighted
+        if (loadedStop != "") {
+            for (var ii=0; ii < stops.count; ++ii) {
+                if (stops.get(ii).id == loadedStop) {  // search in model for a loaded stop
+                    stops.get(ii).mapCircle.color = "#80ff0000"
+                }
             }
         }
         loadedStop = stopIdLong_
-        return 1
     }
 
     function checkLoadStop() {
-        if (loadStop != "" && loadStop != loadedStop) {
-            if (! newCurrentStop(loadStop)) {
-                loadedStop = loadStop
-                loadStop = ""
-                return
-            }
-            JS.__db().transaction(
-                function(tx) {
-                    try {var rs = tx.executeSql("SELECT stopLongitude,stopLatitude FROM Stops WHERE stopIdLong=?", [loadStop]) }
-                    catch (e) { console.log("route: setCurrent EXCEPTION: "+ e) }
-                    if (rs.rows.length > 0) {
-                        map.center.longitude = rs.rows.item(0).stopLongitude
-                        positionCircle.center.longitude = rs.rows.item(0).stopLongitude
-                        map.center.latitude = rs.rows.item(0).stopLatitude
-                        positionCircle.center.latitude = rs.rows.item(0).stopLatitude
-                        loadedStop = loadStop
-                    } else {
-
-                    }
+        if (loadStop != "") {      // got request to show stop
+            if (loadStop != loadedStop) {      // it's not current stop
+                if (! setCurrentStop(loadStop)) {       //     old loadedStop if off highlight
+                    loadedStop = loadStop               //     new stop is highlighted
+                    loadStop = ""                       //     clear request
+                    return
                 }
-            )
-            loadStop= ""
-        } else if (!newCurrentStop(loadStop)) {
+                JS.__db().transaction(                  //     if need to show not loaded into model stop - look in DB first
+                    function(tx) {
+                        try {var rs = tx.executeSql("SELECT stopLongitude,stopLatitude FROM Stops WHERE stopIdLong=?", [loadStop]) }
+                        catch (e) { console.log("route: setCurrent EXCEPTION: "+ e) }
+                        if (rs.rows.length > 0) {
+                            map.center.longitude = rs.rows.item(0).stopLongitude
+                            positionCircle.center.longitude = rs.rows.item(0).stopLongitude
+                            map.center.latitude = rs.rows.item(0).stopLatitude
+                            positionCircle.center.latitude = rs.rows.item(0).stopLatitude
+                            loadedStop = loadStop
+                        } else {
 
-        }
+                        }
+                    }
+                )
+                loadStop= ""
+                // TODO: here in case we didn't find stop in DB - load data from geocode API - fast and with coords.
+            }
+        }  // do nothing if loadStop empty
     }
 
     function checkLoadLine() {
         if (loadLine != "" && loadLine != loadedLine) {
-            while (lineShape.path.length) lineShape.removeCoordinate(lineShape.path[0])
-            console.log("Map Cleaned line")
+            map.removeMapObject(lineShape)
+            while (lineShape.path.length > 1) lineShape.removeCoordinate(lineShape.path[0])
+//            lineShape.removeCoordinate(lineShape.path[0])
+//            while (stops.count) {
+//                map.removeMapObject(stops.get(stops.count-1).mapCircle)
+//            }
+            console.log("Map: Cleaned line")
             loader.sendMessage({"lineIdLong" : loadLine});
             loadLine = ""
+            map.addMapObject(lineShape)
         }
     }
     function addStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_) {
-        try { lineStops.append({ "stopIdLong": stopIdLong_, "mapCircle" : Qt.createQmlObject('import Qt 4.7; import QtMobility.location 1.2;' +
+        console.log("map: received stop: " + stopName_)
+        try { stops.append({ "id": stopIdLong_, "mapCircle" : Qt.createQmlObject('import Qt 4.7; import QtMobility.location 1.2;' +
                                                         'MapCircle{ id: "lineStop' + stopIdLong_ +
                                                         '"; center : Coordinate { longitude : ' + stopLongitude_ +
                                                         '; latitude : ' + stopLatitude_ +
@@ -303,7 +308,10 @@ Item {
                                                         '; property string stopIdShort : "' + stopIdShort_ +
                                                         '"; property string stopIdLong : "' + stopIdLong_ +
                                                         '"; property string stopName : "' + stopName_ +
-                                                        '"; MapMouseArea { anchors.fill: parent; onClicked: { if (routePage.loadedStop != stopIdLong) { routePage.newCurrentStop(stopIdLong); color="#500F0F000"; } routePage.showError("" + stopIdShort + ": " + stopName) } }' +
+                                                        '"; MapMouseArea { anchors.fill: parent; onClicked: {' +
+                                                          ' if (routePage.loadedStop != stopIdLong) {' +
+                                                          ' routePage.setCurrentStop(stopIdLong); color="#500F0F000"; }'+
+                                                          ' routePage.showError("" + stopIdShort + ": " + stopName) } }' +
                                                         '}', map)
                          }) }
 //                                                        '} color : ("lineStop" + routePage.currentStop == id ) ? "#80FF0000" : color="#20bb2000" ; radius: 30.0' +
@@ -311,6 +319,6 @@ Item {
             console.log("route.qml: addStop exception " + e)
         }
 
-        map.addMapObject(lineStops.get(lineStops.count-1).mapCircle)
+        map.addMapObject(stops.get(stops.count-1).mapCircle)
     }
 }

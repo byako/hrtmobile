@@ -1,5 +1,5 @@
 import QtQuick 1.1
-import com.meego 1.0
+import com.nokia.meego 1.0
 import "database.js" as JS
 import com.nokia.extras 1.0
 
@@ -191,13 +191,13 @@ Item {
                     text: "M"
                     visible:  ! loadingMap.visible
                     onClicked: {
-                        if (grid.visible && grid.currentIndex >= 0) {
-                            stopInfoPage.showStopMapLine(searchString, trafficModel.get(grid.currentIndex).departCode)
-                        } else if (linesList.visible && linesList.currentIndex >=0 ) {
-                            stopInfoPage.showStopMapLine(searchString, linesModel.get(linesList.currentIndex).lineNumber)
-                        } else {
+//                        if (grid.visible && grid.currentIndex >= 0) {
+//                            stopInfoPage.showStopMapLine(searchString, trafficModel.get(grid.currentIndex).departCode)
+//                        } else if (linesList.visible && linesList.currentIndex >=0 ) {
+//                            stopInfoPage.showStopMapLine(searchString, linesModel.get(linesList.currentIndex).lineNumber)
+//                        } else {
                             stopInfoPage.showStopMap(searchString)
-                        }
+//                        }
                     }
                 }
                 BusyIndicator{// loading spinner

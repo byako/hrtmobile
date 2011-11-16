@@ -1,5 +1,5 @@
 import QtQuick 1.1
-import com.meego 1.0
+import com.nokia.meego 1.0
 import "database.js" as JS
 import com.nokia.extras 1.0
 
@@ -16,7 +16,7 @@ Item {
     signal showLineMapStop(string lineIdLong, string stopIdLong)
     signal showStopMap(string stopIdLong)
     signal showStopInfo(string stopIdLong)
-    signal pushStopToMap(string lineIdLong_, string stopIdShort_, string stopName_, string stopLongitude_, string stopLatitude_)
+    signal pushStopToMap(string stopIdLong_, string stopIdShort_, string stopName_, string stopLongitude_, string stopLatitude_)
     anchors.fill: parent
 
     Component.onCompleted: { // load config and recent lines
@@ -643,12 +643,7 @@ Item {
             gotLinesInfo()
         }
     }
-    function showMap() {            // push lineIdLong page or
-        if (grid.currentIndex >= 0) {
-            showLineMapStop(searchString, stopReachModel.get(grid.currentIndex).stopIdLong)
-        } else {
-            showLineMap(searchString)
-        }
+    function showMap() {            // push lineIdLong and stops to map page
         for (var ii=0; ii < stopReachModel.count; ++ii) {
             if (stopReachModel.get(ii).stopName != "") {
                 pushStopToMap(stopReachModel.get(ii).stopIdLong,
@@ -657,6 +652,11 @@ Item {
                               stopReachModel.get(ii).stopLongitude,
                               stopReachModel.get(ii).stopLatitude)
             }
+        }
+        if (grid.currentIndex >= 0) {
+            showLineMapStop(searchString, stopReachModel.get(grid.currentIndex).stopIdLong)
+        } else {
+            showLineMap(searchString)
         }
     }
     function checkLineLoadRequest() {
@@ -705,7 +705,7 @@ Item {
 //                    temp_name = JS.getStopName(rs.rows.item(ii).stopIdLong)
                     if (rs2.rows.length == 0) {
                         stopReachLoader.sendMessage({"stopIdLong":rs.rows.item(ii).stopIdLong, "lineReachNumber" : ii})
-                        stopReachModel.append({"stopIdLong" : rs.rows.item(0).stopIdLong,
+                        stopReachModel.append({"stopIdLong" : rs.rows.item(ii).stopIdLong,
                                                   "stopName" : "",
                                                   "stopIdShort" : "",
                                                   "stopLongitude" : "",
@@ -713,7 +713,7 @@ Item {
                                                   "stopCity" : "",
                                                   "reachTime" : rs.rows.item(ii).stopReachTime });
                     } else {
-                        stopReachModel.append({"stopIdLong" : rs.rows.item(0).stopIdLong,
+                        stopReachModel.append({"stopIdLong" : rs.rows.item(ii).stopIdLong,
                                   "stopName" : rs2.rows.item(0).stopName,
                                   "stopIdShort" : rs2.rows.item(0).stopIdShort,
                                   "stopLongitude" : rs2.rows.item(0).stopLongitude,

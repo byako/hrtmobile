@@ -19,7 +19,7 @@ WorkerScript.onMessage = function (message) {
                     lonlat = coords[0].split(",")
                     WorkerScript.sendMessage({"longitude" : "finish", "latitude" : message.lineIdLong, "longit" : lonlat[0], "latit" : lonlat[1]})
                 } else { // load line staight from network
-                    console.log("Loading line shape " + message.lineIdLong + "from Network")
+                    console.log("Loading line shape " + message.lineIdLong + " from Network")
                     var lonlat
                     var doc = new XMLHttpRequest()
                         doc.onreadystatechange = function() {

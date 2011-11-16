@@ -1,5 +1,5 @@
 import QtQuick 1.1
-import com.meego 1.0
+import com.nokia.meego 1.0
 import "database.js" as JS
 
 Page {
@@ -163,7 +163,7 @@ Page {
                 }
             }
         }
-        Connections {
+        Connections {  // settings
             target: settingsLoader.item
             onUpdateConfig: {
                 console.log("updating config")
@@ -172,7 +172,7 @@ Page {
                 if (settingsLoader.status == Loader.Ready) settingsLoader.item.refreshConfig()
             }
         }
-        Connections {
+        Connections {  // line info
             target: lineInfoLoader.item
             onShowLineMap: {
                 console.log("lineInfo signal: showLineMap")
@@ -184,7 +184,6 @@ Page {
             }
             onShowStopMap: {
                 console.log("lineInfo signal: showStopMap")
-                initMap()
                 initMap("", stopIdLong)
             }
             onShowStopInfo: {
@@ -199,8 +198,9 @@ Page {
                 stopInfoLoader.item.buttonClicked()
             }
             onPushStopToMap: {
+                if (tabGroup.currentTab != mapTabButton) initMap("","")
                 if (mapLoader.status == Loader.Ready) {
-                    mapLoader.item.addStop(lineIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_)
+                    mapLoader.item.addStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_)
                 }
             }
         }
