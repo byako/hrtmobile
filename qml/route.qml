@@ -255,32 +255,42 @@ Item {
     }
 
     function checkLoadStop() {
+        console.log("checkLoadStop started")
         if (loadStop != "") {      // got request to show stop
             if (loadStop != loadedStop) {      // it's not current stop
-                if (! setCurrentStop(loadStop)) {       //     old loadedStop if off highlight
-                    loadedStop = loadStop               //     new stop is highlighted
-                    loadStop = ""                       //     clear request
-                    return
+                for (var ii=0; ii < stops.count; ++ii) {   // check if stop is already loaded in stopsModel
+                    if (stops.get(ii).id == loadStop) {
+                        stops.get(ii).mapCircle.color = "#500f0f000"
+                        map.center = stops.get(ii).mapCircle.center
+                        setCurrentStop(loadStop)
+                        loadStop = ""
+                        return
+                    }
                 }
-                JS.__db().transaction(                  //     if need to show not loaded into model stop - look in DB first
+                console.log("didn't find in stops model")
+                JS.__db().transaction(         //     if need to show not loaded into model stop - look in DB first
                     function(tx) {
-                        try {var rs = tx.executeSql("SELECT stopLongitude,stopLatitude FROM Stops WHERE stopIdLong=?", [loadStop]) }
-                        catch (e) { console.log("route: setCurrent EXCEPTION: "+ e) }
+                        try {var rs = tx.executeSql("SELECT * FROM Stops WHERE stopIdLong=?", [loadStop]) }
+                        catch (e) { console.log("route: checkLoadStop EXCEPTION: "+ e) }
                         if (rs.rows.length > 0) {
-                            map.center.longitude = rs.rows.item(0).stopLongitude
-                            positionCircle.center.longitude = rs.rows.item(0).stopLongitude
-                            map.center.latitude = rs.rows.item(0).stopLatitude
-                            positionCircle.center.latitude = rs.rows.item(0).stopLatitude
+                            console.log("route: found " + rs.rows.count + "stops for load stop request: " + loadStop)
+                            addStop(rs.rows.item(0).stopIdLong, rs.rows.item(0).stopIdShort, rs.rows.item(0).stopName, rs.rows.item(0).stopLongitude, rs.rows.item(0).stopLatitude)
+                            map.center = stops.get(stops.count-1).mapCircle.center
+                            stops.get(stops.count-1).mapCircle.color = "#500f0f000"
+                            setCurrentStop(loadStop)
                             loadedStop = loadStop
                         } else {
-
+                            console.log("didn't find in DB")
+                // TODO: here in case we didn't find stop in DB - load data from geocode API - fast and with coords.
                         }
                     }
                 )
-                loadStop= ""
-                // TODO: here in case we didn't find stop in DB - load data from geocode API - fast and with coords.
+                loadStop = ""
+            } else {
+                loadStop = ""
             }
         }  // do nothing if loadStop empty
+        console.log("checkLoadStop ended")
     }
 
     function checkLoadLine() {

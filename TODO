@@ -2,10 +2,8 @@ general:
  - To fix
 	* add db init on first run
 	* use WorkerScript to provide threading in lineInfo, settings, realtimeSchedule,  mainPage (route - loading done, stopInfo - done)
-	* check if the page is in stack before pushing so we can prevent loops
 	* fix models names and views names
  - To implement
-	* finish networking config in settings and lineInfo - make possible to search online using dialog to ask
 	* pinch anction on map
 	* lazy pages load
 	* use NetworkInfo API to check if online\offline http://doc.qt.nokia.com/qtmobility-1.2/qml-networkinfo.html
@@ -16,13 +14,11 @@ lineInfo:
  - To fix
 	* remove exceeding fields in lineInfoModel
 	* on stops tab if stop selected - show on map (if showMapButton triggered)
-	* show saved stops on map, ask to download all stops info
 	* when moving to stop info pass the line number to highlight
 	* after search fill data in search result model so main model is untouched and can be shown again. Allow switch between models
  - To implement
 	* schedule to database
 	* check for schedule in DB. show saved schedule
-	* add networking config support
 	* add possibility to search online even when offline data found
 	* add confirmation on delete all lines action
 	* add checkboxes to multiselectiong dialog lines
@@ -30,22 +26,22 @@ lineInfo:
 stopInfo:
  - To fix
         * if stop is saved but no time schedule returned - show rest of the data
-	* check if came from schedule - open search dialog
 	* split depart schedule to hours
 
  - To implement
 	* if moved from line info - highlight retrieved line number
-	* add networking config support
 	* add confirmation on delete all stops action
 	* save schedule in DB
 	* merge same stops, show all line types in drop down or so
 
 settings:
  - To fix
+	* remove networking config support
  - To implement
 
 realtime:
  - To fix
+	* put is somewhere in app, currently no access from tabs version
 	* schedule countdown timer visualize
 	* when moving to stopInfo search - push also search flag to open search dialog
  - To implement
@@ -56,9 +52,15 @@ route
  - To fix
  - To implement
 	* use landmarks from Location API on route page
-	* show stops from database
 
 Done:
+2011 11 18
+* refactored almost everything
+* tabs interface
+* map shows all stops from lineInfo page
+* stops are added sequentially rather than beign substituted
+
+2011 10 20
 * route: check where threading can be enabled more (i.e. surrounding stops and all passing routes load)
 * settings: add networking mode variants:
  - full offline

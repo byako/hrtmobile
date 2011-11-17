@@ -162,12 +162,6 @@ Item {
         width: parent.width
         height:  parent.height
 //        Image { source: config.bgImage ; fillMode: Image.Center; anchors.fill: parent; }
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                focus: true
-            }
-        }
     }
     Item {                   // Data
         id: dataRect
@@ -265,60 +259,60 @@ Item {
         anchors.topMargin: 10
         anchors.right: parent.right
         anchors.left: parent.left
-        style: TabButtonStyle {
+        style: ButtonStyle {
             inverted: true
         }
-            Button {
-                id: recentButton
-                text: "Recent"
-                onClicked: {
-                    if (recentList.visible == false) {
-                        if (recentList.currentIndex != selectedStopIndex) {
-                            recentList.currentIndex = selectedStopIndex
-                        }
-                        linesList.visible = false
-                        list.visible = false
-                        grid.visible = false
-                        recentList.visible = true
+        Button {
+            id: recentButton
+            text: "Recent"
+            onClicked: {
+                if (recentList.visible == false) {
+                    if (recentList.currentIndex != selectedStopIndex) {
+                        recentList.currentIndex = selectedStopIndex
                     }
+                    linesList.visible = false
+                    list.visible = false
+                    grid.visible = false
+                    recentList.visible = true
                 }
             }
-            Button {
-                id: stopSchedule
-                text: "Schedule"
-                onClicked: {
-                    if (grid.visible == false) {
-                        linesList.visible = false
-                        grid.visible = true
-                        list.visible = false
-                        recentList.visible = false
-                    }
+        }
+        Button {
+            id: stopSchedule
+            text: "Schedule"
+            onClicked: {
+                if (grid.visible == false) {
+                    linesList.visible = false
+                    grid.visible = true
+                    list.visible = false
+                    recentList.visible = false
                 }
             }
-            Button {
-                id: stopLines
-                text: "Lines"
-                onClicked: {
-                    if (linesList.visible == false) {
-                        linesList.visible = true
-                        grid.visible = false
-                        list.visible = false
-                        recentList.visible = false
-                    }
+        }
+        Button {
+            id: stopLines
+            text: "Lines"
+            onClicked: {
+                if (linesList.visible == false) {
+                    linesList.visible = true
+                    grid.visible = false
+                    list.visible = false
+                    recentList.visible = false
                 }
             }
-            Button {
-                id: stopInfo
-                text: "Info"
-                onClicked: {
-                    if (list.visible == false) {
-                        linesList.visible = false
-                        list.visible = true
-                        grid.visible = false
-                        recentList.visible = false
-                    }
+        }
+        Button {
+            id: stopInfo
+            text: "Info"
+            onClicked: {
+                if (list.visible == false) {
+                    linesList.visible = false
+                    list.visible = true
+                    grid.visible = false
+                    recentList.visible = false
                 }
             }
+        }
     }
 /*<----------------------------------------------------------------------->*/
     ListModel {              // recent stops list
@@ -381,28 +375,21 @@ Item {
                 onClicked: {
                     if (selectedStopIndex != index) {
                         selectedStopIndex = index
-//                        recentList.focus = true
                         recentList.currentIndex = index
                         searchString = recentModel.get(index).stopIdLong
                         showMapButton.visible = true
                         fillInfoModel()
                         fillLinesModel()
-//                        if (config.networking < 1) {
-//                            showError("Offline networking mode enabled. Change networking mode in settings.")
-//                            console.log("stop: " + recentModel.get(recentList.currentIndex).stopName+ "; id:" + recentList.currentIndex)
                         stopName.text = recentModel.get(recentList.currentIndex).stopName
                         stopAddress.text = recentModel.get(recentList.currentIndex).stopAddress
                         stopCity.text = recentModel.get(recentList.currentIndex).stopCity
                         dataRect.visible = true
                         showMapButton.visible = true
-//                        } else {
-                            updateSchedule()
-//                        }
+                        updateSchedule()
                     }
                 }
                 onPressedChanged: {
                     if (pressed == true) {
-                        recentList.focus = true
                         recentList.currentIndex = index
                     }
                 }
@@ -428,7 +415,6 @@ Item {
             width: grid.cellWidth; height:  grid.cellHeight;
             Row {
                 spacing: 10;
-//                anchors.fill: parent;
                 Text{
                     text: departTime
                     font.pixelSize: 25
@@ -444,7 +430,6 @@ Item {
                 anchors.fill:  parent
                 onClicked: {
                     grid.currentIndex = index;
-                    grid.focus = true;
                     showError("Destination :  " + departDest)
                 }
                 onPressAndHold: {
@@ -551,13 +536,10 @@ Item {
         GridView {  // stopSchedule grid
             id: grid
             anchors.fill:  parent
-            anchors.topMargin: 10
             delegate: trafficDelegate
             model: trafficModel
-            focus: true
             cellWidth: 160
             cellHeight: 30
-            width: parent.width
             highlight: Rectangle { color: "#666666"; radius:  5 }
             currentIndex: 0
             clip: true
@@ -568,7 +550,6 @@ Item {
             id: list
             visible: false
             anchors.fill: parent
-            anchors.topMargin: 10
             delegate:  infoDelegate
             model: infoModel
             highlight: Rectangle { color:"#666666"; radius:  5 }
@@ -580,7 +561,6 @@ Item {
             visible: true
             spacing: 10
             anchors.fill: parent
-            anchors.topMargin: 10
             delegate:  recentDelegate
             model: recentModel
             highlight: Rectangle { color:"#666666"; radius:  5 }
@@ -591,7 +571,6 @@ Item {
             id: linesList
             visible: false
             anchors.fill: parent
-            anchors.topMargin: 10
             delegate:  linesDelegate
             model: linesModel
             header: linesHeader
@@ -609,21 +588,12 @@ Item {
         loading.visible = true
         loadStopSchedule.sendMessage({"searchString" : searchString})
         grid.currentIndex = 0
-        grid.focus = true
         grid.visible = true
         list.visible = false
         recentList.visible = false
         dataRect.visible = true
     }
     function buttonClicked() {  // SearchBox action
-        console.log("Button clicked: " + searchString)
-/*        if (searchString == "" || searchString.length > 7 || searchString.length < 4) {
-            showError("Wrong stop ID:"+searchString+".\nStop ID is 4 digit or 1 letter & 4 digits. Example: E3127")
-        }*/
-        if (config.networking < 1) {
-            offlineModeOff.open();
-            return
-        }
         if (exactSearch) {
             updateSchedule()
             loadStopInfo.sendMessage({"searchString" : searchString})
@@ -638,24 +608,20 @@ Item {
         tabRect.checkedButton = stopSchedule
     }
     function fillModel() {      // checkout recent stops from database
-        console.log("Fill model started")
         recentModel.clear();
         JS.__db().transaction(
             function(tx) {
-                     var rs = tx.executeSql("SELECT * FROM Stops ORDER BY stopName ASC");
-                         for (var i=0; i<rs.rows.length; ++i) {
-                            recentModel.append(rs.rows.item(i))
-                             console.log("recentModel: add "  + rs.rows.item(i).stopIdLong)
-                             if (rs.rows.item(i).stopIdLong == searchString) {
-                                 console.log("fillModel: found index:" + i + " : " + rs.rows.item(i).stopIdLong)
-                                 selectedStopIndex = i
-                             }
-                         }
-                 }
+                var rs = tx.executeSql("SELECT * FROM Stops ORDER BY stopName ASC");
+                    for (var i=0; i<rs.rows.length; ++i) {
+                        recentModel.append(rs.rows.item(i))
+                        if (rs.rows.item(i).stopIdLong == searchString) {
+                             selectedStopIndex = i
+                    }
+                }
+            }
         )
     }
     function fillInfoModel() {  // checkout stop info from database
-        console.log("Fill info model started")
         JS.__db().transaction(
             function(tx) {
                 try { var rs = tx.executeSql("SELECT option,value FROM StopInfo WHERE stopIdLong=?",[recentModel.get(selectedStopIndex).stopIdLong]); }
@@ -685,15 +651,15 @@ Item {
         if (searchString != "") {
              JS.__db().transaction(
                  function(tx) {
-                        try { var rs = tx.executeSql("SELECT * FROM Stops WHERE stopIdLong=?", [searchString]) }
-                        catch(e) { console.log("exception : "+e) }
-                        if (rs.rows.length > 0) {
-                            showMapButton.visible = true
-                            infoModel.clear()
-                            updateSchedule()
-                        } else {
-                            buttonClicked()
-                        }
+                     try { var rs = tx.executeSql("SELECT * FROM Stops WHERE stopIdLong=?", [searchString]) }
+                     catch(e) { console.log("exception : "+e) }
+                     if (rs.rows.length > 0) {
+                         showMapButton.visible = true
+                         infoModel.clear()
+                         updateSchedule()
+                     } else {
+                         buttonClicked()
+                     }
                  }
              )
         }

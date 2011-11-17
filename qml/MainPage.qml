@@ -207,7 +207,7 @@ Page {
         Connections {
             target: stopInfoLoader.item
             onShowStopMap: {
-                console.log("stopInfo signal: showStopMap")
+                console.log("stopInfo signal: showStopMap " + stopIdLong)
                 initMap("", stopIdLong)
             }
             onShowStopMapLine: {
