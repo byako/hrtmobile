@@ -9,8 +9,8 @@ Item {
     property bool firstRun: true
     property string loadStop: ""
     property string loadLine: ""
-    property string loadedLine: ""
-    property string loadedStop: ""
+    property int loadedLine: -1
+    property int loadedStop: -1
     anchors.fill: parent
 
     Component.onCompleted: { checkLoadStop(); checkLoadLine(); }
@@ -27,17 +27,19 @@ Item {
 
         onMessage: {
             if (messageObject.longitude == "finish") {
-                loadedLine = messageObject.latitude
-                if (loadedStop == "") {
+                if (loadedStop == -1) {
                     map.center.longitude = messageObject.longit
                     map.center.latitude = messageObject.latit
                     positionCircle.center.longitude = messageObject.longit
                     positionCircle.center.latitude = messageObject.latit
                 }
+            } else if (messageObject.longitude == "error"){
+                lines.get(ii).lineShape.destroy()
+                lines.remove(lines.count-1)
             } else {
                 temp.longitude = messageObject.longitude
                 temp.latitude = messageObject.latitude
-                lineShape.addCoordinate(temp)
+                lines.get(lines.count-1).lineShape.addCoordinate(temp)
             }
         }
     }
@@ -94,6 +96,7 @@ Item {
     }
 
     ListModel { id: stops }
+    ListModel { id: lines }
 
     PositionSource {// gps data receiver
         id: positionSource
@@ -131,7 +134,7 @@ Item {
 //            }
         }
         size.width: parent.width
-        size.height: 500
+        size.height: parent.height
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         zoomLevel: 14
@@ -186,14 +189,16 @@ Item {
             }
         }
 
-        ButtonRow {
+        ButtonColumn {
+            id: mapButtons
             z: 5
+            width: 60
+            height: 200
             opacity: 0.8
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 20
-            anchors.left: parent.left
-            width: 200
-            height: 45
+            anchors.centerIn: map
+//            anchors.bottomMargin: 20
+//            anchors.right: map.right
+//            anchors.rightMargin: 10
             Button {
                 id: zoomIn
                 checkable: false
@@ -218,9 +223,28 @@ Item {
                     map.center = positionCircle.center
                 }
             }
+            Button {
+                id: statesChange
+                checkable: false
+                text: "state"
+                onClicked: {
+                    routePage.state = (map.height == routePage.height) ? "showStops" : "hideStops"
+                }
+            }
         }
     }
 
+    states: [
+        State {
+            name: "showStops"
+            PropertyChanges { target: map; height: 500 }
+        },
+        State {
+            name: "hideStops"
+            PropertyChanges { target: map; height: routePage.height }
+        }
+
+    ]
 //----------------------------------------------------------------------------//
     function pupUp(stopIdLong_) {
         for (var ii=0; ii < stopsLoaded.count; ++ii) {
@@ -243,23 +267,36 @@ Item {
         infoBanner.text = stringToShow
         infoBanner.show()
     }
-    function setCurrentStop(stopIdLong_) {     // sets normal color to highlighted stop and sets loadedStop to newly highlighted
-        if (loadedStop != "") {
+    function setCurrentStop(stopIdLong_) {                  // sets normal color to highlighted stop and sets loadedStop to newly highlighted index from stopsModel
+        if (loadedStop != -1) {
+            stops.get(loadedStop).mapCircle.color = "#80ff0000"
+        }
             for (var ii=0; ii < stops.count; ++ii) {
-                if (stops.get(ii).id == loadedStop) {  // search in model for a loaded stop
-                    stops.get(ii).mapCircle.color = "#80ff0000"
+                if (stops.get(ii).stopIdLong == stopIdLong_) {       // search in model for a loaded stop
+                            loadedStop = ii
                 }
             }
+    }
+
+    function checkAddStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_) {
+        for (var ii=0; ii < stops.count; ++ii) {            // check if stop is already loaded in stopsModel before adding
+            if (stops.get(ii).stopIdLong == stopIdLong_) {
+                stops.get(ii).mapCircle.color = "#500f0f000"
+                map.center = stops.get(ii).mapCircle.center
+                setCurrentStop(stopIdLong_)
+                loadStop = ""
+                return
+            }
         }
-        loadedStop = stopIdLong_
+        addStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_);
+
     }
 
     function checkLoadStop() {
-        console.log("checkLoadStop started")
-        if (loadStop != "") {      // got request to show stop
-            if (loadStop != loadedStop) {      // it's not current stop
-                for (var ii=0; ii < stops.count; ++ii) {   // check if stop is already loaded in stopsModel
-                    if (stops.get(ii).id == loadStop) {
+        if (loadStop != "") {                               // got request to show stop
+            if (loadedStop == -1 || loadStop != stops.get(loadedStop).stopIdLong) {                   // it's not current stop
+                for (var ii=0; ii < stops.count; ++ii) {    // check if stop is already loaded in stopsModel
+                    if (stops.get(ii).stopIdLong == loadStop) {
                         stops.get(ii).mapCircle.color = "#500f0f000"
                         map.center = stops.get(ii).mapCircle.center
                         setCurrentStop(loadStop)
@@ -267,8 +304,7 @@ Item {
                         return
                     }
                 }
-                console.log("didn't find in stops model")
-                JS.__db().transaction(         //     if need to show not loaded into model stop - look in DB first
+                JS.__db().transaction(                      // if need to show not loaded into model stop - look in DB first
                     function(tx) {
                         try {var rs = tx.executeSql("SELECT * FROM Stops WHERE stopIdLong=?", [loadStop]) }
                         catch (e) { console.log("route: checkLoadStop EXCEPTION: "+ e) }
@@ -278,7 +314,7 @@ Item {
                             map.center = stops.get(stops.count-1).mapCircle.center
                             stops.get(stops.count-1).mapCircle.color = "#500f0f000"
                             setCurrentStop(loadStop)
-                            loadedStop = loadStop
+                            loadedStop = stops.count-1
                         } else {
                             console.log("didn't find in DB")
                 // TODO: here in case we didn't find stop in DB - load data from geocode API - fast and with coords.
@@ -290,26 +326,53 @@ Item {
                 loadStop = ""
             }
         }  // do nothing if loadStop empty
-        console.log("checkLoadStop ended")
     }
 
     function checkLoadLine() {
-        if (loadLine != "" && loadLine != loadedLine) {
-            map.removeMapObject(lineShape)
-            while (lineShape.path.length > 1) lineShape.removeCoordinate(lineShape.path[0])
+        if (loadLine != "") {
+            if (loadedLine != -1) {
+                if (loadLine == lines.get(loadedLine).lineIdLong) {
+                    return
+                }
+                else {
+                    map.removeMapObject(lines.get(loadedLine))
+                    loadedLine = -1
+                }
+            }
+//            while (lineShape.path.length > 1) lineShape.removeCoordinate(lineShape.path[0])
+
 //            lineShape.removeCoordinate(lineShape.path[0])
 //            while (stops.count) {
 //                map.removeMapObject(stops.get(stops.count-1).mapCircle)
 //            }
-            console.log("Map: Cleaned line")
+            for (var ii=0; ii < lines.count; ++ii) {              // check if line is already in lines model
+                if (lines.get(ii).lineIdLong == loadLine) {
+                    map.addMapObject(lines.get(ii).lineShape)
+                    loadLine = ""
+                    loadedLine = ii
+                    return
+                }
+            }
+            try { lines.append({ "lineIdLong": loadLine, "lineShape" : Qt.createQmlObject('import Qt 4.7; import QtMobility.location 1.2;' +
+                                                            'MapPolyline { id: "lineShape' + lines.count +
+                                                            '"; border { color: "#ff0000"; width: 4 }' +
+                                                            '}', map)
+                             }) }
+            catch (e) {
+                console.log("route.qml: checkLoadLine exception " + e)
+                loadLine = ""
+                return
+            }
+            console.log("added one more line: " + lines.count)
             loader.sendMessage({"lineIdLong" : loadLine});
+            loadedLine = lines.count-1
             loadLine = ""
-            map.addMapObject(lineShape)
+            map.addMapObject(lines.get(lines.count-1).lineShape)
         }
     }
     function addStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_) {
-        console.log("map: received stop: " + stopName_)
-        try { stops.append({ "id": stopIdLong_, "mapCircle" : Qt.createQmlObject('import Qt 4.7; import QtMobility.location 1.2;' +
+//        console.log("route: adding stop to map: " + stopName_)
+        try { stops.append({ "stopIdLong": stopIdLong_, "mapCircle" : Qt.createQmlObject('import Qt 4.7; import QtMobility.location 1.2;' +
                                                         'MapCircle{ id: "lineStop' + stopIdLong_ +
                                                         '"; center : Coordinate { longitude : ' + stopLongitude_ +
                                                         '; latitude : ' + stopLatitude_ +
@@ -319,12 +382,11 @@ Item {
                                                         '"; property string stopIdLong : "' + stopIdLong_ +
                                                         '"; property string stopName : "' + stopName_ +
                                                         '"; MapMouseArea { anchors.fill: parent; onClicked: {' +
-                                                          ' if (routePage.loadedStop != stopIdLong) {' +
+                                                          ' if (stops.get(loadedStop).stopIdLong != stopIdLong) {' +
                                                           ' routePage.setCurrentStop(stopIdLong); color="#500F0F000"; }'+
                                                           ' routePage.showError("" + stopIdShort + ": " + stopName) } }' +
                                                         '}', map)
                          }) }
-//                                                        '} color : ("lineStop" + routePage.currentStop == id ) ? "#80FF0000" : color="#20bb2000" ; radius: 30.0' +
         catch (e) {
             console.log("route.qml: addStop exception " + e)
         }

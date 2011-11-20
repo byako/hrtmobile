@@ -200,7 +200,7 @@ Page {
             onPushStopToMap: {
                 if (tabGroup.currentTab != mapTabButton) initMap("","")
                 if (mapLoader.status == Loader.Ready) {
-                    mapLoader.item.addStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_)
+                    mapLoader.item.checkAddStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_)
                 }
             }
         }
@@ -231,7 +231,7 @@ Page {
             }
         }
     }
-    function initMap(lineIdLong_, stopIdLong_) {
+    function initMap(lineIdLong_, stopIdLong_) { // load map if not yet loaded and show on screen
         if (mapLoader.status != Loader.Ready) {
             mapLoader.source = "route.qml"
         }
