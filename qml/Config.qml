@@ -6,6 +6,5 @@ Item {      // config object
     property string highlightColor: ""
     property string bgImage: ""
     property string highlightColorBg: ""
-    property int networking: 1  // default
     property string lineGroup: "false"
 }

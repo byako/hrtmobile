@@ -2,21 +2,19 @@ general:
  - To fix
 	* add db init on first run
 	* use WorkerScript to provide threading in lineInfo, settings, realtimeSchedule,  mainPage (route - loading done, stopInfo - done)
-	* fix models names and views names
  - To implement
 	* pinch anction on map
 	* lazy pages load
-	* use NetworkInfo API to check if online\offline http://doc.qt.nokia.com/qtmobility-1.2/qml-networkinfo.html
 	* split all data into favorites and just DB
 	* koolah
 
 lineInfo:
  - To fix
 	* remove exceeding fields in lineInfoModel
-	* on stops tab if stop selected - show on map (if showMapButton triggered)
 	* when moving to stop info pass the line number to highlight
 	* after search fill data in search result model so main model is untouched and can be shown again. Allow switch between models
  - To implement
+	* split everything in pages, use tabButtonRow
 	* schedule to database
 	* check for schedule in DB. show saved schedule
 	* add possibility to search online even when offline data found
@@ -29,6 +27,7 @@ stopInfo:
 	* split depart schedule to hours
 
  - To implement
+	* split everything in pages, use tabButtonRow
 	* if moved from line info - highlight retrieved line number
 	* add confirmation on delete all stops action
 	* save schedule in DB
@@ -36,7 +35,6 @@ stopInfo:
 
 settings:
  - To fix
-	* remove networking config support
  - To implement
 
 realtime:
@@ -52,8 +50,14 @@ route
  - To fix
  - To implement
 	* use landmarks from Location API on route page
+	* when loading line from stopInfo - load also line stops
 
 Done:
+* lineinfo: on stops tab if stop selected - show on map (if showMapButton triggered)
+* fix models names and views names
+* route: show only 1 line by default
+* settings: remove networking config support
+
 2011 11 18
 * refactored almost everything
 * tabs interface

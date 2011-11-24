@@ -40,16 +40,6 @@ Item {
                 themeDialog.open()
             }
         }*/
-        TumblerButton {
-            style: TumblerButtonStyle {
-                inverted: true
-            }
-            id: networkingButton
-            text: "Networking"
-            onClicked: {
-                networkingDialog.open()
-            }
-        }
         Button {
             style: ButtonStyle {
                 inverted: true
@@ -113,24 +103,6 @@ Item {
              }
          }
     }*/
-    ListModel {
-        id: networkingModel
-        ListElement { name: "Full offline: don't use network" }
-        ListElement { name: "Partly online: online schedules" }
-        ListElement { name: "Full online: always use network" }
-    }
-    SelectionDialog {
-         id: networkingDialog
-         titleText: "Networking"
-         selectedIndex: JS.getCurrent("networking")
-         model: networkingModel
-         onSelectedIndexChanged: {
-             if (config.networking != selectedIndex) {
-                 JS.setCurrent("networking",selectedIndex)
-                 config.networking = selectedIndex
-             }
-         }
-    }
 //----------------------------------------------------------------------------//
     function showError(errorText) {  // show popup splash window with error
         infoBanner.text = errorText

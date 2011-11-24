@@ -26,7 +26,7 @@ Page {
             TabButton {
                 id: recentTabButton
                 tab: recentPageContainer;
-                iconSource: (checked) ? "image://theme/icon-m-toolbar-search-white" : "image://theme/icon-m-toolbar-frequent-used-white"
+                iconSource: "image://theme/icon-m-toolbar-frequent-used-white"
                 onClicked: {
                      tabGroup.lastTab = -1
                 }
@@ -99,11 +99,10 @@ Page {
         Page {   // recents page
             id: recentPageContainer
             Label {
-                style: LabelStyle {
-                    inverted: true
-                }
-                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
                 Text {
+                    color: "#FFFFFF"
                     text: "Recent lines/stops/places"
                     font.pixelSize: 25
                 }
@@ -204,7 +203,7 @@ Page {
                 }
             }
         }
-        Connections {
+        Connections {  // stop info
             target: stopInfoLoader.item
             onShowStopMap: {
                 console.log("stopInfo signal: showStopMap " + stopIdLong)

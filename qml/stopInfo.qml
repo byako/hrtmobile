@@ -94,8 +94,6 @@ Item {
         message: "Offline mode enabled.\nGo online?\n(Data charges may apply)"
         titleText: "Offline mode"
         onAccepted: {
-            JS.setCurrent("networking","1")
-            config.networking = "1"
             getInfo()
             updateSchedule()
         }
@@ -115,7 +113,7 @@ Item {
             MenuItem {
                 text: "Delete"
                 onClicked: {
-                    if (JS.deleteStop(recentModel.get(recentList.currentIndex).stopIdLong) == 0) {
+                    if (JS.deleteStop(recentModel.get(stopsView.currentIndex).stopIdLong) == 0) {
                         fillModel();
                     }
                 }
@@ -135,11 +133,11 @@ Item {
         MenuLayout {
             MenuItem {
                 text: "Line Info"
-                onClicked : stopInfoPage.showLineInfo(trafficModel.get(grid.currentIndex).departCode);
+                onClicked : stopInfoPage.showLineInfo(trafficModel.get(scheduleView.currentIndex).departCode);
             }
             MenuItem {
                 text: "Line Map"
-                onClicked : stopInfoPage.showStopMapLine(searchString, trafficModel.get(grid.currentIndex).departCode)
+                onClicked : stopInfoPage.showStopMapLine(searchString, trafficModel.get(scheduleView.currentIndex).departCode)
             }
         }
     }
@@ -148,11 +146,11 @@ Item {
         MenuLayout {
             MenuItem {
                 text: "Line Info"
-                onClicked : stopInfoPage.showLineInfo(linesModel.get(linesList.currentIndex).lineNumber);
+                onClicked : stopInfoPage.showLineInfo(linesModel.get(linesView.currentIndex).lineNumber);
             }
             MenuItem {
                 text: "Line Map"
-                onClicked : stopInfoPage.showStopMapLine(searchString, linesModel.get(linesList.currentIndex).lineNumber);
+                onClicked : stopInfoPage.showStopMapLine(searchString, linesModel.get(linesView.currentIndex).lineNumber);
             }
         }
     }
@@ -185,10 +183,10 @@ Item {
                     text: "M"
                     visible:  ! loadingMap.visible
                     onClicked: {
-//                        if (grid.visible && grid.currentIndex >= 0) {
-//                            stopInfoPage.showStopMapLine(searchString, trafficModel.get(grid.currentIndex).departCode)
-//                        } else if (linesList.visible && linesList.currentIndex >=0 ) {
-//                            stopInfoPage.showStopMapLine(searchString, linesModel.get(linesList.currentIndex).lineNumber)
+//                        if (scheduleView.visible && scheduleView.currentIndex >= 0) {
+//                            stopInfoPage.showStopMapLine(searchString, trafficModel.get(scheduleView.currentIndex).departCode)
+//                        } else if (linesView.visible && linesView.currentIndex >=0 ) {
+//                            stopInfoPage.showStopMapLine(searchString, linesModel.get(linesView.currentIndex).lineNumber)
 //                        } else {
                             stopInfoPage.showStopMap(searchString)
 //                        }
@@ -257,23 +255,23 @@ Item {
         enabled: loading.visible == true ? false : true
         anchors.top: dataRect.bottom
         anchors.topMargin: 10
-        anchors.right: parent.right
-        anchors.left: parent.left
-        style: ButtonStyle {
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: parent.width
+        style: TabButtonStyle {
             inverted: true
         }
         Button {
             id: recentButton
             text: "Recent"
             onClicked: {
-                if (recentList.visible == false) {
-                    if (recentList.currentIndex != selectedStopIndex) {
-                        recentList.currentIndex = selectedStopIndex
+                if (stopsView.visible == false) {
+                    if (stopsView.currentIndex != selectedStopIndex) {
+                        stopsView.currentIndex = selectedStopIndex
                     }
-                    linesList.visible = false
-                    list.visible = false
-                    grid.visible = false
-                    recentList.visible = true
+                    linesView.visible = false
+                    infoView.visible = false
+                    scheduleView.visible = false
+                    stopsView.visible = true
                 }
             }
         }
@@ -281,11 +279,11 @@ Item {
             id: stopSchedule
             text: "Schedule"
             onClicked: {
-                if (grid.visible == false) {
-                    linesList.visible = false
-                    grid.visible = true
-                    list.visible = false
-                    recentList.visible = false
+                if (scheduleView.visible == false) {
+                    linesView.visible = false
+                    scheduleView.visible = true
+                    infoView.visible = false
+                    stopsView.visible = false
                 }
             }
         }
@@ -293,11 +291,11 @@ Item {
             id: stopLines
             text: "Lines"
             onClicked: {
-                if (linesList.visible == false) {
-                    linesList.visible = true
-                    grid.visible = false
-                    list.visible = false
-                    recentList.visible = false
+                if (linesView.visible == false) {
+                    linesView.visible = true
+                    scheduleView.visible = false
+                    infoView.visible = false
+                    stopsView.visible = false
                 }
             }
         }
@@ -305,11 +303,11 @@ Item {
             id: stopInfo
             text: "Info"
             onClicked: {
-                if (list.visible == false) {
-                    linesList.visible = false
-                    list.visible = true
-                    grid.visible = false
-                    recentList.visible = false
+                if (infoView.visible == false) {
+                    linesView.visible = false
+                    infoView.visible = true
+                    scheduleView.visible = false
+                    stopsView.visible = false
                 }
             }
         }
@@ -330,7 +328,7 @@ Item {
     Component {              // recent stops delegate
         id: recentDelegate
         Item {
-            width: recentList.width
+            width: stopsView.width
             height: 70
             Column {
                 height: parent.height
@@ -375,14 +373,14 @@ Item {
                 onClicked: {
                     if (selectedStopIndex != index) {
                         selectedStopIndex = index
-                        recentList.currentIndex = index
+                        stopsView.currentIndex = index
                         searchString = recentModel.get(index).stopIdLong
                         showMapButton.visible = true
                         fillInfoModel()
                         fillLinesModel()
-                        stopName.text = recentModel.get(recentList.currentIndex).stopName
-                        stopAddress.text = recentModel.get(recentList.currentIndex).stopAddress
-                        stopCity.text = recentModel.get(recentList.currentIndex).stopCity
+                        stopName.text = recentModel.get(stopsView.currentIndex).stopName
+                        stopAddress.text = recentModel.get(stopsView.currentIndex).stopAddress
+                        stopCity.text = recentModel.get(stopsView.currentIndex).stopCity
                         dataRect.visible = true
                         showMapButton.visible = true
                         updateSchedule()
@@ -390,7 +388,7 @@ Item {
                 }
                 onPressedChanged: {
                     if (pressed == true) {
-                        recentList.currentIndex = index
+                        stopsView.currentIndex = index
                     }
                 }
                 onPressAndHold: {
@@ -412,28 +410,28 @@ Item {
     Component {              // traffic delegate
         id:trafficDelegate
         Item {
-            width: grid.cellWidth; height:  grid.cellHeight;
+            width: scheduleView.cellWidth; height:  scheduleView.cellHeight;
             Row {
                 spacing: 10;
                 Text{
                     text: departTime
                     font.pixelSize: 25
-                    color: trafficModel.get(grid.currentIndex).departLine == departLine ? "#00ee10" : "#cdd9ff"
+                    color: trafficModel.get(scheduleView.currentIndex).departLine == departLine ? "#00ee10" : "#cdd9ff"
                 }
                 Text{
                     text: departLine
                     font.pixelSize: 25
-                    color: trafficModel.get(grid.currentIndex).departLine == departLine ? "#00ee10" : "#cdd9ff"
+                    color: trafficModel.get(scheduleView.currentIndex).departLine == departLine ? "#00ee10" : "#cdd9ff"
                 }
             }
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
-                    grid.currentIndex = index;
+                    scheduleView.currentIndex = index;
                     showError("Destination :  " + departDest)
                 }
                 onPressAndHold: {
-		    grid.currentIndex = index
+                    scheduleView.currentIndex = index
 		    lineContext.open()
 		}
             }
@@ -449,7 +447,7 @@ Item {
     Component {              // stop info delegate
         id: infoDelegate
         Item {
-            width: list.width
+            width: infoView.width
             height: 50
             Row {
                 anchors.left: parent.left
@@ -479,7 +477,7 @@ Item {
     Component {              // lines passing delegate
         id: linesDelegate
         Item {
-            width: list.width
+            width: infoView.width
             height: 50
             Row {
                 anchors.left: parent.left
@@ -500,14 +498,14 @@ Item {
             MouseArea{
                 anchors.fill: parent
                 onPressAndHold: { linesPassingContext.open() }
-                onClicked: { linesList.currentIndex = index }
+                onClicked: { linesView.currentIndex = index }
             }
         }
     }
     Component {              // lines passing header Header
         id: linesHeader
         Item {
-            width: recentList.width
+            width: stopsView.width
             height: 40
             Row {
                 anchors.left: parent.left
@@ -526,7 +524,7 @@ Item {
             }
         }
     }
-    Item {                   // grid rect
+    Item {                   // scheduleView rect
         id: infoRect
         anchors.top: tabRect.bottom
         anchors.topMargin: 10
@@ -534,7 +532,7 @@ Item {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         GridView {  // stopSchedule grid
-            id: grid
+            id: scheduleView
             anchors.fill:  parent
             delegate: trafficDelegate
             model: trafficModel
@@ -546,8 +544,8 @@ Item {
             visible: false
             flow: GridView.TopToBottom
         }
-        ListView {  // stop info list
-            id: list
+        ListView {  // stop info infoView
+            id: infoView
             visible: false
             anchors.fill: parent
             delegate:  infoDelegate
@@ -556,8 +554,8 @@ Item {
             currentIndex: -1
             clip: true
         }
-        ListView {  // recentList
-            id: recentList
+        ListView {  // stopsView
+            id: stopsView
             visible: true
             spacing: 10
             anchors.fill: parent
@@ -568,7 +566,7 @@ Item {
             clip: true
         }
         ListView {  // lines passing
-            id: linesList
+            id: linesView
             visible: false
             anchors.fill: parent
             delegate:  linesDelegate
@@ -587,10 +585,10 @@ Item {
     function getSchedule() {
         loading.visible = true
         loadStopSchedule.sendMessage({"searchString" : searchString})
-        grid.currentIndex = 0
-        grid.visible = true
-        list.visible = false
-        recentList.visible = false
+        scheduleView.currentIndex = 0
+        scheduleView.visible = true
+        infoView.visible = false
+        stopsView.visible = false
         dataRect.visible = true
     }
     function buttonClicked() {  // SearchBox action

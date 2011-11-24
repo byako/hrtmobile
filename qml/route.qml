@@ -330,12 +330,12 @@ Item {
 
     function checkLoadLine() {
         if (loadLine != "") {
-            if (loadedLine != -1) {
-                if (loadLine == lines.get(loadedLine).lineIdLong) {
+            if (loadedLine != -1) {       // some line shape is loaded
+                if (loadLine == lines.get(loadedLine).lineIdLong) {     // requested line already loaded
                     return
                 }
                 else {
-                    map.removeMapObject(lines.get(loadedLine))
+                    map.removeMapObject(lines.get(loadedLine).lineShape)
                     loadedLine = -1
                 }
             }

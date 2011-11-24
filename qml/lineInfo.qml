@@ -83,7 +83,7 @@ Item {
             MenuItem {
                 text: "Delete"
                 onClicked: {
-                    if (JS.deleteLine(lineInfoModel.get(linesList.currentIndex).lineIdLong) == 0) {
+                    if (JS.deleteLine(lineInfoModel.get(linesView.currentIndex).lineIdLong) == 0) {
                         lineInfoModel.clear()
                         lineInfoLoadLines.sendMessage("")
                     }
@@ -110,14 +110,14 @@ Item {
             MenuItem {
                 text: "Stop Info"
                 onClicked : {
-                    showStopInfo(stopReachModel.get(grid.currentIndex).stopIdLong)
+                    showStopInfo(stopReachModel.get(stopsView.currentIndex).stopIdLong)
                 }
             }
             MenuItem {
                 text: "Map"
                 onClicked : {
                     // send stopIdLong and lineIdLong to map page to show both
-                    showLineMapStop(searchString, stopReachModel.get(searchString, grid.currentIndex).stopIdLong)
+                    showLineMapStop(searchString, stopReachModel.get(searchString, stopsView.currentIndex).stopIdLong)
                 }
             }
         }
@@ -147,7 +147,7 @@ Item {
                 saveLine(selectedIndexes[i])
             }
             if (lineInfoModel.count > tempCount) {
-                linesList.currentIndex = tempCount
+                linesView.currentIndex = tempCount
                 showLineInfo()
             }
          }
@@ -160,7 +160,6 @@ Item {
         anchors.fill: parent
         width: parent.width
         height:  parent.height
-//        Image { source: config.bgImage; fillMode: Image.Center; anchors.fill: parent; }
         MouseArea {
             anchors.fill: parent
             onClicked: focus = true
@@ -193,7 +192,6 @@ Item {
                 }
         }
         Column {
-//            spacing: 5
             Row {
                 Label {
                     id: lineType;
@@ -228,7 +226,7 @@ Item {
         anchors.top: dataRect.bottom
         anchors.topMargin: 10
         anchors.horizontalCenter: parent.horizontalCenter
-        width: (parent.width-10)
+        width: parent.width
         style: TabButtonStyle {
             inverted: true
         }
@@ -236,14 +234,14 @@ Item {
                 id: linesButton
                 text: "Lines"
                 onClicked: {
-                    if (linesList.visible == false) {
-                        linesList.visible = true
-                        grid.visible = false
-                        schedule.visible = false
+                    if (linesView.visible == false) {
+                        linesView.visible = true
+                        stopsView.visible = false
+                        scheduleView.visible = false
                         scheduleButtons.visible = false
                         focus = true
-                        if (linesList.currentIndex != selectedLineIndex) {
-                            linesList.currentIndex = selectedLineIndex
+                        if (linesView.currentIndex != selectedLineIndex) {
+                            linesView.currentIndex = selectedLineIndex
                         }
                     }
                 }
@@ -252,10 +250,10 @@ Item {
                 id: stopsButton
                 text: "Stops"
                 onClicked: {
-                    if (grid.visible == false) {
-                        linesList.visible = false
-                        grid.visible = true
-                        schedule.visible = false
+                    if (stopsView.visible == false) {
+                        linesView.visible = false
+                        stopsView.visible = true
+                        scheduleView.visible = false
                         scheduleButtons.visible = false
                         focus = true
                     }
@@ -265,12 +263,12 @@ Item {
                 id: scheduleButton
                 text: "Schedule"
                 onClicked: {
-                    if (schedule.visible == false) {
-                        linesList.visible = false
-                        grid.visible = false
-                        schedule.visible = true
+                    if (scheduleView.visible == false) {
+                        linesView.visible = false
+                        stopsView.visible = false
+                        scheduleView.visible = true
                         scheduleButtons.visible = true
-                        if (scheduleLoaded == 0 && linesList.currentIndex != -1) {
+                        if (scheduleLoaded == 0 && linesView.currentIndex != -1) {
                             scheduleLoader.sendMessage({"lineIdLong":searchString})
                             scheduleLoaded = 1
                         }
@@ -286,7 +284,7 @@ Item {
     Component {     // stops reach delegate
         id:stopReachDelegate
         Item {
-            width: grid.width;
+            width: stopsView.width;
             height: 50;
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -299,12 +297,12 @@ Item {
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
-                    grid.focus = true;
-                    grid.currentIndex = index;
+                    stopsView.focus = true;
+                    stopsView.currentIndex = index;
                 }
                 onPressedChanged: {
                     if (pressed == true) {
-                        grid.currentIndex = index;
+                        stopsView.currentIndex = index;
                     }
                 }
                 onPressAndHold: {
@@ -323,7 +321,7 @@ Item {
     Component {     // lineInfo section header
         id:lineInfoSectionHeader
         Item {
-            width: linesList.width;
+            width: linesView.width;
             height: 35
             Text{
                 anchors.horizontalCenter:  parent.horizontalCenter
@@ -338,7 +336,7 @@ Item {
     Component {     // lineInfo short delegate
         id:lineInfoShortDelegate
         Item {
-            width: linesList.width;
+            width: linesView.width;
             height: 45
             Text{
                 anchors.verticalCenter: parent.verticalCenter
@@ -359,8 +357,8 @@ Item {
                 }
                 onPressedChanged: {
                     if (pressed == true) {
-                        linesList.focus = true
-                        linesList.currentIndex = index
+                        linesView.focus = true
+                        linesView.currentIndex = index
                     }
                 }
                 onPressAndHold: {
@@ -372,7 +370,7 @@ Item {
     Component {     // lineInfo delegate
         id:lineInfoDelegate
         Item {
-            width: linesList.width;
+            width: linesView.width;
             height: 70
             Column {
                 height: parent.height
@@ -406,8 +404,8 @@ Item {
                 }
                 onPressedChanged: {
                     if (pressed == true) {
-                        linesList.focus = true
-                        linesList.currentIndex = index
+                        linesView.focus = true
+                        linesView.currentIndex = index
                     }
                 }
                 onPressAndHold: {
@@ -429,13 +427,13 @@ Item {
     Component{      // schedule delegate
         id:scheduleDelegate
         Item {
-            width: schedule.cellWidth
-            height: schedule.cellHeight
+            width: scheduleView.cellWidth
+            height: scheduleView.cellHeight
             Text{ anchors.left: parent.left; text: departTime; font.pixelSize: 25; color: "#cdd9ff"}
         }
     }
 //--                        --------------------------------------------------//
-    Item{           // grid rect
+    Item{           // stopsView rect
         id: infoRect
         anchors.top: tabRect.bottom
         anchors.topMargin: 10
@@ -444,7 +442,7 @@ Item {
         anchors.bottom: parent.bottom
         visible: true;
         ListView {  // Lines list
-            id: linesList
+            id: linesView
             anchors.fill:  parent
             delegate: config.lineGroup == "true" ? lineInfoShortDelegate : lineInfoDelegate
             section.property: config.lineGroup == "true" ? "lineTypeName": ""
@@ -462,7 +460,7 @@ Item {
             }
         }
         ListView {  // stops reach model show
-            id: grid
+            id: stopsView
             anchors.fill:  parent
             delegate: stopReachDelegate
             model: stopReachModel
@@ -490,26 +488,26 @@ Item {
                 id: scheduleButton0
                 text: "Mon-Fri"
                 onClicked: {
-                    schedule.model = scheduleModel
+                    scheduleView.model = scheduleModel
                 }
             }
             Button {
                 id: scheduleButton1
                 text: "Sat"
                 onClicked: {
-                    schedule.model = scheduleModel1
+                    scheduleView.model = scheduleModel1
                 }
             }
             Button {
                 id: scheduleButton2
                 text: "Sun"
                 onClicked: {
-                    schedule.model = scheduleModel2
+                    scheduleView.model = scheduleModel2
                 }
             }
         }
-        GridView {  // schedule list
-            id: schedule
+        GridView {  // scheduleView list
+            id: scheduleView
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: scheduleButtons.bottom
@@ -555,10 +553,10 @@ Item {
         }
         if (lineInfoModel.count > tempCount) {
             if (tempCount >= 0) {
-                linesList.currentIndex = tempCount
+                linesView.currentIndex = tempCount
                 selectedLineIndex = tempCount
             } else {
-                linesList.currentIndex = 0
+                linesView.currentIndex = 0
                 selectedLineIndex = 0
             }
             searchString = lineInfoModel.get(tempCount).lineIdLong
@@ -607,10 +605,12 @@ Item {
             } else if (doc.readyState == XMLHttpRequest.DONE) {
                 if (doc.responseXML == null) {
                     showError("No lines found")
+                    loading.visible = false
                     return
                 } else {
                     JS.response = doc.responseXML.documentElement
                     console.log("OK, got " + doc.responseXML.documentElement.childNodes.length+ " lines")
+                    loading.visible = false
                     if (doc.responseXML.documentElement.childNodes.length > 4) {
                         saveSelectDialog.open()
                     } else {
@@ -619,6 +619,7 @@ Item {
                 }
             } else if (doc.readyState == XMLHttpRequest.ERROR) {
                 showError("ERROR returned from server")
+                loading.visible = false
             }
         }
     doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&epsg_out=wgs84&query="+searchString); // for line info request
@@ -653,8 +654,8 @@ Item {
                               stopReachModel.get(ii).stopLatitude)
             }
         }
-        if (grid.currentIndex >= 0) {
-            showLineMapStop(searchString, stopReachModel.get(grid.currentIndex).stopIdLong)
+        if (stopsView.currentIndex >= 0) {
+            showLineMapStop(searchString, stopReachModel.get(stopsView.currentIndex).stopIdLong)
         } else {
             showLineMap(searchString)
         }
@@ -726,21 +727,21 @@ Item {
         )
     }
     function showLineInfo() {        // triggered when one of saved line selected by user
-        if (linesList.currentIndex >= 0) {
-            console.log("ShowLineInfo:  current index is " + linesList.currentIndex)
-            linesList.visible = false
-            grid.visible = true
+        if (linesView.currentIndex >= 0) {
+            console.log("ShowLineInfo:  current index is " + linesView.currentIndex)
+            linesView.visible = false
+            stopsView.visible = true
             dataRect.visible = true
             showMapButtonButton.visible = true
             scheduleLoaded = 0
             scheduleClear()
             stopReachModel.clear()
             getStops()
-            lineShortCodeName.text = lineInfoModel.get(linesList.currentIndex).lineIdShort
-            lineStart.text = "From : " + lineInfoModel.get(linesList.currentIndex).lineStart
-            lineEnd.text = "To : " + lineInfoModel.get(linesList.currentIndex).lineEnd
-            lineType.text = JS.getLineType(lineInfoModel.get(linesList.currentIndex).lineType)
-            searchString = lineInfoModel.get(linesList.currentIndex).lineIdLong
+            lineShortCodeName.text = lineInfoModel.get(linesView.currentIndex).lineIdShort
+            lineStart.text = "From : " + lineInfoModel.get(linesView.currentIndex).lineStart
+            lineEnd.text = "To : " + lineInfoModel.get(linesView.currentIndex).lineEnd
+            lineType.text = JS.getLineType(lineInfoModel.get(linesView.currentIndex).lineType)
+            searchString = lineInfoModel.get(linesView.currentIndex).lineIdLong
         } else {
             dataRect.visible = false
             stopReachModel.clear()
@@ -750,10 +751,10 @@ Item {
     function gotLinesInfo() {         // after offline search is succeded
         infoRect.visible = true;
         if (lineInfoModel.count == 1) {
-            linesList.visible = false
-            grid.visible = true
+            linesView.visible = false
+            stopsView.visible = true
             dataRect.visible = true
-            linesList.currentIndex = 0
+            linesView.currentIndex = 0
             showLineInfo()
         }
     }
