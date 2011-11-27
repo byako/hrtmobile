@@ -11,9 +11,9 @@ Item {
     property string loadLine: ""
     property int loadedLine: -1
     property int loadedStop: -1
-    anchors.fill: parent
-
-    Component.onCompleted: { checkLoadStop(); checkLoadLine(); }
+    width: 480
+    height: 745
+//    Component.onCompleted: { checkLoadStop(); checkLoadLine(); }
 
     InfoBanner {             // info banner
         id: infoBanner
@@ -133,10 +133,10 @@ Item {
 //                mapping.secret: MosYa80xjv5tZQmoAN6N
 //            }
         }
-        size.width: parent.width
-        size.height: parent.height
-        anchors.top: parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
+//        anchors.fill: routePage
+        width: routePage.width
+        height: routePage.height
+        anchors.bottom: parent.bottom
         zoomLevel: 14
         center: Coordinate {
             latitude: 60.1636
@@ -193,12 +193,13 @@ Item {
             id: mapButtons
             z: 5
             width: 60
-            height: 200
-            opacity: 0.8
-            anchors.centerIn: map
-//            anchors.bottomMargin: 20
-//            anchors.right: map.right
-//            anchors.rightMargin: 10
+            height: 120
+            opacity: 0.7
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            style: ButtonStyle {
+                inverted: true
+            }
             Button {
                 id: zoomIn
                 checkable: false
@@ -215,20 +216,43 @@ Item {
                     map.zoomLevel -= 1
                 }
             }
-            Button {
-                id: findMe
-                checkable: false
-                text: "Me"
-                onClicked: {
-                    map.center = positionCircle.center
-                }
+        }
+        Button {
+            id: statesChangeButton
+            width: 100
+            anchors.horizontalCenter: map.horizontalCenter
+            anchors.top: map.top
+            checkable: false
+            text: "Show loaded infok"
+            opacity: 0.7
+            style: ButtonStyle {
+                inverted: true
             }
-            Button {
-                id: statesChange
-                checkable: false
-                text: "state"
-                onClicked: {
-                    routePage.state = (map.height == routePage.height) ? "showStops" : "hideStops"
+            onClicked: {
+                routePage.state = (map.height == routePage.height) ? "showStops" : "hideStops"
+            }
+        }
+        Button {
+            id: showCurrentLocation
+            anchors.right: map.right
+            anchors.top: map.top
+            width: 60
+            height: 60
+            checkable: true
+            iconSource:  "image://theme/icon-s-location-picker"
+            opacity: 0.7
+            style: ButtonStyle {
+                inverted: true
+            }
+            onClicked: {
+                if (checked) {
+                    map.center = positionCircle.center
+                    showError("Position tracking enabled")
+                } else {
+                    if (loadedStop != -1)
+                        map.center = stops.get(loadedStop).mapCircle.center
+                        // TODO: keep tracking GPS position
+                    showError("Position tracking disabled")
                 }
             }
         }
@@ -237,13 +261,12 @@ Item {
     states: [
         State {
             name: "showStops"
-            PropertyChanges { target: map; height: 500 }
+            PropertyChanges { target: map; height: 500; y:  244}
         },
         State {
             name: "hideStops"
-            PropertyChanges { target: map; height: routePage.height }
+            PropertyChanges { target: map; height: routePage.height; y: 0 }
         }
-
     ]
 //----------------------------------------------------------------------------//
     function pupUp(stopIdLong_) {
@@ -382,7 +405,7 @@ Item {
                                                         '"; property string stopIdLong : "' + stopIdLong_ +
                                                         '"; property string stopName : "' + stopName_ +
                                                         '"; MapMouseArea { anchors.fill: parent; onClicked: {' +
-                                                          ' if (stops.get(loadedStop).stopIdLong != stopIdLong) {' +
+                                                          ' if (loadedStop == -1 || stops.get(loadedStop).stopIdLong != stopIdLong) {' +
                                                           ' routePage.setCurrentStop(stopIdLong); color="#500F0F000"; }'+
                                                           ' routePage.showError("" + stopIdShort + ": " + stopName) } }' +
                                                         '}', map)

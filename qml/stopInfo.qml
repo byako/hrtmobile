@@ -14,7 +14,8 @@ Item {
     signal showStopMapLine(string stopIdLong, string lineIdLong)
     signal showLineMap(string lineIdLong)
     signal showLineInfo(string lineIdLong)
-    anchors.fill: parent
+    width: 480
+    height: 745
 
     Config { id: config }
     WorkerScript {           // quick search stops by name for non-exact search. Using geocoding.
@@ -504,10 +505,12 @@ Item {
     }
     Component {              // lines passing header Header
         id: linesHeader
-        Item {
+        Rectangle {
             width: stopsView.width
             height: 40
+            color: "#222222"
             Row {
+                anchors.verticalCenter : parent.verticalCenter
                 anchors.left: parent.left
                 spacing: 20
                 Text{  // line

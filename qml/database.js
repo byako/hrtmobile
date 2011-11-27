@@ -34,6 +34,12 @@ function setTheme(themeName) {
     )
 }
 function loadConfig(config2) {
+    __db().transaction(
+        function(tx) {
+            try { var rs = tx.executeSql("SELECT * FROM CONFIG WHERE option=?", ["theme"]) }
+            catch(e) { console.log("DB is not initialized. Creating all data from scratch.");cleanAll(); initDB(); }
+        }
+    )
     config2.bgColor = getCurrent("bgColor")
     config2.bgImage = getCurrent("bgImage")
     config2.highlightColor = getCurrent("highlightColor")

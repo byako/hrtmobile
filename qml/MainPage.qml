@@ -16,6 +16,7 @@ Page {
 
     SearchDialog {
         id: searchDialog
+        page: recentPageContainer
     }
     tools: ToolBarLayout {
         ButtonRow {
@@ -26,7 +27,7 @@ Page {
             TabButton {
                 id: recentTabButton
                 tab: recentPageContainer;
-                iconSource: "image://theme/icon-m-toolbar-frequent-used-white"
+                iconSource:  "image://theme/icon-m-toolbar-favorite-unmark-white" //"image://theme/icon-m-toolbar-frequent-used-white"
                 onClicked: {
                      tabGroup.lastTab = -1
                 }
@@ -42,6 +43,7 @@ Page {
                          searchDialog.open()
                      } else if (lineInfoLoader.status != Loader.Ready){
                         lineInfoLoader.source = "lineInfo.qml"
+                        lineInfoLoader.parent = lineInfoPageContainer
                      }
                      tabGroup.lastTab = 0
                 }
@@ -57,6 +59,7 @@ Page {
                         searchDialog.open()
                     } else if (stopInfoLoader.status != Loader.Ready){
                         stopInfoLoader.source = "stopInfo.qml"
+                        stopInfoLoader.parent = stopInfoPageContainer
                     }
                     tabGroup.lastTab = 1
                 }
@@ -79,7 +82,6 @@ Page {
             TabButton {
                 id: settingsTabButton
                 tab: settingsPageContainer;
-                //text: "opts";
                 iconSource: (checked) ? "image://theme/icon-m-toolbar-view-menu-white-selected" : "image://theme/icon-m-toolbar-view-menu-white"
                 onClicked: {
                     if (settingsLoader.status != Loader.Ready){
@@ -93,73 +95,39 @@ Page {
 
     TabGroup {
         id: tabGroup
-        anchors.fill: parent
         currentTab: recentPageContainer
         property int lastTab: -1
         Page {   // recents page
             id: recentPageContainer
             Label {
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                Text {
-                    color: "#FFFFFF"
-                    text: "Recent lines/stops/places"
-                    font.pixelSize: 25
-                }
-            }
-
-            property Item loader: Loader {
-                id: recentLoader
-                onStatusChanged: {
-                    if (status == Loader.Ready) {
-                        item.parent = recentPageContainer
-                    }
-                }
+                style: LabelStyle { inverted: true }
+                anchors.centerIn: parent
+                text: "Recent lines/stops/places"
             }
         }
 
         Page {
             id: lineInfoPageContainer
-            property Item loader: Loader {
+            Loader {
                 id: lineInfoLoader
-                onStatusChanged: {
-                    if (status == Loader.Ready) {
-                        item.parent = lineInfoPageContainer
-                    }
-                }
             }
         }
         Page {
             id: stopInfoPageContainer
-            property Item loader: Loader {
+            Loader {
                 id: stopInfoLoader
-                onStatusChanged: {
-                    if (status == Loader.Ready) {
-                        item.parent = stopInfoPageContainer
-                    }
-                }
             }
         }
         Page {
             id: routePageContainer
             Loader {
                 id: mapLoader
-                onStatusChanged: {
-                    if (status == Loader.Ready) {
-                        item.parent = routePageContainer
-                    }
-                }
             }
         }
         Page {
             id: settingsPageContainer
             Loader {
                 id: settingsLoader
-                onStatusChanged: {
-                    if (status == Loader.Ready) {
-                        item.parent = settingsPageContainer
-                    }
-                }
             }
         }
         Connections {  // settings
@@ -189,11 +157,12 @@ Page {
                 console.log("lineInfo signal: showStopInfo")
                 if (stopInfoLoader.status!= Loader.Ready) {
                     stopInfoLoader.source = "stopInfo.qml"
-                    tabGroup.lastTab = 1
-                    mainTabBar.checkedButton = stopsTabButton
-                    tabGroup.currentTab = stopInfoPageContainer
                 }
+                tabGroup.lastTab = 1
+                mainTabBar.checkedButton = stopsTabButton
+                tabGroup.currentTab = stopInfoPageContainer
                 stopInfoLoader.item.searchString = stopIdLong
+                stopInfoLoader.item.exactSearch = true
                 stopInfoLoader.item.buttonClicked()
             }
             onPushStopToMap: {
@@ -221,10 +190,10 @@ Page {
                 console.log("stopInfo signal: showLineInfo")
                 if (lineInfoLoader.status!= Loader.Ready) {
                     lineInfoLoader.source = "lineInfo.qml"
-                    tabGroup.lastTab = 0
-                    mainTabBar.checkedButton = linesTabButton
-                    tabGroup.currentTab = lineInfoPageContainer
                 }
+                tabGroup.lastTab = 0
+                mainTabBar.checkedButton = linesTabButton
+                tabGroup.currentTab = lineInfoPageContainer
                 lineInfoLoader.item.searchString = lineIdLong
                 lineInfoLoader.item.buttonClicked()
             }

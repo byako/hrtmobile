@@ -17,7 +17,8 @@ Item {
     signal showStopMap(string stopIdLong)
     signal showStopInfo(string stopIdLong)
     signal pushStopToMap(string stopIdLong_, string stopIdShort_, string stopName_, string stopLongitude_, string stopLatitude_)
-    anchors.fill: parent
+    width: 480
+    height: 745
 
     Component.onCompleted: { // load config and recent lines
         refreshConfig()
@@ -117,7 +118,8 @@ Item {
                 text: "Map"
                 onClicked : {
                     // send stopIdLong and lineIdLong to map page to show both
-                    showLineMapStop(searchString, stopReachModel.get(searchString, stopsView.currentIndex).stopIdLong)
+                    sendStopsToMap()
+                    showLineMapStop(searchString, stopReachModel.get(stopsView.currentIndex).stopIdLong)
                 }
             }
         }
@@ -160,10 +162,6 @@ Item {
         anchors.fill: parent
         width: parent.width
         height:  parent.height
-        MouseArea {
-            anchors.fill: parent
-            onClicked: focus = true
-        }
     }
     Item{           // data rect: info labels
         id: dataRect
@@ -234,15 +232,9 @@ Item {
                 id: linesButton
                 text: "Lines"
                 onClicked: {
-                    if (linesView.visible == false) {
-                        linesView.visible = true
-                        stopsView.visible = false
-                        scheduleView.visible = false
-                        scheduleButtons.visible = false
-                        focus = true
-                        if (linesView.currentIndex != selectedLineIndex) {
-                            linesView.currentIndex = selectedLineIndex
-                        }
+                    infoRect.state = "linesSelected"
+                    if (linesView.currentIndex != selectedLineIndex) {
+                        linesView.currentIndex = selectedLineIndex
                     }
                 }
             }
@@ -250,29 +242,17 @@ Item {
                 id: stopsButton
                 text: "Stops"
                 onClicked: {
-                    if (stopsView.visible == false) {
-                        linesView.visible = false
-                        stopsView.visible = true
-                        scheduleView.visible = false
-                        scheduleButtons.visible = false
-                        focus = true
-                    }
+                    infoRect.state = "stopsSelected"
                 }
             }
             Button {  // line schedule
                 id: scheduleButton
                 text: "Schedule"
                 onClicked: {
-                    if (scheduleView.visible == false) {
-                        linesView.visible = false
-                        stopsView.visible = false
-                        scheduleView.visible = true
-                        scheduleButtons.visible = true
-                        if (scheduleLoaded == 0 && linesView.currentIndex != -1) {
-                            scheduleLoader.sendMessage({"lineIdLong":searchString})
-                            scheduleLoaded = 1
-                        }
-                        focus = true
+                    infoRect.state = "scheduleSelected"
+                    if (scheduleLoaded == 0 && linesView.currentIndex != -1) {
+                        scheduleLoader.sendMessage({"lineIdLong":searchString})
+                        scheduleLoaded = 1
                     }
                 }
             }
@@ -281,6 +261,30 @@ Item {
     ListModel {     // stops reach model
         id:stopReachModel
     }
+    Component {     // stop reach header
+        id: stopReachHeader
+        Rectangle {
+            width: stopsView.width
+            height: 40
+            color: "#222222"
+            Row {
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.left: parent.left
+                spacing: 20
+                Text{  // stop Name
+                    text: "Stop name"
+                    font.pixelSize: 35
+                    color: "#cdd9ff"
+                    width: 320
+                }
+                Text{  // reach time
+                    text: "Reach(m)"
+                    font.pixelSize: 35
+                    color: "#cdd9ff"
+                }
+            }
+        }
+    }
     Component {     // stops reach delegate
         id:stopReachDelegate
         Item {
@@ -288,24 +292,19 @@ Item {
             height: 50;
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
-                anchors.verticalCenter: parent.verticalCenter
+                anchors.left: parent.left
                 height: parent.height
                 spacing: 15
-                Text{ text: stopName == "" ? stopIdLong:stopName; font.pixelSize: 30; color: "#cdd9ff"; anchors.verticalCenter : parent.verticalCenter}
+                Text{ text: stopName == "" ? stopIdLong:stopName; font.pixelSize: 30; color: "#cdd9ff"; anchors.verticalCenter : parent.verticalCenter; width: 400;}
                 Text{ text: reachTime; font.pixelSize: 30; color: "#cdd9ff"; anchors.verticalCenter : parent.verticalCenter}
             }
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
-                    stopsView.focus = true;
                     stopsView.currentIndex = index;
                 }
-                onPressedChanged: {
-                    if (pressed == true) {
-                        stopsView.currentIndex = index;
-                    }
-                }
                 onPressAndHold: {
+                    stopsView.currentIndex = index;
                     stopContextMenu.open()
                 }
             }
@@ -352,16 +351,13 @@ Item {
                     if (selectedLineIndex != index) {
                         searchString = lineIdLong
                         selectedLineIndex = index
+                        linesView.currentIndex = index
+                        tabRect.checkedButton = stopsButton
                         showLineInfo()
                     }
                 }
-                onPressedChanged: {
-                    if (pressed == true) {
-                        linesView.focus = true
-                        linesView.currentIndex = index
-                    }
-                }
                 onPressAndHold: {
+                    linesView.currentIndex = index
                     linesContextMenu.open()
                 }
             }
@@ -402,13 +398,8 @@ Item {
                         showLineInfo()
                     }
                 }
-                onPressedChanged: {
-                    if (pressed == true) {
-                        linesView.focus = true
-                        linesView.currentIndex = index
-                    }
-                }
                 onPressAndHold: {
+                    linesView.currentIndex = index
                     linesContextMenu.open()
                 }
             }
@@ -453,11 +444,11 @@ Item {
             currentIndex: -1
             clip: true
             visible: true
-            onVisibleChanged: {
-                if (visible == true) {
-                    tabRect.checkedButton = linesButton;
-                }
-            }
+//            onVisibleChanged: {
+//                if (visible == true) {
+//                    tabRect.checkedButton = linesButton;
+//                }
+//            }
         }
         ListView {  // stops reach model show
             id: stopsView
@@ -466,13 +457,14 @@ Item {
             model: stopReachModel
             highlight: Rectangle { color: "#666666"; radius:  5 }
             currentIndex: -1
+            header: stopReachHeader
             clip: true
             visible: false;
-            onVisibleChanged: {
-                if (visible == true) {
-                    tabRect.checkedButton = stopsButton;
-                }
-            }
+//            onVisibleChanged: {
+//                if (visible == true) {
+//                    tabRect.checkedButton = stopsButton;
+//                }
+//            }
         }
         ButtonRow { // scheduleButtons week period choose
             id: scheduleButtons
@@ -521,12 +513,35 @@ Item {
             currentIndex: -1
             clip: true
             visible: false;
-            onVisibleChanged: {
-                if (visible == true) {
-                    tabRect.checkedButton = scheduleButton;
-                }
-            }
+//            onVisibleChanged: {
+//                if (visible == true) {
+//                    tabRect.checkedButton = scheduleButton;
+//                }
+//            }
         }
+        states: [
+            State {
+                name: "linesSelected"
+                PropertyChanges { target: linesView; visible: true }
+                PropertyChanges { target: stopsView; visible: false }
+                PropertyChanges { target: scheduleView; visible: false }
+                PropertyChanges { target: scheduleButtons; visible: false }
+            },
+            State {
+                name: "stopsSelected"
+                PropertyChanges { target: linesView; visible: false }
+                PropertyChanges { target: stopsView; visible: true }
+                PropertyChanges { target: scheduleView; visible: false }
+                PropertyChanges { target: scheduleButtons; visible: false }
+            },
+            State {
+                name: "scheduleSelected"
+                PropertyChanges { target: linesView; visible: false }
+                PropertyChanges { target: stopsView; visible: false }
+                PropertyChanges { target: scheduleView; visible: true }
+                PropertyChanges { target: scheduleButtons; visible: true }
+            }
+        ]
     }
 /*<-------------------------------------------------------------------------->*/
     function showError(errorText) {   // show popup splash window with error
@@ -644,7 +659,7 @@ Item {
             gotLinesInfo()
         }
     }
-    function showMap() {            // push lineIdLong and stops to map page
+    function sendStopsToMap() {
         for (var ii=0; ii < stopReachModel.count; ++ii) {
             if (stopReachModel.get(ii).stopName != "") {
                 pushStopToMap(stopReachModel.get(ii).stopIdLong,
@@ -654,6 +669,9 @@ Item {
                               stopReachModel.get(ii).stopLatitude)
             }
         }
+    }
+    function showMap() {            // push lineIdLong and stops to map page
+        sendStopsToMap()
         if (stopsView.currentIndex >= 0) {
             showLineMapStop(searchString, stopReachModel.get(stopsView.currentIndex).stopIdLong)
         } else {
@@ -729,19 +747,19 @@ Item {
     function showLineInfo() {        // triggered when one of saved line selected by user
         if (linesView.currentIndex >= 0) {
             console.log("ShowLineInfo:  current index is " + linesView.currentIndex)
-            linesView.visible = false
-            stopsView.visible = true
+            infoRect.state = "stopsSelected"
+            tabRect.checkedButton = stopsButton
             dataRect.visible = true
             showMapButtonButton.visible = true
             scheduleLoaded = 0
             scheduleClear()
             stopReachModel.clear()
             getStops()
-            lineShortCodeName.text = lineInfoModel.get(linesView.currentIndex).lineIdShort
-            lineStart.text = "From : " + lineInfoModel.get(linesView.currentIndex).lineStart
-            lineEnd.text = "To : " + lineInfoModel.get(linesView.currentIndex).lineEnd
-            lineType.text = JS.getLineType(lineInfoModel.get(linesView.currentIndex).lineType)
-            searchString = lineInfoModel.get(linesView.currentIndex).lineIdLong
+            lineShortCodeName.text = lineInfoModel.get(selectedLineIndex).lineIdShort
+            lineStart.text = "From : " + lineInfoModel.get(selectedLineIndex).lineStart
+            lineEnd.text = "To : " + lineInfoModel.get(selectedLineIndex).lineEnd
+            lineType.text = JS.getLineType(lineInfoModel.get(selectedLineIndex).lineType)
+            searchString = lineInfoModel.get(selectedLineIndex).lineIdLong
         } else {
             dataRect.visible = false
             stopReachModel.clear()
@@ -749,10 +767,10 @@ Item {
         }
     }
     function gotLinesInfo() {         // after offline search is succeded
+        console.log("DEBUG ME HERE! I DON'T KNOW WHY IS THIS HAPPENING TO ME!!!!! HELP!!")
         infoRect.visible = true;
         if (lineInfoModel.count == 1) {
-            linesView.visible = false
-            stopsView.visible = true
+            infoRect.state = "stopsSelected"
             dataRect.visible = true
             linesView.currentIndex = 0
             showLineInfo()

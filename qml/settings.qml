@@ -7,8 +7,9 @@ Item {
     id: settingsPage
     objectName: "SettingsPageItem"
     property string currentTheme: ""
-    anchors.fill: parent
     signal updateConfig()
+    width: 480
+    height: 745
 
     InfoBanner {// info banner
         id: infoBanner

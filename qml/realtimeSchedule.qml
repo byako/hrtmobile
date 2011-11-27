@@ -13,6 +13,8 @@ Page {
     property string stopId: ""
     property string linesCount: "10"
     orientationLock: PageOrientation.LockPortrait
+    width: 480
+    height: 745
 
     Component.onCompleted: { refreshConfig(); fillModel(); }
 

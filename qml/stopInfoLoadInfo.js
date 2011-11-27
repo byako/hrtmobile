@@ -1,6 +1,6 @@
 //-------------------------------------- ** --------------------------------------------
 //  WorkerScript to fetch and load info about stop
-//  Use Api v2.0 slower, but will give more data: stops, line shape, link for schedule
+//  Use Api v2.0 slower, but will give more data: lines, line shape, link for schedule
 //-------------------------------------- ** --------------------------------------------
 
 WorkerScript.onMessage = function(message) {
