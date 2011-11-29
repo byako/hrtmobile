@@ -99,11 +99,14 @@ Page {
         property int lastTab: -1
         Page {   // recents page
             id: recentPageContainer
-            Label {
+            Favorites {
+                id: favoritesPageItem
+            }
+/*            Label {
                 style: LabelStyle { inverted: true }
                 anchors.centerIn: parent
                 text: "Recent lines/stops/places"
-            }
+            }*/
         }
 
         Page {

@@ -1,3 +1,10 @@
+hrtmobile (0.6.0) unstable; urgency=low
+
+  * add favorites support
+  * add color differentiation
+
+ -- Alexey Fomenko <alexey.fomenko@gmail.com>  Tue, 29 Nov 2011 23:19:24 +0200
+
 hrtmobile (0.5.0) unstable; urgency=low
 
   * experimental API support

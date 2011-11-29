@@ -26,5 +26,6 @@
         <file>qml/SearchDialog.qml</file>
         <file>qml/stopSearch.js</file>
         <file>qml/Loading.qml</file>
+        <file>qml/Favorites.qml</file>
     </qresource>
 </RCC>

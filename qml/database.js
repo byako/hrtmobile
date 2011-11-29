@@ -56,7 +56,7 @@ function initDB() {
                 tx.executeSql('CREATE TABLE IF NOT EXISTS Current(option TEXT PRIMARY KEY, value TEXT)')
 
                 tx.executeSql('CREATE TABLE IF NOT EXISTS LineTypes(lineType TEXT, lineTypeName TEXT, PRIMARY KEY(lineType,lineTypeName))')
-                tx.executeSql('CREATE TABLE IF NOT EXISTS Lines(lineIdLong TEXT PRIMARY KEY, lineIdShort TEXT, lineName TEXT, lineType TEXT, lineStart TEXT, lineEnd TEXT, startStopIdLong TEXT, endStopIdLong TEXT, lineShape TEXT, lineSchedule TEXT, FOREIGN KEY(lineType) REFERENCES LineTypes(lineType))')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS Lines(lineIdLong TEXT PRIMARY KEY, lineIdShort TEXT, lineName TEXT, lineType TEXT, lineStart TEXT, lineEnd TEXT, startStopIdLong TEXT, endStopIdLong TEXT, lineShape TEXT, lineSchedule TEXT, favorite TEXT, FOREIGN KEY(lineType) REFERENCES LineTypes(lineType))')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS LineStops(lineIdLong TEXT, stopIdLong TEXT, stopReachTime TEXT, FOREIGN KEY(lineIdLong) REFERENCES Lines(lineIdLong))')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS LineSchedule(lineIdLong TEXT, weekDay TEXT, departTime TEXT, PRIMARY KEY(lineIdLong,weekDay,departTime))')  // not used for now
 
@@ -137,7 +137,7 @@ function addLine(string) {
     var returnVal = 0
     var fields = new Array
     fields = string.split(";")
-    if (fields.length < 10) {
+    if (fields.length < 11) {
         returnVal = -1
     } else {
         __db().transaction(
@@ -156,7 +156,7 @@ function addLine(string) {
                         returnVal = 1
                     }
                 } else {
-                    rs = tx.executeSql('INSERT INTO Lines VALUES(?,?,?,?,?,?,?,?,?,?)', [fields[0], fields[1], fields[2], fields[3], fields[4], fields[5], fields[6], fields[7], fields[8], fields[9]])
+                    rs = tx.executeSql('INSERT INTO Lines VALUES(?,?,?,?,?,?,?,?,?,?,?)', [fields[0], fields[1], fields[2], fields[3], fields[4], fields[5], fields[6], fields[7], fields[8], fields[9], fields[10]])
                 }
             }
         )

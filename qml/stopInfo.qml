@@ -675,7 +675,6 @@ Item {
     function setFavorite(stopIdLong_,value) {  // checkout stop info from database
         JS.__db().transaction(
             function(tx) {  // TODO
-                console.log("setting favorite for " + stopIdLong_ + ":" + value)
                 try { var rs = tx.executeSql("UPDATE Stops SET favorite=? WHERE stopIdLong=?",[value,stopIdLong_]); }
                 catch(e) { console.log("stopInfo: setFavorite EXCEPTION: " + e) }
             }

@@ -74,7 +74,8 @@ Item {
             lineInfoModel.append({"lineIdLong" : messageObject.lineIdLong, "lineIdShort" : messageObject.lineIdShort,
                                      "lineStart" : messageObject.lineStart, "lineEnd" : messageObject.lineEnd,
                                      "lineName" : messageObject.lineName, "lineType" : messageObject.lineType,
-                                "lineTypeName" : JS.getLineType(messageObject.lineType) + messageObject.lineIdShort
+                                     "lineTypeName" : JS.getLineType(messageObject.lineType) + messageObject.lineIdShort,
+                                     "favorite" : messageObject.favorite
                                  })
         }
     }
@@ -170,25 +171,49 @@ Item {
         anchors.top:  parent.top
         anchors.right: parent.right
         visible: false
-        height: 110
+        height: 120
         Button {    // showMapButton
-                id: showMapButtonButton
+            id: showMapButtonButton
+            style: ButtonStyle {
+                inverted: true
+            }
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.rightMargin: 20
+            height: 60
+            width: 60
+            text: "M"
+            visible: false
+            onClicked: {
+                if (searchString != "") {
+                    showError("Building line shape")
+                    showMap()
+                }
+            }
+        }
+        Item {          // favorite
+            anchors.right: parent.right
+            anchors.rightMargin: 20
+            anchors.bottom: parent.bottom
+            height: 60
+            width: 60
+            Button { // favorite
                 style: ButtonStyle {
                     inverted: true
                 }
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.right: parent.right
-                anchors.rightMargin: 20
-                height: 60
-                width: 60
-                text: "M"
-                visible: false
+                id: favoriteButton
+                anchors.fill: parent
+                iconSource: (lineInfoModel.get(selectedLineIndex).favorite == "true") ? "image://theme/icon-m-toolbar-favorite-mark-white" : "image://theme/icon-m-toolbar-favorite-unmark-white"
                 onClicked: {
-                    if (searchString != "") {
-                        showError("Building line shape")
-                        showMap()
+                    if (lineInfoModel.get(selectedLineIndex).favorite == "true") {
+                        setFavorite(searchString, "false")
+                        lineInfoModel.set(selectedLineIndex, {"favorite":"false"})
+                    } else {
+                        setFavorite(searchString, "true")
+                        lineInfoModel.set(selectedLineIndex, {"favorite":"true"})
                     }
                 }
+            }
         }
         Column {
             Row {
@@ -565,7 +590,6 @@ Item {
         chooseLinesDialog.open()
     }
     function saveAllLines() {
-        console.log ("spinner visible")
         loading.visible = true
         var tempCount = lineInfoModel.count
         for (var ii = 0; ii < JS.response.childNodes.length; ++ii) {
@@ -582,7 +606,6 @@ Item {
             searchString = lineInfoModel.get(tempCount).lineIdLong
             showLineInfo()
         }
-        console.log ("spinner invisible")
         loading.visible = false
         gotLinesInfo()
     }
@@ -593,7 +616,8 @@ Item {
                                  "lineStart" : "" + JS.response.childNodes[ii].childNodes[3].firstChild.nodeValue,
                                  "lineEnd" : "" + JS.response.childNodes[ii].childNodes[4].firstChild.nodeValue,
                                  "lineType" : "" + JS.response.childNodes[ii].childNodes[2].firstChild.nodeValue,
-                                 "lineTypeName" : "" + JS.getLineType(JS.response.childNodes[ii].childNodes[2].firstChild.nodeValue) + " " + JS.response.childNodes[ii].childNodes[1].firstChild.nodeValue
+                                 "lineTypeName" : "" + JS.getLineType(JS.response.childNodes[ii].childNodes[2].firstChild.nodeValue) + " " + JS.response.childNodes[ii].childNodes[1].firstChild.nodeValue,
+                                 "favorite" : "false"
                                  });
             if ( JS.addLine(""+ JS.response.childNodes[ii].childNodes[0].firstChild.nodeValue +
                             ";"+ JS.response.childNodes[ii].childNodes[1].firstChild.nodeValue +
@@ -604,7 +628,8 @@ Item {
                             ";" + JS.response.childNodes[ii].childNodes[8].firstChild.firstChild.firstChild.nodeValue +
                             ";" + JS.response.childNodes[ii].childNodes[8].lastChild.firstChild.firstChild.nodeValue +
                             ";" + JS.response.childNodes[ii].childNodes[7].firstChild.nodeValue +
-                            ";" + JS.response.childNodes[ii].childNodes[6].firstChild.nodeValue) == 0 ) {
+                            ";" + JS.response.childNodes[ii].childNodes[6].firstChild.nodeValue +
+                            ";" + "false" ) == 0 ) {
                 showError("Saved new line: " + JS.response.childNodes[ii].childNodes[1].firstChild.nodeValue)
             }
             JS.__db().transaction(
@@ -706,7 +731,8 @@ Item {
                                             "lineStart" : rs.rows.item(ii).lineStart,
                                             "lineEnd" : rs.rows.item(ii).lineEnd,
                                             "lineType" : rs.rows.item(ii).lineType,
-                                            "lineTypeName" : JS.getLineType(rs.rows.item(ii).lineType) + " " + rs.rows.item(ii).lineIdShort
+                                            "lineTypeName" : JS.getLineType(rs.rows.item(ii).lineType) + " " + rs.rows.item(ii).lineIdShort,
+                                            "favorite" : rs.rows.item(ii).favorite
                                             });
                    }
                } else {
@@ -723,7 +749,7 @@ Item {
                 try { var rs = tx.executeSql('SELECT * FROM LineStops WHERE lineIdLong=?', [searchString]); }
                 catch (e) { console.log ("lineInfo.qml: getStops exception 1: " + e) }
                 for (var ii=0; ii<rs.rows.length; ++ii) {
-                    try { //console.log("found 1:" + rs.rows.item(ii).lineIdLong + "; 2: " + rs.rows.item(ii).stopIdLong + ";4: " + rs.rows.item(ii).stopIdShort + ";3: " + rs.rows.item(ii).stopName)
+                    try {
                         var rs2 = tx.executeSql('SELECT * FROM Stops WHERE stopIdLong=?', [rs.rows.item(ii).stopIdLong]);
                     }
                     catch (e) { console.log ("lineInfo.qml: getStops exception 2: " + e) }
@@ -781,6 +807,14 @@ Item {
             linesView.currentIndex = 0
             showLineInfo()
         }
+    }
+    function setFavorite(lineIdLong_,value) {  // checkout stop info from database
+        JS.__db().transaction(
+            function(tx) {  // TODO
+                try { var rs = tx.executeSql("UPDATE Lines SET favorite=? WHERE lineIdLong=?",[value,lineIdLong_]); }
+                catch(e) { console.log("lineInfo: setFavorite EXCEPTION: " + e) }
+            }
+        )
     }
     function refreshConfig() {        // reload config from database - same function on every page
         JS.loadConfig(config)
