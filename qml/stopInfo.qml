@@ -156,7 +156,7 @@ Item {
         }
     }
     Rectangle {              // dark background
-        color: "#000000";
+        color: "#002050";
         anchors.fill: parent
         width: parent.width
         height:  parent.height
@@ -167,12 +167,12 @@ Item {
         anchors.left: parent.left
         anchors.top:  parent.top
         anchors.right: parent.right
-        height: 110
+        height: 120
         visible: false
         Item {          // showMapButton
                 anchors.right: parent.right
                 anchors.rightMargin: 20
-                anchors.verticalCenter: parent.verticalCenter
+                anchors.top: parent.top
                 height: 60
                 width: 60
                 Button { // showMapButton
@@ -203,6 +203,30 @@ Item {
                     z: 8
                 }
             }
+        Item {          // favorite
+                anchors.right: parent.right
+                anchors.rightMargin: 20
+                anchors.bottom: parent.bottom
+                height: 60
+                width: 60
+                Button { // favorite
+                    style: ButtonStyle {
+                        inverted: true
+                    }
+                    id: favoriteButton
+                    anchors.fill: parent
+                    iconSource: (recentModel.get(selectedStopIndex).favorite == "true") ? "image://theme/icon-m-toolbar-favorite-mark-white" : "image://theme/icon-m-toolbar-favorite-unmark-white"
+                    onClicked: {
+                        if (recentModel.get(selectedStopIndex).favorite == "true") {
+                            setFavorite(searchString, "false")
+                            recentModel.set(selectedStopIndex, {"favorite":"false"})
+                        } else {
+                            setFavorite(searchString, "true")
+                            recentModel.set(selectedStopIndex, {"favorite":"true"})
+                        }
+                    }
+                }
+        }
         Column {            // data labels
             Row {
                 Label {
@@ -263,7 +287,7 @@ Item {
         }
         Button {
             id: recentButton
-            text: "Recent"
+            text: "Saved"
             onClicked: {
                 if (stopsView.visible == false) {
                     if (stopsView.currentIndex != selectedStopIndex) {
@@ -534,6 +558,17 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
+        ListView {  // stopsView
+            id: stopsView
+            visible: true
+            spacing: 10
+            anchors.fill: parent
+            delegate:  recentDelegate
+            model: recentModel
+            highlight: Rectangle { color:"#666666"; radius:  5 }
+            currentIndex: -1
+            clip: true
+        }
         GridView {  // stopSchedule grid
             id: scheduleView
             anchors.fill:  parent
@@ -547,27 +582,6 @@ Item {
             visible: false
             flow: GridView.TopToBottom
         }
-        ListView {  // stop info infoView
-            id: infoView
-            visible: false
-            anchors.fill: parent
-            delegate:  infoDelegate
-            model: infoModel
-            highlight: Rectangle { color:"#666666"; radius:  5 }
-            currentIndex: -1
-            clip: true
-        }
-        ListView {  // stopsView
-            id: stopsView
-            visible: true
-            spacing: 10
-            anchors.fill: parent
-            delegate:  recentDelegate
-            model: recentModel
-            highlight: Rectangle { color:"#666666"; radius:  5 }
-            currentIndex: -1
-            clip: true
-        }
         ListView {  // lines passing
             id: linesView
             visible: false
@@ -575,6 +589,16 @@ Item {
             delegate:  linesDelegate
             model: linesModel
             header: linesHeader
+            highlight: Rectangle { color:"#666666"; radius:  5 }
+            currentIndex: -1
+            clip: true
+        }
+        ListView {  // stop info infoView
+            id: infoView
+            visible: false
+            anchors.fill: parent
+            delegate:  infoDelegate
+            model: infoModel
             highlight: Rectangle { color:"#666666"; radius:  5 }
             currentIndex: -1
             clip: true
@@ -645,6 +669,15 @@ Item {
                     linesModel.append({"lineNumber" : rs.rows.item(i).lineIdLong,
                                       "lineDest" : rs.rows.item(i).lineEnd})
                 }
+            }
+        )
+    }
+    function setFavorite(stopIdLong_,value) {  // checkout stop info from database
+        JS.__db().transaction(
+            function(tx) {  // TODO
+                console.log("setting favorite for " + stopIdLong_ + ":" + value)
+                try { var rs = tx.executeSql("UPDATE Stops SET favorite=? WHERE stopIdLong=?",[value,stopIdLong_]); }
+                catch(e) { console.log("stopInfo: setFavorite EXCEPTION: " + e) }
             }
         )
     }

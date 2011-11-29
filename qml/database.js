@@ -60,7 +60,7 @@ function initDB() {
                 tx.executeSql('CREATE TABLE IF NOT EXISTS LineStops(lineIdLong TEXT, stopIdLong TEXT, stopReachTime TEXT, FOREIGN KEY(lineIdLong) REFERENCES Lines(lineIdLong))')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS LineSchedule(lineIdLong TEXT, weekDay TEXT, departTime TEXT, PRIMARY KEY(lineIdLong,weekDay,departTime))')  // not used for now
 
-                tx.executeSql('CREATE TABLE IF NOT EXISTS Stops(stopIdLong TEXT PRIMARY KEY, stopIdShort TEXT, stopName TEXT, stopAddress TEXT, stopCity TEXT, stopLongitude TEXT, stopLatitude TEXT)')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS Stops(stopIdLong TEXT PRIMARY KEY, stopIdShort TEXT, stopName TEXT, stopAddress TEXT, stopCity TEXT, stopLongitude TEXT, stopLatitude TEXT, favorite TEXT)')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS StopLines(stopIdLong TEXT, lineIdLong TEXT, lineEnd TEXT, PRIMARY KEY(stopIdLong,lineIdLong), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong))')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS StopInfo(stopIdLong TEXT, option TEXT, value TEXT, PRIMARY KEY(stopIdLong,option), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong))')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS StopSchedule(stopIdLong, weekTime TEXT, departTime TEXT, lineId TEXT)')  // not used for now
@@ -132,29 +132,7 @@ function createDefaultConfig() {
         }
     )
 }
-function showDB() {
-    console.log("DEBUG: showDatabase invoked: ");
-    __db().transaction(
-        function(tx) {
-            var rs, ii;
-            if (tx.executeSql("SELECT * FROM CONFIG")) {
-                rs = tx.executeSql("SELECT * FROM CONFIG");
-                for (ii=0; ii < rs.rows.length; ++ii ) {
-                    console.log("" + rs.rows.item(ii).option + " : " + rs.rows.item(ii).value)
-                }
-            }
-/*	    if (rs.length > 0) {
-		console.log("found " + ts.length + " tables\n");
-	    } else {
-                console.log("no tables found\n");
-		return;
-            }
-	    for (var ii=0; ii < rs.length; ++ii) {
-		console.log("table: " + rs[ii]);
-            }*/
-	}
-    )
-}
+
 function addLine(string) {
     var returnVal = 0
     var fields = new Array

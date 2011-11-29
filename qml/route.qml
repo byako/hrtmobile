@@ -150,6 +150,7 @@ Item {
             }
             color : "#80FF00"
             radius : 30.0
+            visible: false
             MapMouseArea {
                 onClicked: {
                     console.log("Me touched!");

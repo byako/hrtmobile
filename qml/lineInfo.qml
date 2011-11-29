@@ -11,6 +11,7 @@ Item {
     property int currentSchedule : -1
     property string searchString: ""
     property int selectedLineIndex : -1
+    property bool offlineResult : false
 
     signal showLineMap(string lineIdLong)
     signal showLineMapStop(string lineIdLong, string stopIdLong)
@@ -158,7 +159,7 @@ Item {
          }
     }
     Rectangle{      // dark background
-        color: "#000000"
+        color: "#005020"
         anchors.fill: parent
         width: parent.width
         height:  parent.height
@@ -230,17 +231,21 @@ Item {
         }
             Button {  // recent lines
                 id: linesButton
-                text: "Lines"
+                text: "Saved lines"
                 onClicked: {
                     infoRect.state = "linesSelected"
                     if (linesView.currentIndex != selectedLineIndex) {
                         linesView.currentIndex = selectedLineIndex
+                    } else if (offlineResult == true) {
+                        lineInfoModel.clear()
+                        lineInfoLoadLines.sendMessage("")
+                        offlineResult = false
                     }
                 }
             }
             Button {  // line stops
                 id: stopsButton
-                text: "Stops"
+                text: "Line Stops"
                 onClicked: {
                     infoRect.state = "stopsSelected"
                 }
@@ -250,7 +255,7 @@ Item {
                 text: "Schedule"
                 onClicked: {
                     infoRect.state = "scheduleSelected"
-                    if (scheduleLoaded == 0 && linesView.currentIndex != -1) {
+                    if (scheduleLoaded == 0 && selectedLineIndex != -1) {
                         scheduleLoader.sendMessage({"lineIdLong":searchString})
                         scheduleLoaded = 1
                     }
@@ -275,7 +280,7 @@ Item {
                     text: "Stop name"
                     font.pixelSize: 35
                     color: "#cdd9ff"
-                    width: 320
+                    width: 310
                 }
                 Text{  // reach time
                     text: "Reach(m)"
@@ -693,6 +698,7 @@ Item {
                if (rs.rows.length > 0) {
                    lineInfoModel.clear()
                    stopReachModel.clear()
+                   offlineResult = true
                    for (var ii=0; ii < rs.rows.length; ++ii) {
                        lineInfoModel.append({"lineIdLong" : rs.rows.item(ii).lineIdLong,
                                             "lineIdShort" : rs.rows.item(ii).lineIdShort,
@@ -755,11 +761,11 @@ Item {
             scheduleClear()
             stopReachModel.clear()
             getStops()
-            lineShortCodeName.text = lineInfoModel.get(selectedLineIndex).lineIdShort
-            lineStart.text = "From : " + lineInfoModel.get(selectedLineIndex).lineStart
-            lineEnd.text = "To : " + lineInfoModel.get(selectedLineIndex).lineEnd
-            lineType.text = JS.getLineType(lineInfoModel.get(selectedLineIndex).lineType)
-            searchString = lineInfoModel.get(selectedLineIndex).lineIdLong
+            lineShortCodeName.text = lineInfoModel.get(linesView.currentIndex).lineIdShort
+            lineStart.text = "From : " + lineInfoModel.get(linesView.currentIndex).lineStart
+            lineEnd.text = "To : " + lineInfoModel.get(linesView.currentIndex).lineEnd
+            lineType.text = JS.getLineType(lineInfoModel.get(linesView.currentIndex).lineType)
+            searchString = lineInfoModel.get(linesView.currentIndex).lineIdLong
         } else {
             dataRect.visible = false
             stopReachModel.clear()

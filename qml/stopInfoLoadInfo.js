@@ -27,13 +27,13 @@ WorkerScript.onMessage = function(message) {
                         } else {
                             returnVal = 1
                             // first only push basic info into DB's Stops table
-                            try { rs = tx.executeSql('INSERT INTO Stops VALUES(?,?,?,?,?,?,?)', [a.childNodes[ii].childNodes[0].firstChild.nodeValue,
+                            try { rs = tx.executeSql('INSERT INTO Stops VALUES(?,?,?,?,?,?,?,?)', [a.childNodes[ii].childNodes[0].firstChild.nodeValue,
                                                                                                  a.childNodes[ii].childNodes[1].firstChild.nodeValue,
                                                                                                  a.childNodes[ii].childNodes[2].firstChild.nodeValue,
                                                                                                  a.childNodes[ii].childNodes[13].firstChild.nodeValue,
                                                                                                  a.childNodes[ii].childNodes[4].firstChild.nodeValue,
                                                                                                  lonlat[0],
-                                                                                                 lonlat[1]]) }
+                                                                                                 lonlat[1], false]) }
                             catch(e) { WorkerScript.sendMessage({"action" : "FAILED"}); console.log("EXCEPTION: " + e); return }
                             // for every passing line put a record to stopLines table of DB
                             for (var cc=0;cc<a.childNodes[ii].childNodes[6].childNodes.length;++cc) {

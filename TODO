@@ -1,5 +1,6 @@
 general:
  - To fix
+	* show search item on search dialog
 	* use WorkerScript to provide threading in lineInfo, settings, realtimeSchedule,  mainPage (route - loading done, stopInfo - done)
  - To implement
 	* on stopInfo and lineInfo make selected button wider that the others
@@ -22,11 +23,13 @@ lineInfo:
 
 stopInfo:
  - To fix
+	* finish geocoding api response push to selectDialog
 	* when stop is selected from list: error shown on console about icon
         * if stop is saved but no time schedule returned - show rest of the data
 	* split depart schedule to hours
 
  - To implement
+	* realtime schedule button can be implemented via pop-up menu on schedule button
 	* if moved from line info - highlight retrieved line number
 	* add confirmation on delete all stops action
 	* save schedule in DB
