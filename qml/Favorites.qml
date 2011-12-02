@@ -4,10 +4,11 @@ import com.nokia.meego 1.0
 
 Item {
 //    objectName: "favoritesPage"
-//    id: favoritesPageItem
+    id: favoritesPage
+    signal finishedLoad()
     width: 480
     height: 745
-    Component.onCompleted: { loadLines(); loadStops(); }
+    Component.onCompleted: { loadLines(); loadStops(); favoritesPage.finishedLoad() }
     // -================================ STOPS ==================================-
     ListModel {              // recent stops list
         id: recentModel
@@ -120,7 +121,7 @@ Item {
         anchors.top: parent.top
         width: parent.width
         height: 370
-        color: "#002050"
+        color: "#000000"
         Label {
             id: stopsLabel
             anchors.horizontalCenter: parent.horizontalCenter
@@ -133,7 +134,8 @@ Item {
             id: stopsView
             spacing: 10
             anchors.top: stopsLabel.bottom
-            height: 350
+            anchors.topMargin: 10
+            height: 340
             width: parent.width
             delegate:  recentDelegate
             model: recentModel
@@ -147,7 +149,7 @@ Item {
         anchors.top : stopInfoRect.bottom
         width: parent.width
         height: 375
-        color: "#005020"
+        color: "#000000"
         Label {
             id: linesLabel
             anchors.horizontalCenter: parent.horizontalCenter
@@ -159,7 +161,8 @@ Item {
         ListView {  // linesView
             id: linesView
             anchors.top: linesLabel.bottom
-            height: 355
+            anchors.topMargin: 10
+            height: 345
             spacing: 10
             width: parent.width
             delegate: lineInfoDelegate

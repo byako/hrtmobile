@@ -97,7 +97,7 @@ function createDefaultConfig() {
         function(tx) {
             try {
                 tx.executeSql("INSERT INTO Current VALUES(?, ?)",["theme","black"])
-                tx.executeSql("INSERT INTO Current VALUES(?, ?)",["lineGroup","false"])
+                tx.executeSql("INSERT INTO Current VALUES(?, ?)",["lineGroup","true"])
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'bgColor', '#000000' , "black"]);
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'textColor', '#cdd9ff', "black"]);
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'highlightColor', '#00ee10', "black"]);

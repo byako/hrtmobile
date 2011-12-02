@@ -156,7 +156,7 @@ Item {
         }
     }
     Rectangle {              // dark background
-        color: "#002050";
+        color: "#000000";
         anchors.fill: parent
         width: parent.width
         height:  parent.height
@@ -411,13 +411,8 @@ Item {
                         updateSchedule()
                     }
                 }
-                onPressedChanged: {
-                    if (pressed == true) {
-                        stopsView.currentIndex = index
-                    }
-                }
                 onPressAndHold: {
-                    console.log("Press and holded!!!")
+                    stopsView.currentIndex = index
                     recentStopsContextMenu.open()
                 }
             }
@@ -459,6 +454,9 @@ Item {
                     scheduleView.currentIndex = index
 		    lineContext.open()
 		}
+                onDoubleClicked: {
+                    stopInfoPage.showLineInfo(departCode)
+                }
             }
         }
     }
@@ -524,6 +522,7 @@ Item {
                 anchors.fill: parent
                 onPressAndHold: { linesPassingContext.open() }
                 onClicked: { linesView.currentIndex = index }
+                onDoubleClicked: { stopInfoPage.showLineInfo(lineNumber) }
             }
         }
     }

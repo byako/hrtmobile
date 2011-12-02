@@ -3,6 +3,7 @@ general:
 	* show search item on search dialog
 	* use WorkerScript to provide threading in lineInfo, settings, realtimeSchedule,  mainPage (route - loading done, stopInfo - done)
  - To implement
+	* popup menu on search button press and hold: clear
 	* on stopInfo and lineInfo make selected button wider that the others
 	* pinch anction on map
 	* lazy pages load
@@ -15,6 +16,7 @@ lineInfo:
 	* after search fill data in search result model so main model is untouched and can be shown again. Allow switch between models
 	* show midpoint passes when possible for schedule
 	* add possibility to search online even when offline data found
+	* go to stopInfo with double click
  - To implement
 	* save schedule to database
 	* check for schedule in DB. show saved schedule
@@ -27,7 +29,7 @@ stopInfo:
 	* when stop is selected from list: error shown on console about icon
         * if stop is saved but no time schedule returned - show rest of the data
 	* split depart schedule to hours
-
+	* go to lineInfo with double click
  - To implement
 	* realtime schedule button can be implemented via pop-up menu on schedule button
 	* if moved from line info - highlight retrieved line number
@@ -53,6 +55,7 @@ route
  - To implement
 	* use landmarks from Location API on route page
 	* when loading line from stopInfo - load also line stops from network
+	* when stop is selected eneque button "show stop info", or double-tap to go to info
 
 Done:
 * stopInfo: use tabs is not possible: no way to manipulate part of page, only whole page; use states to minimize code lines

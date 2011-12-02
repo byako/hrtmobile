@@ -133,6 +133,22 @@ Page {
                 id: settingsLoader
             }
         }
+        Connections {  // favorites
+            target: favoritesPageItem
+            onFinishedLoad: {
+                console.log("loading pages")
+                if (lineInfoLoader.status != Loader.Ready) {
+                    lineInfoLoader.source = "lineInfo.qml"
+                    lineInfoLoader.parent = lineInfoPageContainer
+                }
+                if (stopInfoLoader.status != Loader.Ready) {
+                    stopInfoLoader.source = "stopInfo.qml"
+                    stopInfoLoader.parent = stopInfoPageContainer
+                }
+//                if (stopInfoLoader.status == Loader.Ready) stopInfoLoader.item.refreshConfig()
+//                if (settingsLoader.status == Loader.Ready) settingsLoader.item.refreshConfig()
+            }
+        }
         Connections {  // settings
             target: settingsLoader.item
             onUpdateConfig: {
@@ -140,6 +156,21 @@ Page {
                 if (lineInfoLoader.status == Loader.Ready) lineInfoLoader.item.refreshConfig()
                 if (stopInfoLoader.status == Loader.Ready) stopInfoLoader.item.refreshConfig()
                 if (settingsLoader.status == Loader.Ready) settingsLoader.item.refreshConfig()
+            }
+        }
+        Connections {  // map page
+            target: mapLoader.item
+            onStopInfo: {
+                console.log("routePage signal: stopInfo")
+                if (stopInfoLoader.status!= Loader.Ready) {
+                    stopInfoLoader.source = "stopInfo.qml"
+                }
+                tabGroup.lastTab = 1
+                mainTabBar.checkedButton = stopsTabButton
+                tabGroup.currentTab = stopInfoPageContainer
+                stopInfoLoader.item.searchString = stopIdLong_
+                stopInfoLoader.item.exactSearch = true
+                stopInfoLoader.item.buttonClicked()
             }
         }
         Connections {  // line info

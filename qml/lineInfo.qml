@@ -1,7 +1,7 @@
 import QtQuick 1.1
 import com.nokia.meego 1.0
 import "database.js" as JS
-import com.nokia.extras 1.0
+import com.nokia.extras 1.1
 
 Item {
     objectName: "lineInfoPage"
@@ -160,7 +160,7 @@ Item {
          }
     }
     Rectangle{      // dark background
-        color: "#005020"
+        color: "#000000"
         anchors.fill: parent
         width: parent.width
         height:  parent.height

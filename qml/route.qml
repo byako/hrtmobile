@@ -7,10 +7,12 @@ import com.nokia.extras 1.0
 Item {
     id: routePage
     property bool firstRun: true
+    property bool findStops: false
     property string loadStop: ""
     property string loadLine: ""
     property int loadedLine: -1
     property int loadedStop: -1
+    signal stopInfo(string stopIdLong_)
     width: 480
     height: 745
 //    Component.onCompleted: { checkLoadStop(); checkLoadLine(); }
@@ -104,10 +106,12 @@ Item {
         active: false //(loadStop == loadLine) ? true : false
         onPositionChanged: {
             console.log("position chhanged. distance from previous: " + position.coordinate.distanceTo(positionCircle.center) );
-            if (position.coordinate.distanceTo(positionCircle.center) > 100 || firstRun == true) {
+            if (position.coordinate.distanceTo(positionCircle.prev) > 100 || firstRun == true) {
                 firstRun = false
                 console.log("New position: lon: " + position.coordinate.longitude + "; lan: " + position.coordinate.latitude)
-                stopsSearch.sendMessage({"longitude" : position.coordinate.longitude, "latitude" : position.coordinate.latitude})
+                if (findStops) {
+                    stopsSearch.sendMessage({"longitude" : position.coordinate.longitude, "latitude" : position.coordinate.latitude})
+                }
                 positionCircle.center = position.coordinate
                 map.center = position.coordinate
             }
@@ -144,6 +148,11 @@ Item {
         }
         MapCircle {
             id : positionCircle
+            property Coordinate prev: Coordinate // for stops search steps
+            {
+                latitude : 60.1636
+                longitude : 24.9167
+            }
             center : Coordinate {
                 latitude : 60.1636
                 longitude : 24.9167
@@ -224,7 +233,7 @@ Item {
             anchors.horizontalCenter: map.horizontalCenter
             anchors.top: map.top
             checkable: false
-            text: "Show loaded infok"
+            text: "Info"
             opacity: 0.7
             style: ButtonStyle {
                 inverted: true
@@ -248,8 +257,12 @@ Item {
             onClicked: {
                 if (checked) {
                     map.center = positionCircle.center
+                    positionCircle.visible = true
+                    positionSource.active = true
                     showError("Position tracking enabled")
                 } else {
+//                    positionCircle.visible = false
+                    positionSource.active = false
                     if (loadedStop != -1)
                         map.center = stops.get(loadedStop).mapCircle.center
                         // TODO: keep tracking GPS position
@@ -269,6 +282,7 @@ Item {
             PropertyChanges { target: map; height: routePage.height; y: 0 }
         }
     ]
+
 //----------------------------------------------------------------------------//
     function pupUp(stopIdLong_) {
         for (var ii=0; ii < stopsLoaded.count; ++ii) {
@@ -408,8 +422,9 @@ Item {
                                                         '"; MapMouseArea { anchors.fill: parent; onClicked: {' +
                                                           ' if (loadedStop == -1 || stops.get(loadedStop).stopIdLong != stopIdLong) {' +
                                                           ' routePage.setCurrentStop(stopIdLong); color="#500F0F000"; }'+
-                                                          ' routePage.showError("" + stopIdShort + ": " + stopName) } }' +
-                                                        '}', map)
+                                                        ' routePage.showError("" + stopIdShort + ": " + stopName) }' +
+                                                        'onDoubleClicked: { routePage.stopInfo(stopIdLong) } ' +
+                                                        '} }', map)
                          }) }
         catch (e) {
             console.log("route.qml: addStop exception " + e)
