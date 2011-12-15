@@ -1,3 +1,31 @@
+hrtmobile (0.6.4) unstable; urgency=low
+
+  * map info interactive
+
+ -- Alexey Fomenko <alexey.fomenko@gmail.com>  Thu, 15 Dec 2011 11:31:34 +0200
+
+hrtmobile (0.6.3) unstable; urgency=low
+
+  * favorites interactive
+  * stops deletion/selection indexes fixed
+
+ -- Alexey Fomenko <alexey.fomenko@gmail.com>  Mon, 12 Dec 2011 10:27:51 +0200
+
+hrtmobile (0.6.2) unstable; urgency=low
+
+  * geocode api: faster
+  * stops find\deletion improved
+
+ -- Alexey Fomenko <alexey.fomenko@gmail.com>  Mon, 12 Dec 2011 10:27:51 +0200
+
+hrtmobile (0.6.1) unstable; urgency=low
+
+  * favorites page(non-interactive)
+  * half-interactive map
+  * remove color differenciation
+
+ -- Alexey Fomenko <alexey.fomenko@gmail.com>  Mon, 12 Dec 2011 10:27:50 +0200
+
 hrtmobile (0.6.0) unstable; urgency=low
 
   * add favorites support

@@ -2,17 +2,20 @@ import QtQuick 1.1
 import com.nokia.meego 1.0
 import QtMobility.location 1.2
 import "database.js" as JS
-import com.nokia.extras 1.0
+import com.nokia.extras 1.1
 
 Item {
     id: routePage
     property bool firstRun: true
+    property bool searchNearbyStops: false
     property bool findStops: false
     property string loadStop: ""
     property string loadLine: ""
     property int loadedLine: -1
     property int loadedStop: -1
     signal stopInfo(string stopIdLong_)
+    signal stopsCleaned()
+    state: "hideStops"
     width: 480
     height: 745
 //    Component.onCompleted: { checkLoadStop(); checkLoadLine(); }
@@ -35,9 +38,11 @@ Item {
                     positionCircle.center.longitude = messageObject.longit
                     positionCircle.center.latitude = messageObject.latit
                 }
+                lineLabel.text = "Line: " + messageObject.lineIdShort + " -> " + messageObject.lineEnd
             } else if (messageObject.longitude == "error"){
                 lines.get(ii).lineShape.destroy()
                 lines.remove(lines.count-1)
+                lineLabel.text = ""
             } else {
                 temp.longitude = messageObject.longitude
                 temp.latitude = messageObject.latitude
@@ -46,7 +51,7 @@ Item {
         }
     }
     WorkerScript {  // nearby stops loader
-        id: stopsSearch
+        id: stopsNearbySearch
         source: "mapStopsSearch.js"
         onMessage: {                  // check if stop is already on the map before adding; leave if found
             for (var ii=0; ii < stopsLoaded.count; ++ii) {
@@ -66,15 +71,15 @@ Item {
                                                 '; center : Coordinate { longitude : ' + messageObject.longitude +
                                                 '; latitude : ' + messageObject.latitude +
                                                 '} color : "#80FF0000"; radius: 30.0' +
-                                                '; signal pupUp()' +
+                                                '' +
                                                 '; property string stopIdLong : "" +' + messageObject.stopIdLong +
                                                 '; property string distance : "" + ' + messageObject.distance +
-                                                '; MapMouseArea { anchors.fill: parent; onClicked: { routePage.pupUp(stopIdLong) } }' +
+                                                '; MapMouseArea { anchors.fill: parent; onClicked: { routePage.popUp(stopIdLong) } }' +
                                                 '}', map))
 
         }
     }
-    WorkerScript {  // nearby stops info load
+    WorkerScript {  // line stops info load
         id: stopInfoLoad
         source: "lineInfo.js"
         onMessage: {
@@ -105,12 +110,12 @@ Item {
         updateInterval: 10000
         active: false //(loadStop == loadLine) ? true : false
         onPositionChanged: {
-            console.log("position chhanged. distance from previous: " + position.coordinate.distanceTo(positionCircle.center) );
+            console.log("route.qml: position chhanged. distance from previous: " + position.coordinate.distanceTo(positionCircle.center) );
             if (position.coordinate.distanceTo(positionCircle.prev) > 100 || firstRun == true) {
                 firstRun = false
-                console.log("New position: lon: " + position.coordinate.longitude + "; lan: " + position.coordinate.latitude)
+                console.log("route.qml: new position: lon: " + position.coordinate.longitude + "; lat: " + position.coordinate.latitude)
                 if (findStops) {
-                    stopsSearch.sendMessage({"longitude" : position.coordinate.longitude, "latitude" : position.coordinate.latitude})
+                    stopsNearbySearch.sendMessage({"longitude" : position.coordinate.longitude, "latitude" : position.coordinate.latitude})
                 }
                 positionCircle.center = position.coordinate
                 map.center = position.coordinate
@@ -125,7 +130,33 @@ Item {
     }
     Coordinate { id: temp }
 
-    Map {        
+    Label {
+        anchors.top: parent.top
+        anchors.left: parent.left
+        id: lineLabel
+        text: "Line"
+        color: "#cdd9ff"
+        font.pixelSize: 35
+    }
+    Item {
+        anchors.top : lineLabel.bottom
+        anchors.topMargin: 10
+        width: parent.width
+        height: 160
+        Tumbler {
+            columns: [stopsColumn]
+            onChanged: {
+                stops.get(stopsColumn.selectedIndex).mapCircle.color="#500F0F000"
+                if (loadedStop >= 0) {
+                    stops.get(loadedStop).mapCircle.color = "#80ff0000"
+                }
+                loadedStop = stopsColumn.selectedIndex
+                map.center = stops.get(loadedStop).mapCircle.center
+            }
+        }
+    }
+
+    Map {
         id: map
         z : 1
         plugin : Plugin {
@@ -282,6 +313,10 @@ Item {
             PropertyChanges { target: map; height: routePage.height; y: 0 }
         }
     ]
+    TumblerColumn {
+        id: stopsColumn
+        items: stops
+    }
 
 //----------------------------------------------------------------------------//
     function pupUp(stopIdLong_) {
@@ -309,13 +344,21 @@ Item {
         if (loadedStop != -1) {
             stops.get(loadedStop).mapCircle.color = "#80ff0000"
         }
-            for (var ii=0; ii < stops.count; ++ii) {
-                if (stops.get(ii).stopIdLong == stopIdLong_) {       // search in model for a loaded stop
-                            loadedStop = ii
-                }
+        for (var ii=0; ii < stops.count; ++ii) {
+            if (stops.get(ii).stopIdLong == stopIdLong_) {       // search in model for a loaded stop
+                        loadedStop = ii
+                        stopsColumn.selectedIndex = ii
             }
-    }
+        }
 
+    }
+    function cleanStops() {
+        for (var i=0; i<stops.count; ++i) {
+            map.removeMapObject(stops.get(i).mapCircle)
+        }
+        stops.clear()
+        routePage.stopsCleaned()
+    }
     function checkAddStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_) {
         for (var ii=0; ii < stops.count; ++ii) {            // check if stop is already loaded in stopsModel before adding
             if (stops.get(ii).stopIdLong == stopIdLong_) {
@@ -401,7 +444,7 @@ Item {
                 loadLine = ""
                 return
             }
-            console.log("added one more line: " + lines.count)
+            console.log("route.qml: checkLoadLine: added one more line: " + lines.count)
             loader.sendMessage({"lineIdLong" : loadLine});
             loadedLine = lines.count-1
             loadLine = ""
@@ -420,11 +463,12 @@ Item {
                                                         '"; property string stopIdLong : "' + stopIdLong_ +
                                                         '"; property string stopName : "' + stopName_ +
                                                         '"; MapMouseArea { anchors.fill: parent; onClicked: {' +
-                                                          ' if (loadedStop == -1 || stops.get(loadedStop).stopIdLong != stopIdLong) {' +
-                                                          ' routePage.setCurrentStop(stopIdLong); color="#500F0F000"; }'+
-                                                        ' routePage.showError("" + stopIdShort + ": " + stopName) }' +
+                                                        ' if (loadedStop == -1 || stops.get(loadedStop).stopIdLong != stopIdLong) {' +
+                                                        ' routePage.setCurrentStop(stopIdLong); color="#500F0F000"; }'+
+                                                        ' if (routePage.state == "hideStops") routePage.showError("" + stopIdShort + ": " + stopName) }' +
                                                         'onDoubleClicked: { routePage.stopInfo(stopIdLong) } ' +
-                                                        '} }', map)
+                                                        '} }', map),
+                               "value" : "" + stopIdShort_ + "-" + stopName_
                          }) }
         catch (e) {
             console.log("route.qml: addStop exception " + e)

@@ -18,6 +18,8 @@ Item {
     signal showStopMap(string stopIdLong)
     signal showStopInfo(string stopIdLong)
     signal pushStopToMap(string stopIdLong_, string stopIdShort_, string stopName_, string stopLongitude_, string stopLatitude_)
+    signal refreshFavorites()
+    signal cleanMapAndPushStops()
     width: 480
     height: 745
 
@@ -74,17 +76,36 @@ Item {
             lineInfoModel.append({"lineIdLong" : messageObject.lineIdLong, "lineIdShort" : messageObject.lineIdShort,
                                      "lineStart" : messageObject.lineStart, "lineEnd" : messageObject.lineEnd,
                                      "lineName" : messageObject.lineName, "lineType" : messageObject.lineType,
-                                     "lineTypeName" : JS.getLineType(messageObject.lineType) + messageObject.lineIdShort,
+                                     "lineTypeName" : JS.getLineType(messageObject.lineType) + " " + messageObject.lineIdShort,
                                      "favorite" : messageObject.favorite
                                  })
         }
     }
+    MultiSelectionDialog {   // save lines select dialog
+         id: chooseLinesDialog
+         acceptButtonText: "Save"
+         rejectButtonText: "Cancel"
+         titleText: "Lines to save"
+         model: searchResultLineInfoModel
+         onAccepted: {
+            var tempCount = lineInfoModel.count
+            for (var i=0;i<selectedIndexes.length;++i) {
+                saveLine(selectedIndexes[i])
+            }
+            if (lineInfoModel.count > tempCount) {
+                linesView.currentIndex = tempCount
+                showLineInfo()
+            }
+         }
+         onRejected: {
 
+         }
+    }
     ContextMenu {   // line info context menu
         id: linesContextMenu
         MenuLayout {
             MenuItem {
-                text: "Delete"
+                text: "Delete line"
                 onClicked: {
                     if (JS.deleteLine(lineInfoModel.get(linesView.currentIndex).lineIdLong) == 0) {
                         lineInfoModel.clear()
@@ -120,7 +141,7 @@ Item {
                 text: "Map"
                 onClicked : {
                     // send stopIdLong and lineIdLong to map page to show both
-                    sendStopsToMap()
+                    lineInfoPageItem.cleanMapAndPushStops()
                     showLineMapStop(searchString, stopReachModel.get(stopsView.currentIndex).stopIdLong)
                 }
             }
@@ -139,26 +160,6 @@ Item {
             fillSearchResultInfoModel()
         }
     }
-    MultiSelectionDialog {   // save lines select dialog
-         id: chooseLinesDialog
-         acceptButtonText: "Save"
-         rejectButtonText: "Not any"
-         titleText: "Lines to save"
-         model: searchResultLineInfoModel
-         onAccepted: {
-            var tempCount = lineInfoModel.count
-            for (var i=0;i<selectedIndexes.length;++i) {
-                saveLine(selectedIndexes[i])
-            }
-            if (lineInfoModel.count > tempCount) {
-                linesView.currentIndex = tempCount
-                showLineInfo()
-            }
-         }
-         onRejected: {
-
-         }
-    }
     Rectangle{      // dark background
         color: "#000000"
         anchors.fill: parent
@@ -174,7 +175,7 @@ Item {
         height: 120
         Button {    // showMapButton
             id: showMapButtonButton
-            style: ButtonStyle {
+            style: TabButtonStyle {
                 inverted: true
             }
             anchors.top: parent.top
@@ -198,7 +199,7 @@ Item {
             height: 60
             width: 60
             Button { // favorite
-                style: ButtonStyle {
+                style: TabButtonStyle {
                     inverted: true
                 }
                 id: favoriteButton
@@ -212,6 +213,7 @@ Item {
                         setFavorite(searchString, "true")
                         lineInfoModel.set(selectedLineIndex, {"favorite":"true"})
                     }
+                    lineInfoPageItem.refreshFavorites()
                 }
             }
         }
@@ -333,6 +335,10 @@ Item {
                 onClicked: {
                     stopsView.currentIndex = index;
                 }
+                onDoubleClicked: {
+                    stopsView.currentIndex = index;
+                    showStopInfo(stopIdLong)
+                }
                 onPressAndHold: {
                     stopsView.currentIndex = index;
                     stopContextMenu.open()
@@ -353,8 +359,8 @@ Item {
             width: linesView.width;
             height: 35
             Text{
-                anchors.horizontalCenter:  parent.horizontalCenter
-                anchors.rightMargin: 20
+                anchors.left:  parent.left
+                anchors.leftMargin: 10
                 anchors.verticalCenter: parent.verticalCenter
                 text: section;
                 font.pixelSize: 35;
@@ -366,11 +372,12 @@ Item {
         id:lineInfoShortDelegate
         Item {
             width: linesView.width;
-            height: 45
+            height: 35
             Text{
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: parent.left
-                anchors.leftMargin: 10
+                anchors.leftMargin: 50
+                wrapMode: Text.WordWrap
                 text: lineStart + " -> " + lineEnd;
                 font.pixelSize: 25;
                 color: "#cdd9ff"
@@ -393,49 +400,6 @@ Item {
             }
         }
     }
-    Component {     // lineInfo delegate
-        id:lineInfoDelegate
-        Item {
-            width: linesView.width;
-            height: 70
-            Column {
-                height: parent.height
-                width: parent.width
-                anchors.top: parent.top
-                anchors.topMargin: 5
-                anchors.horizontalCenter: parent.horizontalCenter
-                Text{
-                    anchors.left: parent.left
-                    anchors.leftMargin: 10
-                    text: lineTypeName
-                    font.pixelSize: 25
-                    color: "#cdd9ff"
-                }
-                Text{
-                    anchors.left: parent.left
-                    anchors.leftMargin: 10
-                    text: lineStart + " -> " + lineEnd;
-                    font.pixelSize: 25;
-                    color: "#cdd9ff"
-                }
-            }
-            MouseArea {
-                anchors.fill:  parent
-                onClicked: {
-                    if (selectedLineIndex != index) {
-                        searchString = lineIdLong
-                        selectedLineIndex = index
-                        showLineInfo()
-                    }
-                }
-                onPressAndHold: {
-                    linesView.currentIndex = index
-                    linesContextMenu.open()
-                }
-            }
-        }
-    }
-
     ListModel {     // schedule list Mon - Fri model
         id:scheduleModel
     }
@@ -465,9 +429,9 @@ Item {
         ListView {  // Lines list
             id: linesView
             anchors.fill:  parent
-            delegate: config.lineGroup == "true" ? lineInfoShortDelegate : lineInfoDelegate
-            section.property: config.lineGroup == "true" ? "lineTypeName": ""
-            section.delegate: config.lineGroup == "true" ? lineInfoSectionHeader : {} ;
+            delegate: lineInfoShortDelegate
+            section.property: "lineTypeName"
+            section.delegate: lineInfoSectionHeader
             model: lineInfoModel
             spacing: 5
             highlight: Rectangle { color: "#666666"; radius:  5 }
@@ -701,7 +665,7 @@ Item {
         }
     }
     function showMap() {            // push lineIdLong and stops to map page
-        sendStopsToMap()
+        lineInfoPageItem.cleanMapAndPushStops()
         if (stopsView.currentIndex >= 0) {
             showLineMapStop(searchString, stopReachModel.get(stopsView.currentIndex).stopIdLong)
         } else {

@@ -1,41 +1,37 @@
 general:
  - To fix
-	* show search item on search dialog
 	* use WorkerScript to provide threading in lineInfo, settings, realtimeSchedule,  mainPage (route - loading done, stopInfo - done)
  - To implement
 	* popup menu on search button press and hold: clear
 	* on stopInfo and lineInfo make selected button wider that the others
 	* pinch anction on map
 	* lazy pages load
-	* split all data into favorites and just DB
 	* koolah
 
 lineInfo:
  - To fix
-	* when moving to stop info pass the line number to highlight
 	* after search fill data in search result model so main model is untouched and can be shown again. Allow switch between models
-	* show midpoint passes when possible for schedule
 	* add possibility to search online even when offline data found
-	* go to stopInfo with double click
  - To implement
+	* when moving to stop info pass the line number to highlight
 	* save schedule to database
 	* check for schedule in DB. show saved schedule
 	* add confirmation on delete all lines action
 	* add checkboxes to multiselectiong dialog lines
+	* show midpoint passes when possible for schedule
 
 stopInfo:
  - To fix
-	* finish geocoding api response push to selectDialog
-	* when stop is selected from list: error shown on console about icon
-        * if stop is saved but no time schedule returned - show rest of the data
-	* split depart schedule to hours
-	* go to lineInfo with double click
+	* when stop is selected from list: error shown on console about Schedule buttong icon
  - To implement
 	* realtime schedule button can be implemented via pop-up menu on schedule button
 	* if moved from line info - highlight retrieved line number
 	* add confirmation on delete all stops action
 	* save schedule in DB
 	* merge same stops, show all line types in drop down or so
+	* save full schedule for a stop if stop is favorite
+	* split depart schedule to hours
+	* a lot of stops (mostly VR) has same names: consider to add "nickname" for stop to be used, available for editing by user
 
 settings:
  - To fix
@@ -52,12 +48,22 @@ realtime:
 
 route
  - To fix
+	* finish stops and line name show
  - To implement
 	* use landmarks from Location API on route page
 	* when loading line from stopInfo - load also line stops from network
 	* when stop is selected eneque button "show stop info", or double-tap to go to info
 
 Done:
+2011 12 15
+* version increase
+* general: split all data into favorites and just DB
+* finish geocoding api response push to searchResult model
+* stopInfo: if stop is saved but no time schedule returned - show rest of the data
+* stopInfo: go to lineInfo with double click
+* stopInfo: if searchResult are shown and delete all requested : delete only filtered stops
+* stopInfo: finish with buttonClicked(): setCurrent has been removed. Need to check stop in model in case if stopIdLong was requested and it's already saved
+* stopInfo: implement states for stopInfo page
 * stopInfo: use tabs is not possible: no way to manipulate part of page, only whole page; use states to minimize code lines
 * lineInfo: use tabs is not possible: no way to manipulate part of page, only whole page; use states to minimize code lines
 * general: add db init on first run

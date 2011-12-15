@@ -1,7 +1,7 @@
 import QtQuick 1.1
 import com.nokia.meego 1.0
 import "database.js" as JS
-import com.nokia.extras 1.0
+import com.nokia.extras 1.1
 
 Page {
     id: stopInfoPage

@@ -148,14 +148,35 @@ Page {
 //                if (stopInfoLoader.status == Loader.Ready) stopInfoLoader.item.refreshConfig()
 //                if (settingsLoader.status == Loader.Ready) settingsLoader.item.refreshConfig()
             }
+            onLoadStop: {
+                console.log("favorites signal: loadStop")
+                if (stopInfoLoader.status!= Loader.Ready) {
+                    stopInfoLoader.source = "stopInfo.qml"
+                }
+                tabGroup.lastTab = 1
+                mainTabBar.checkedButton = stopsTabButton
+                tabGroup.currentTab = stopInfoPageContainer
+                stopInfoLoader.item.searchString = stopIdLong
+                stopInfoLoader.item.buttonClicked()
+            }
+            onLoadLine: {
+                console.log("favorites signal: loadLine")
+                if (lineInfoLoader.status!= Loader.Ready) {
+                    lineInfoLoader.source = "lineInfo.qml"
+                }
+                tabGroup.lastTab = 0
+                mainTabBar.checkedButton = linesTabButton
+                tabGroup.currentTab = lineInfoPageContainer
+                lineInfoLoader.item.searchString = lineIdLong
+                lineInfoLoader.item.buttonClicked()
+            }
         }
         Connections {  // settings
             target: settingsLoader.item
-            onUpdateConfig: {
-                console.log("updating config")
+            onDbclean: {
+                console.log("db cleaned: resetting stop and line info pages")
                 if (lineInfoLoader.status == Loader.Ready) lineInfoLoader.item.refreshConfig()
                 if (stopInfoLoader.status == Loader.Ready) stopInfoLoader.item.refreshConfig()
-                if (settingsLoader.status == Loader.Ready) settingsLoader.item.refreshConfig()
             }
         }
         Connections {  // map page
@@ -169,8 +190,11 @@ Page {
                 mainTabBar.checkedButton = stopsTabButton
                 tabGroup.currentTab = stopInfoPageContainer
                 stopInfoLoader.item.searchString = stopIdLong_
-                stopInfoLoader.item.exactSearch = true
                 stopInfoLoader.item.buttonClicked()
+            }
+            onStopsCleaned: {
+                console.log("routePage signal: stopsCleaned")
+                lineInfoLoader.item.sendStopsToMap()
             }
         }
         Connections {  // line info
@@ -196,14 +220,25 @@ Page {
                 mainTabBar.checkedButton = stopsTabButton
                 tabGroup.currentTab = stopInfoPageContainer
                 stopInfoLoader.item.searchString = stopIdLong
-                stopInfoLoader.item.exactSearch = true
                 stopInfoLoader.item.buttonClicked()
+            }
+            onCleanMapAndPushStops: {
+                console.log("lineInfo signal: cleanMapAndPushStops")
+                if(mapLoader.status == Loader.Ready) {
+                    mapLoader.item.cleanStops()
+                } else {
+                    mapLoader.source = "route.qml"
+                    lineInfoLoader.item.sendStopsToMap()
+                }
             }
             onPushStopToMap: {
                 if (tabGroup.currentTab != mapTabButton) initMap("","")
                 if (mapLoader.status == Loader.Ready) {
                     mapLoader.item.checkAddStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_)
                 }
+            }
+            onRefreshFavorites: {
+                favoritesPageItem.loadLines()
             }
         }
         Connections {  // stop info
@@ -230,6 +265,9 @@ Page {
                 tabGroup.currentTab = lineInfoPageContainer
                 lineInfoLoader.item.searchString = lineIdLong
                 lineInfoLoader.item.buttonClicked()
+            }
+            onRefreshFavorites: {
+                favoritesPageItem.loadStops()
             }
         }
     }

@@ -1,45 +1,58 @@
 import QtQuick 1.1
 import com.nokia.meego 1.0
 import "database.js" as JS
-import com.nokia.extras 1.0
+import com.nokia.extras 1.1
 
 Item {
     id: stopInfoPage
     objectName: "stopInfoPage"
     property string searchString: ""    // keep stopIdLong here. If stopIdShort supplied (request from lineInfo) -> remove and place stopIdLong
     property int selectedStopIndex: -1
-    property bool exactSearch: false
 
     signal showStopMap(string stopIdLong)
     signal showStopMapLine(string stopIdLong, string lineIdLong)
     signal showLineMap(string lineIdLong)
     signal showLineInfo(string lineIdLong)
+    signal refreshFavorites()
     width: 480
     height: 745
 
+    Component.onCompleted: { refreshConfig(); infoModel.clear(); fillModel(); }
     Config { id: config }
     WorkerScript {           // quick search stops by name for non-exact search. Using geocoding.
         id: stopsLookup
         source: "stopSearch.js"
         onMessage: {
             if (messageObject.stopIdShort != "FINISHED") {
-                console.log("WORKER SENT stopIdShort: " + messageObject.stopIdShort)
-                showError("Got info: " + messageObject.stopIdLong + " "
-                          + messageObject.stopIdShort + " "
-                          + messageObject.stopName + " "
-                          + messageObject.stopCity + " "
-                          + messageObject.stopLongitude + " "
-                          + messageObject.stopLatitude)
+//                console.log("WORKER SENT stopIdLong: " + messageObject.stopIdLong + "; stopIdShort: " + messageObject.stopIdShort + "; state: " + messageObject.state)
+                if (messageObject.state == "load") { // load stop short info from recentModel to searchResultStopInfoModel
+                    for (var i=0;i<searchResultStopInfoModel.count;++i) {
+                        if (searchResultStopInfoModel.get(i).stopIdLong == messageObject.stopIdLong)
+                            return
+                    }
+                    for (var i=0;i<recentModel.count;++i) { // just put saved already stop from recent model to searchResultStopInfoModel
+                        if (recentModel.get(i).stopIdLong == messageObject.stopIdLong) {
+                            searchResultStopInfoModel.append(recentModel.get(i))
+                            break
+                        }
+                    }
+                } else if (messageObject.state == "online") {
+                    searchResultStopInfoModel.append(messageObject)
+                }
             } else {
+                loading.visible = false
                 console.log("stopInfo geocode API FINISHED request " + searchString);
+                searchString = ""
+                stopsView.model = searchResultStopInfoModel
+                recentButton.text = "Filtered"
             }
         }
     }
-    WorkerScript {           // load stop info from wev to database
+    WorkerScript {           // load stop info from web or database
         id: loadStopInfo
         source: "stopInfoLoadInfo.js"
         onMessage: {
-            if (messageObject.action == "SAVED") {
+            if (messageObject.action == "SAVED") {  // stop has been saved from server reply
                 loadingMap.visible = false
                 searchString = messageObject.stopIdLong
                 console.log("WORKER SENT stopIdLong: setting searchString = " + messageObject.stopIdLong)
@@ -49,10 +62,14 @@ Item {
                 fillLinesModel()
                 fillInfoModel()
                 showError("Saved stop information")
+            } else if (messageObject.action == "LOAD") { // stop has been found in database
+                // TODO load stop from offline DATABASE
             } else if (messageObject.action == "ERROR") {
                 showError("Server returned ERROR");
             } else if (messageObject.action == "FAILED") {
                 showError("Couldn't open information")
+            } else {
+                console.log("stopInfo: loadStopInfo worker: unknown action: " + messageBoject.action)
             }
         }
     }
@@ -61,9 +78,9 @@ Item {
         source: "stopInfoScheduleLoad.js"
         onMessage: {
             if (messageObject.departName == "STOPNAME") {
-                stopName.text = messageObject.stopName
-                stopAddress.text = messageObject.stopAddress
-                stopCity.text = messageObject.stopCity
+                stopNameValue.text = messageObject.stopName
+                stopAddressValue.text = messageObject.stopAddress
+                stopCityValue.text = messageObject.stopCity
             } else if (messageObject.departName == "ERROR") {
                 showError("Server returned ERROR")
                 loading.visible = false
@@ -80,28 +97,12 @@ Item {
         }
     }
 
-    Component.onCompleted: { refreshConfig(); infoModel.clear(); fillModel(); setCurrent();    }
-
     Loading {                   // busy indicator
         id: loading
         visible: false
         anchors.fill: parent
         z: 8
     }
-/*    QueryDialog {            // offline dialog
-        id: offlineModeOff
-        acceptButtonText: "Go online"
-        rejectButtonText: "Keep offline"
-        message: "Offline mode enabled.\nGo online?\n(Data charges may apply)"
-        titleText: "Offline mode"
-        onAccepted: {
-            getInfo()
-            updateSchedule()
-        }
-        onRejected: {
-            console.log("User declined to go online")
-        }
-    }*/
     InfoBanner {             // info banner
         id: infoBanner
         text: "info description here"
@@ -112,19 +113,61 @@ Item {
         id: recentStopsContextMenu
         MenuLayout {
             MenuItem {
-                text: "Delete"
+                text: "Delete stop"
                 onClicked: {
-                    if (JS.deleteStop(recentModel.get(stopsView.currentIndex).stopIdLong) == 0) {
-                        fillModel();
+                    JS.deleteStop(stopsView.model.get(stopsView.currentIndex).stopIdLong) // remove from database
+                    if (stopsView.model.get(stopsView.currentIndex).favorite == "true" ) stopInfoPage.refreshFavorites() // check if favorites page needs to be refreshed
+                    if (selectedStopIndex >= 0) { // if some stop is selected to view and dataRect shows data - mess with indexes
+                        if (selectedStopIndex == stopsView.currentIndex) { // if removing selected stop - clean models, hide dataRect
+                            stopsView.model.remove(stopsView.currentIndex)
+                            if (stopsView.model == searchResultStopInfoModel) fillModel()
+                            selectedStopIndex = -1
+                            stopsView.currentIndex = -1
+                            dataRect.visible = false
+                            trafficModel.clear()
+                            linesModel.clear()
+                            infoModel.clear()
+                        } else if (selectedStopIndex > stopsView.currentIndex) {
+                            selectedStopIndex -= 1
+                        }
+                            stopsView.model.remove(stopsView.currentIndex)
+                            if (stopsView.model == searchResultStopInfoModel) fillModel()
+                            stopsView.currentIndex = selectedStopIndex
+                    } else {
+                        stopsView.model.remove(stopsView.currentIndex)
+                        if (stopsView.model == searchResultStopInfoModel) {
+                            fillModel()
+                        }
+                        stopsView.currentIndex = -1
                     }
                 }
             }
             MenuItem {
                 text: "Delete all"
                 onClicked: {
-                    if (JS.deleteStop("*") == 0) {
-                        fillModel();
+                    if (stopsView.model == recentModel) { // recent stops are shown: delete all except the favourites
+                        for (var i1=0; i1 < recentModel.count; ++i1) {
+                            if (recentModel.get(i1).favorite != "true") {
+                                JS.deleteStop(recentModel.get(i1).stopIdLong)
+                            }
+                        }
+                    } else { // filtered search results are shown : delete only those
+                        for (var i2=0; i2 < searchResultStopInfoModel.count; ++i2) {
+                            if (searchResultStopInfoModel.get(i2).favorite != "true") {
+                                JS.deleteStop(searchResultStopInfoModel.get(i2).stopIdLong)
+                            }
+                        }
+                        searchResultStopInfoModel.clear()
                     }
+                    fillModel()  // reload recent stops model
+                    stopsView.model = recentModel
+                    recentButton.text = "Recent"
+                    stopsView.currentIndex = -1
+                    selectedStopIndex = -1
+                    trafficModel.clear()
+                    linesModel.clear()
+                    infoModel.clear()
+                    dataRect.visible = false
                 }
             }
         }
@@ -160,9 +203,8 @@ Item {
         anchors.fill: parent
         width: parent.width
         height:  parent.height
-//        Image { source: config.bgImage ; fillMode: Image.Center; anchors.fill: parent; }
     }
-    Item {                   // Data
+    Item {                   // Data Rect
         id: dataRect
         anchors.left: parent.left
         anchors.top:  parent.top
@@ -215,15 +257,16 @@ Item {
                     }
                     id: favoriteButton
                     anchors.fill: parent
-                    iconSource: (recentModel.get(selectedStopIndex).favorite == "true") ? "image://theme/icon-m-toolbar-favorite-mark-white" : "image://theme/icon-m-toolbar-favorite-unmark-white"
+                    iconSource: (selectedStopIndex < 0) ? "" : (stopsView.model.get(selectedStopIndex).favorite == "true") ? "image://theme/icon-m-toolbar-favorite-mark-white" : "image://theme/icon-m-toolbar-favorite-unmark-white"
                     onClicked: {
-                        if (recentModel.get(selectedStopIndex).favorite == "true") {
+                        if (stopsView.model.get(selectedStopIndex).favorite == "true") {
                             setFavorite(searchString, "false")
-                            recentModel.set(selectedStopIndex, {"favorite":"false"})
+                            stopsView.model.set(selectedStopIndex, {"favorite":"false"})
                         } else {
                             setFavorite(searchString, "true")
-                            recentModel.set(selectedStopIndex, {"favorite":"true"})
+                            stopsView.model.set(selectedStopIndex, {"favorite":"true"})
                         }
+                        stopInfoPage.refreshFavorites()
                     }
                 }
         }
@@ -237,7 +280,7 @@ Item {
                     width: 100
                 }
                 Label {
-                    id: stopName;
+                    id: stopNameValue;
                     text: qsTr("Name")
                     color: "#cdd9ff"
                     font.pixelSize: 30
@@ -252,7 +295,7 @@ Item {
                     width: 100
                 }
                 Label {
-                    id: stopAddress;
+                    id: stopAddressValue;
                     text: qsTr("Address")
                     color: "#cdd9ff"
                     font.pixelSize: 30
@@ -267,7 +310,7 @@ Item {
                     width: 100
                 }
                 Label {
-                    id: stopCity;
+                    id: stopCityValue;
                     text: qsTr("City")
                     color: "#cdd9ff"
                     font.pixelSize: 30
@@ -287,16 +330,23 @@ Item {
         }
         Button {
             id: recentButton
-            text: "Saved"
+            text: "Recent"
             onClicked: {
-                if (stopsView.visible == false) {
-                    if (stopsView.currentIndex != selectedStopIndex) {
-                        stopsView.currentIndex = selectedStopIndex
-                    }
-                    linesView.visible = false
-                    infoView.visible = false
-                    scheduleView.visible = false
-                    stopsView.visible = true
+                if (stopsView.currentIndex != selectedStopIndex) { stopsView.currentIndex = selectedStopIndex }
+                if (infoRect.state != "stopsSelected") {
+                    infoRect.state = "stopsSelected"
+                } else if (stopsView.model != recentModel) {
+                    searchString = ""
+                    fillModel()
+                    stopsView.model = recentModel
+                    text="Recent"
+                    searchResultStopInfoModel.clear()
+                    dataRect.visible = false
+                } else if (searchResultStopInfoModel.count > 0){
+                    stopsView.model = searchResultStopInfoModel
+                    text="Filtered"
+                } else {
+                    fillModel()
                 }
             }
         }
@@ -304,40 +354,31 @@ Item {
             id: stopSchedule
             text: "Schedule"
             onClicked: {
-                if (scheduleView.visible == false) {
-                    linesView.visible = false
-                    scheduleView.visible = true
-                    infoView.visible = false
-                    stopsView.visible = false
-                }
+                infoRect.state = "scheduleSelected"
             }
         }
         Button {
             id: stopLines
             text: "Lines"
             onClicked: {
-                if (linesView.visible == false) {
-                    linesView.visible = true
-                    scheduleView.visible = false
-                    infoView.visible = false
-                    stopsView.visible = false
-                }
+                infoRect.state = "linesSelected"
             }
         }
         Button {
             id: stopInfo
             text: "Info"
             onClicked: {
-                if (infoView.visible == false) {
-                    linesView.visible = false
-                    infoView.visible = true
-                    scheduleView.visible = false
-                    stopsView.visible = false
-                }
+                infoRect.state = "infoSelected"
             }
         }
     }
 /*<----------------------------------------------------------------------->*/
+    ListModel {              // search result stopInfo list model
+        id:searchResultStopInfoModel
+    }
+    ListModel {              // short name list model for multiSelection dialog
+        id: multiSelectionModel
+    }
     ListModel {              // recent stops list
         id: recentModel
 //        ListElement {
@@ -396,20 +437,23 @@ Item {
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
-                    if (selectedStopIndex != index) {
+                    if (selectedStopIndex != index || stopNameValue != stopName ) {
                         selectedStopIndex = index
                         stopsView.currentIndex = index
-                        searchString = recentModel.get(index).stopIdLong
+                        searchString = "" + stopsView.model.get(index).stopIdLong
                         showMapButton.visible = true
                         fillInfoModel()
                         fillLinesModel()
-                        stopName.text = recentModel.get(stopsView.currentIndex).stopName
-                        stopAddress.text = recentModel.get(stopsView.currentIndex).stopAddress
-                        stopCity.text = recentModel.get(stopsView.currentIndex).stopCity
+                        stopNameValue.text = stopName
+                        stopAddressValue.text = stopAddress
+                        stopCityValue.text = stopCity
                         dataRect.visible = true
                         showMapButton.visible = true
-                        updateSchedule()
+                        fillSchedule()
+                    } else if (stopsView.currentIndex != selectedStopIndex){
+                        stopsView.currentIndex = index
                     }
+                    infoRect.state="scheduleSelected"
                 }
                 onPressAndHold: {
                     stopsView.currentIndex = index
@@ -520,7 +564,7 @@ Item {
             }
             MouseArea{
                 anchors.fill: parent
-                onPressAndHold: { linesPassingContext.open() }
+                onPressAndHold: { linesView.currentIndex = index; linesPassingContext.open() }
                 onClicked: { linesView.currentIndex = index }
                 onDoubleClicked: { stopInfoPage.showLineInfo(lineNumber) }
             }
@@ -557,6 +601,7 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
+        state: "stopsSelected"
         ListView {  // stopsView
             id: stopsView
             visible: true
@@ -602,34 +647,47 @@ Item {
             currentIndex: -1
             clip: true
         }
+
+    states: [
+        State {
+            name: "stopsSelected"
+            PropertyChanges { target: stopsView; visible: true }
+            PropertyChanges { target: scheduleView; visible: false }
+//            PropertyChanges { target: scheduleButtons; visible: false }
+            PropertyChanges { target: linesView; visible: false }
+            PropertyChanges { target: infoView; visible: false }
+        },
+        State {
+            name: "scheduleSelected"
+            PropertyChanges { target: stopsView; visible: false }
+            PropertyChanges { target: scheduleView; visible: true}
+//            PropertyChanges { target: scheduleButtons; visible: true }
+            PropertyChanges { target: linesView; visible: false }
+            PropertyChanges { target: infoView; visible: false }
+        },
+        State {
+            name: "linesSelected"
+            PropertyChanges { target: stopsView; visible: false }
+            PropertyChanges { target: scheduleView; visible: false }
+//            PropertyChanges { target: scheduleButtons; visible: false }
+            PropertyChanges { target: linesView; visible: true }
+            PropertyChanges { target: infoView; visible: false }
+        },
+        State {
+            name: "infoSelected"
+            PropertyChanges { target: stopsView; visible: false }
+            PropertyChanges { target: scheduleView; visible: false }
+//            PropertyChanges { target: scheduleButtons; visible: false }
+            PropertyChanges { target: linesView; visible: false }
+            PropertyChanges { target: infoView; visible: true }
+        }
+    ]
+
     }
 /*<----------------------------------------------------------------------->*/
     function showError(errorText) {  // show popup splash window with error
         infoBanner.text = errorText
         infoBanner.show()
-    }
-    function getSchedule() {
-        loading.visible = true
-        loadStopSchedule.sendMessage({"searchString" : searchString})
-        scheduleView.currentIndex = 0
-        scheduleView.visible = true
-        infoView.visible = false
-        stopsView.visible = false
-        dataRect.visible = true
-    }
-    function buttonClicked() {  // SearchBox action
-        if (exactSearch) {
-            updateSchedule()
-            loadStopInfo.sendMessage({"searchString" : searchString})
-            loadingMap.visible = true
-        } else {
-            stopsLookup.sendMessage({"searchString" : searchString})
-        }
-    }
-    function updateSchedule() { // update only schedule
-        trafficModel.clear()
-        getSchedule()
-        tabRect.checkedButton = stopSchedule
     }
     function fillModel() {      // checkout recent stops from database
         recentModel.clear();
@@ -639,16 +697,18 @@ Item {
                     for (var i=0; i<rs.rows.length; ++i) {
                         recentModel.append(rs.rows.item(i))
                         if (rs.rows.item(i).stopIdLong == searchString) {
-                             selectedStopIndex = i
+                            selectedStopIndex = i
+                            stopsView.currentIndex = i
                     }
                 }
             }
         )
+
     }
     function fillInfoModel() {  // checkout stop info from database
         JS.__db().transaction(
             function(tx) {
-                try { var rs = tx.executeSql("SELECT option,value FROM StopInfo WHERE stopIdLong=?",[recentModel.get(selectedStopIndex).stopIdLong]); }
+                try { var rs = tx.executeSql("SELECT option,value FROM StopInfo WHERE stopIdLong=?",[searchString]); }
                 catch(e) { console.log("FillInfoModel EXCEPTION: " + e) }
                 infoModel.clear();
                 for (var i=0; i<rs.rows.length; ++i) {
@@ -661,7 +721,7 @@ Item {
     function fillLinesModel() {  // checkout stop info from database
         JS.__db().transaction(
             function(tx) {  // TODO
-                try { var rs = tx.executeSql("SELECT lineIdLong, lineEnd FROM StopLines WHERE stopIdLong=?",[recentModel.get(selectedStopIndex).stopIdLong]); }
+                try { var rs = tx.executeSql("SELECT lineIdLong, lineEnd FROM StopLines WHERE stopIdLong=?",[searchString]); }
                 catch(e) { console.log("FillLinesModel EXCEPTION: " + e) }
                 linesModel.clear();
                 for (var i=0; i<rs.rows.length; ++i) {
@@ -671,6 +731,51 @@ Item {
             }
         )
     }
+    function fillSchedule() {
+        trafficModel.clear()
+        tabRect.checkedButton = stopSchedule
+        loading.visible = true
+        loadStopSchedule.sendMessage({"searchString" : searchString})
+        scheduleView.currentIndex = 0
+//        infoRect.state = "scheduleSelected"
+        dataRect.visible = true
+    }
+
+    function buttonClicked() {  // SearchBox action, or transfer from another stop with request to show info
+        if (searchString != "") {
+            for (var j=0; j<recentModel.count; ++j) {
+                if (stopsView.model.get(j).stopIdLong == searchString) {  // this check should work only if stopIdLong supplied
+                    if (selectedStopIndex != j) {
+                        infoRect.state = "scheduleSelected"
+                        stopsView.model = recentModel
+                        selectedStopIndex = j
+                        stopsView.currentIndex = j
+                        searchString = "" + recentModel.get(j).stopIdLong
+                        showMapButton.visible = true
+                        fillInfoModel()
+                        fillLinesModel()
+                        stopNameValue.text = recentModel.get(selectedStopIndex).stopName
+                        stopAddressValue.text = recentModel.get(selectedStopIndex).stopAddress
+                        stopCityValue.text = recentModel.get(selectedStopIndex).stopCity
+                        dataRect.visible = true
+                        showMapButton.visible = true
+                        fillSchedule()
+                        console.log("stopInfo: buttonClicked: found stop via stopIdLong already in model: " + searchString + ": " + j);
+                        return
+                    }
+                }
+            }
+            loading.visible = true
+            searchResultStopInfoModel.clear()
+            selectedStopIndex = -1
+            stopsView.currentIndex = -1
+            dataRect.visible = false
+            trafficModel.clear()
+            infoModel.clear()
+            linesModel.clear()
+            stopsLookup.sendMessage({"searchString" : searchString})
+        }
+    }
     function setFavorite(stopIdLong_,value) {  // checkout stop info from database
         JS.__db().transaction(
             function(tx) {  // TODO
@@ -678,23 +783,6 @@ Item {
                 catch(e) { console.log("stopInfo: setFavorite EXCEPTION: " + e) }
             }
         )
-    }
-    function setCurrent() {     // stop info request from lineInfo:stopReach
-        if (searchString != "") {
-             JS.__db().transaction(
-                 function(tx) {
-                     try { var rs = tx.executeSql("SELECT * FROM Stops WHERE stopIdLong=?", [searchString]) }
-                     catch(e) { console.log("exception : "+e) }
-                     if (rs.rows.length > 0) {
-                         showMapButton.visible = true
-                         infoModel.clear()
-                         updateSchedule()
-                     } else {
-                         buttonClicked()
-                     }
-                 }
-             )
-        }
     }
     function refreshConfig() {
         JS.loadConfig(config)

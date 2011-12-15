@@ -21,7 +21,7 @@ WorkerScript.onMessage = function(message) {
                         var rs = tx.executeSql('SELECT * FROM Stops WHERE stopIdLong=?', [a.childNodes[ii].childNodes[0].firstChild.nodeValue]);
                         if (rs.rows.length > 0) {
                            for (var bb=0; bb<rs.rows.length; ++bb) {
-                               console.log("Found already in database: " + rs.rows.item(bb).stopIdLong +";"+ rs.rows.item(bb).stopName)
+                               console.log("stopInfoLoadInfo.js: Found already in database: " + rs.rows.item(bb).stopIdLong +";"+ rs.rows.item(bb).stopName)
                            }
                            return
                         } else {

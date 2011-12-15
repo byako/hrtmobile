@@ -15,7 +15,7 @@ WorkerScript.onMessage = function (message) {
                 var schedText = doc.responseText
                 var schedule = new Array;
                 var lines = new Array;
-                var time_ = Array
+                var time_ = new Array;
                 var stopName, stopAddress, stopCity
 
                 schedule = schedText.split("\n")

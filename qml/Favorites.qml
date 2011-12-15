@@ -6,6 +6,8 @@ Item {
 //    objectName: "favoritesPage"
     id: favoritesPage
     signal finishedLoad()
+    signal loadStop(string stopIdLong)
+    signal loadLine(string lineIdLong)
     width: 480
     height: 745
     Component.onCompleted: { loadLines(); loadStops(); favoritesPage.finishedLoad() }
@@ -13,6 +15,7 @@ Item {
     ListModel {              // recent stops list
         id: recentModel
         ListElement{
+            stopIdLong: ""
             stopName: "No favorite stops yet"
             stopIdShort: ""
             stopAddress: "Try Stop page -> search tool button"
@@ -65,7 +68,9 @@ Item {
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
-                    // TODO
+                    stopsView.currentIndex = index
+                    favoritesPage.loadStop(stopIdLong)
+                    stopsView.currentIndex = -1
                 }
             }
         }
@@ -76,6 +81,7 @@ Item {
     ListModel {     // lineInfo list model
         id:lineInfoModel
         ListElement {
+            lineIdLong: ""
             lineTypeName: "No favorite lines yet"
             lineStart: "Try Line page"
             lineEnd: "Search tool button"
@@ -110,13 +116,16 @@ Item {
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
+                    linesView.currentIndex = index
+                    favoritesPage.loadLine(lineIdLong)
+                    linesView.currentIndex = -1
                 }
             }
         }
     }
 
     //-==========================================================================-
-    Rectangle {                   // scheduleView rect
+    Rectangle {                   // stops view rect
         id: stopInfoRect
         anchors.top: parent.top
         width: parent.width
@@ -144,7 +153,7 @@ Item {
             clip: true
         }
     }
-    Rectangle {
+    Rectangle {                   // lines view rect
         id: lineInfoRect
         anchors.top : stopInfoRect.bottom
         width: parent.width
@@ -174,6 +183,7 @@ Item {
     }
     //-===========================================================================-
     function loadLines() {
+        lineInfoModel.clear()
         JS.__db().transaction(
             function(tx) {
                 try { var rs = tx.executeSql('SELECT lineIdLong, lineIdShort, lineName, lineStart, lineEnd, lineType, favorite FROM Lines WHERE favorite=?', ["true"]); }
@@ -183,7 +193,7 @@ Item {
                     lineInfoModel.append({"lineIdLong" : rs.rows.item(ii).lineIdLong, "lineIdShort" : rs.rows.item(ii).lineIdShort,
                                              "lineStart" : rs.rows.item(ii).lineStart, "lineEnd" : rs.rows.item(ii).lineEnd,
                                              "lineName" : rs.rows.item(ii).lineName, "lineType" : rs.rows.item(ii).lineType,
-                                        "lineTypeName" : JS.getLineType(rs.rows.item(ii).lineType) + rs.rows.item(ii).lineIdShort,
+                                        "lineTypeName" : JS.getLineType(rs.rows.item(ii).lineType) + " " + rs.rows.item(ii).lineIdShort,
                                              "favorite" : rs.rows.item(ii).favorite
                                          })
                 }
@@ -191,6 +201,7 @@ Item {
         )
     }
     function loadStops() {
+        recentModel.clear()
         JS.__db().transaction(
             function(tx) {
                 try { var rs = tx.executeSql('SELECT * FROM Stops WHERE favorite=?', ["true"]); }
