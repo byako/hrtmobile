@@ -26,6 +26,7 @@ Item {
 
     Column {
         spacing: 20
+        anchors.horizontalCenter: parent.horizontalCenter
         Button {
             style: ButtonStyle {
                 inverted: true
@@ -39,6 +40,11 @@ Item {
                 settingsPage.dbclean()
                 showError("Database cleaned")
             }
+        }
+        Label {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: "HRTMobile version 0.6.5 (20111215)"
+            color: "#cdd9ff"
         }
     }
 //----------------------------------------------------------------------------//

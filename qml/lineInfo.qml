@@ -108,6 +108,9 @@ Item {
                 text: "Delete line"
                 onClicked: {
                     if (JS.deleteLine(lineInfoModel.get(linesView.currentIndex).lineIdLong) == 0) {
+                        if (lineInfoModel.get(linesView.currentIndex).favorite == "true") {
+                            lineInfoPageItem.refreshFavorites()
+                        }
                         lineInfoModel.clear()
                         lineInfoLoadLines.sendMessage("")
                     }
@@ -118,12 +121,19 @@ Item {
                 text: "Delete all"
                 onClicked: {
                     loading.visible = true
-                    if (JS.deleteLine("*") == 0) {
-                        lineInfoModel.clear()
-                        lineInfoLoadLines.sendMessage("")
+                    for (var i=0; i< lineInfoModel.count; ++i) {
+                        if (lineInfoModel.get(i).favorite == "false") {
+                            JS.deleteLine(lineInfoModel.get(i).lineIdLong)
+                        }
                     }
+                    lineInfoModel.clear()
+                    lineInfoLoadLines.sendMessage("")
                     loading.visible = false
-                    showLineInfo()
+                    scheduleClear()
+                    stopReachModel.clear()
+                    linesView.currentIndex = -1
+                    selectedLineIndex = -1
+                    dataRect.visible = false
                 }
             }
         }
