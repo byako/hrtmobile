@@ -1,3 +1,9 @@
+hrtmobile (0.6.6) unstable; urgency=low
+
+  * Splash screen
+
+ -- Alexey Fomenko <alexey.fomenko@gmail.com>  Tue, 10 Jan 2012 16:07:36 +0200
+
 hrtmobile (0.6.5) unstable; urgency=low
 
   * Fixed: deletion of all lines except favorites, update favorites page

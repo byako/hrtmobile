@@ -19,6 +19,13 @@ Item {
 
     Component.onCompleted: { refreshConfig(); infoModel.clear(); fillModel(); }
     Config { id: config }
+    Rectangle {              // dark background
+        color: "#000000";
+        anchors.fill: parent
+        width: parent.width
+        height:  parent.height
+    }
+
     WorkerScript {           // quick search stops by name for non-exact search. Using geocoding.
         id: stopsLookup
         source: "stopSearch.js"
@@ -38,13 +45,20 @@ Item {
                     }
                 } else if (messageObject.state == "online") {
                     searchResultStopInfoModel.append(messageObject)
+                    recentModel.append(messageObject)
                 }
             } else {
                 loading.visible = false
                 console.log("stopInfo geocode API FINISHED request " + searchString);
                 searchString = ""
-                stopsView.model = searchResultStopInfoModel
-                recentButton.text = "Filtered"
+                if (searchResultStopInfoModel.count > 1) {
+                    stopsView.model = searchResultStopInfoModel
+                    recentButton.text = "Filtered"
+                } else { // if only one stop has been found - show it immediately without showing a list of found stops
+                    searchString = searchResultStopInfoModel.get(0).stopIdLong
+                    searchResultStopInfoModel.clear()
+                    buttonClicked()
+                }
             }
         }
     }
@@ -97,7 +111,7 @@ Item {
         }
     }
 
-    Loading {                   // busy indicator
+    Loading {                // busy indicator
         id: loading
         visible: false
         anchors.fill: parent
@@ -109,6 +123,7 @@ Item {
         z: 10
         opacity: 1.0
     }
+
     ContextMenu {            // recent stops context menu
         id: recentStopsContextMenu
         MenuLayout {
@@ -198,12 +213,7 @@ Item {
             }
         }
     }
-    Rectangle {              // dark background
-        color: "#000000";
-        anchors.fill: parent
-        width: parent.width
-        height:  parent.height
-    }
+
     Item {                   // Data Rect
         id: dataRect
         anchors.left: parent.left
@@ -211,7 +221,7 @@ Item {
         anchors.right: parent.right
         height: 120
         visible: false
-        Item {          // showMapButton
+        Item {               // showMapButton
                 anchors.right: parent.right
                 anchors.rightMargin: 20
                 anchors.top: parent.top
@@ -226,13 +236,7 @@ Item {
                     text: "M"
                     visible:  ! loadingMap.visible
                     onClicked: {
-//                        if (scheduleView.visible && scheduleView.currentIndex >= 0) {
-//                            stopInfoPage.showStopMapLine(searchString, trafficModel.get(scheduleView.currentIndex).departCode)
-//                        } else if (linesView.visible && linesView.currentIndex >=0 ) {
-//                            stopInfoPage.showStopMapLine(searchString, linesModel.get(linesView.currentIndex).lineNumber)
-//                        } else {
                             stopInfoPage.showStopMap(searchString)
-//                        }
                     }
                 }
                 BusyIndicator{// loading spinner
@@ -245,7 +249,7 @@ Item {
                     z: 8
                 }
             }
-        Item {          // favorite
+        Item {               // favorite
                 anchors.right: parent.right
                 anchors.rightMargin: 20
                 anchors.bottom: parent.bottom
@@ -270,8 +274,8 @@ Item {
                     }
                 }
         }
-        Column {            // data labels
-            Row {
+        Column {             // data labels
+            Row {            // stop name labels
                 Label {
                     id: stopNameLabel
                     text: qsTr("Name")
@@ -286,7 +290,7 @@ Item {
                     font.pixelSize: 30
                 }
             }
-            Row {
+            Row {            // stop address labels
                 Label {
                     id: stopAddressLabel
                     text: qsTr("Address")
@@ -301,7 +305,7 @@ Item {
                     font.pixelSize: 30
                 }
             }
-            Row {
+            Row {            // stop city labels
                 Label {
                     id: stopCityLabel;
                     text: qsTr("City")
@@ -375,9 +379,6 @@ Item {
 /*<----------------------------------------------------------------------->*/
     ListModel {              // search result stopInfo list model
         id:searchResultStopInfoModel
-    }
-    ListModel {              // short name list model for multiSelection dialog
-        id: multiSelectionModel
     }
     ListModel {              // recent stops list
         id: recentModel
@@ -492,6 +493,7 @@ Item {
                 anchors.fill:  parent
                 onClicked: {
                     scheduleView.currentIndex = index;
+//                    scheduleView.positionViewAtIndex(index,GridView.Beginning)
                     showError("Destination :  " + departDest)
                 }
                 onPressAndHold: {
@@ -721,12 +723,15 @@ Item {
     function fillLinesModel() {  // checkout stop info from database
         JS.__db().transaction(
             function(tx) {  // TODO
-                try { var rs = tx.executeSql("SELECT lineIdLong, lineEnd FROM StopLines WHERE stopIdLong=?",[searchString]); }
-                catch(e) { console.log("FillLinesModel EXCEPTION: " + e) }
+                try { var rs = tx.executeSql("SELECT StopLines.lineIdLong, StopLines.lineEnd, Lines.lineType FROM StopLines LEFT OUTER JOIN Lines ON StopLines.lineIdLong=Lines.lineIdLong WHERE stopIdLong=?",[searchString]); }
+                catch(e) { console.log("FillLinesModel EXCEPTION: " + e); return }
                 linesModel.clear();
                 for (var i=0; i<rs.rows.length; ++i) {
                     linesModel.append({"lineNumber" : rs.rows.item(i).lineIdLong,
                                       "lineDest" : rs.rows.item(i).lineEnd})
+                    if (rs.rows.item(i).lineType) {
+                        console.log("Adding lineType for the stop:"+rs.rows.item(i).lineType)
+                    }
                 }
             }
         )
@@ -741,7 +746,7 @@ Item {
         dataRect.visible = true
     }
 
-    function buttonClicked() {  // SearchBox action, or transfer from another stop with request to show info
+    function buttonClicked() {  // SearchBox action, or transfer from lineInfo page with request to show info
         if (searchString != "") {
             for (var j=0; j<recentModel.count; ++j) {
                 if (stopsView.model.get(j).stopIdLong == searchString) {  // this check should work only if stopIdLong supplied

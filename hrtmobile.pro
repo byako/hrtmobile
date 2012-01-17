@@ -56,7 +56,8 @@ OTHER_FILES += \
     qml/SearchDialog.qml \
     qml/stopSearch.js \
     qml/Loading.qml \
-    qml/Favorites.qml
+    qml/Favorites.qml \
+    qml/lineSearch.js
 
 RESOURCES += \
     res.qrc
@@ -82,6 +83,7 @@ contains(MEEGO_EDITION,harmattan) {
     target.path = /opt/hrtmobile/bin
     INSTALLS += target
 }
+
 
 
 

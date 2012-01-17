@@ -4,7 +4,7 @@ Version=1.0
 Type=Application
 Terminal=false
 Name=HRT Mobile
-Exec=invoker --single-instance --type=e /opt/hrtmobile/bin/hrtmobile
+Exec=invoker --single-instance --type=e --splash=/usr/share/hrtmobile/hrtmobile_splash.jpg --splash=/usr/share/hrtmobile/hrtmobile_l_splash.jpg /opt/hrtmobile/bin/hrtmobile
 Icon=/usr/share/icons/hicolor/80x80/apps/hrtmobile.png
 X-Window-Icon=
 X-HildonDesk-ShowInToolbar=true

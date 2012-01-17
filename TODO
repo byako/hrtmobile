@@ -55,6 +55,8 @@ route
 	* when stop is selected eneque button "show stop info", or double-tap to go to info
 
 Done:
+* stopInfo: if only one stop has been found - open it
+
 2011 12 15
 * version increase
 * general: split all data into favorites and just DB

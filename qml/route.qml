@@ -38,7 +38,7 @@ Item {
                     positionCircle.center.longitude = messageObject.longit
                     positionCircle.center.latitude = messageObject.latit
                 }
-                lineLabel.text = "Line: " + messageObject.lineIdShort + " -> " + messageObject.lineEnd
+                lineLabel.text = messageObject.lineIdShort + " -> " + messageObject.lineEnd
             } else if (messageObject.longitude == "error"){
                 lines.get(ii).lineShape.destroy()
                 lines.remove(lines.count-1)

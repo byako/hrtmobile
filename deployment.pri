@@ -95,14 +95,18 @@ symbian {
     }
     icon.files = $${TARGET}.png
     icon.path = /usr/share/icons/hicolor/64x64/apps
+    splashscreen.files = $${TARGET}_splash.jpg $${TARGET}_l_splash.jpg
+    splashscreen.path = /usr/share/$${TARGET}
     desktopfile.files = $${TARGET}.desktop
     target.path = $${installPrefix}/bin
+    export(splashscreen.files)
+    export(splashscreen.path)
     export(icon.files)
     export(icon.path)
     export(desktopfile.files)
     export(desktopfile.path)
     export(target.path)
-    INSTALLS += desktopfile icon target
+    INSTALLS += desktopfile icon target splashscreen
 }
 
 export (ICON)

@@ -42,6 +42,20 @@ Item {
         anchors.fill: parent
         z: 8
     }
+    WorkerScript {  // lineSearch
+        id: lineSearchWorker
+        source: "lineSearch.js"
+
+        onMessage: {
+            console.log("lineInfo.qml: lineSearch worker sent: " + messageObject.lineIdLong)
+/*            stopReachModel.set(messageObject.lineReachNumber, {"stopName" : messageObject.stopName,
+                                   "stopIdShort" : messageObject.stopIdShort,
+                                   "stopCity" : messageObject.stopCity,
+                                   "stopLongitude" : messageObject.stopLongitude,
+                                   "stopLatitude" : messageObject.stopLatitude,
+                               })*/
+        }
+    }
     WorkerScript {  // stop name loader
         id: stopReachLoader
         source: "lineInfo.js"
@@ -378,18 +392,18 @@ Item {
             }
         }
     }
-    Component {     // lineInfo short delegate
+    Component {     // lineInfo delegate
         id:lineInfoShortDelegate
         Item {
             width: linesView.width;
-            height: 35
+            height: 40
             Text{
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: parent.left
                 anchors.leftMargin: 50
                 wrapMode: Text.WordWrap
                 text: lineStart + " -> " + lineEnd;
-                font.pixelSize: 25;
+                font.pixelSize: 28;
                 color: "#cdd9ff"
             }
             MouseArea {
@@ -617,34 +631,11 @@ Item {
                 }
             )
     }
-    function getXML() {               // xml http request                 : TODO : switch to use local var instead of JS.doc
-      var doc = new XMLHttpRequest()
-        doc.onreadystatechange = function() {
-            if (doc.readyState == XMLHttpRequest.HEADERS_RECEIVED) {
-            } else if (doc.readyState == XMLHttpRequest.DONE) {
-                if (doc.responseXML == null) {
-                    showError("No lines found")
-                    loading.visible = false
-                    return
-                } else {
-                    JS.response = doc.responseXML.documentElement
-                    console.log("OK, got " + doc.responseXML.documentElement.childNodes.length+ " lines")
-                    loading.visible = false
-                    if (doc.responseXML.documentElement.childNodes.length > 4) {
-                        saveSelectDialog.open()
-                    } else {
-                        saveAllLines()
-                    }
-                }
-            } else if (doc.readyState == XMLHttpRequest.ERROR) {
-                showError("ERROR returned from server")
-                loading.visible = false
-            }
-        }
-    doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&epsg_out=wgs84&query="+searchString); // for line info request
-//             http://api.reittiopas.fi/public-ytv/fi/api/?key="+stopId.text+"&user=byako&pass=gfccdjhl");
-    loading.visible = true
-    doc.send();
+    function getXML() {
+        console.log("lineInfo.qml: sending lineSearch request")
+        // FINISH HERE: search worker will do the stuff. remove also offline search from here
+        lineSearchWorker.sendMessage({"searchString":searchString})
+//        loading.visible = true
     }
     function scheduleClear() {
         scheduleModel.clear()
