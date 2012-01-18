@@ -21,18 +21,30 @@ WorkerScript.onMessage = function (message) {
                 resp=doc.responseXML.documentElement
                 console.log("lineSearch.js: OK, got " + doc.responseXML.documentElement.childNodes.length+ " lines")
                 for (var ii = 0; ii < resp.childNodes.length; ++ii) {
-                    console.log("" + resp.childNodes[ii].childNodes[0].firstChild.nodeValue + " : " +
+//                    console.log("" + resp.childNodes[ii].childNodes[0].firstChild.nodeValue + " : " +
+//                                resp.childNodes[ii].childNodes[2].firstChild.nodeValue + " : " +
+//                                resp.childNodes[ii].childNodes[3].firstChild.nodeValue
+//                                )
+                    if (resp.childNodes[ii].childNodes[2].firstChild.nodeValue != "21" &&
+                        resp.childNodes[ii].childNodes[2].firstChild.nodeValue != "23" &&
+                        resp.childNodes[ii].childNodes[2].firstChild.nodeValue != "24") {
+                            WorkerScript.sendMessage({"lineIdLong":resp.childNodes[ii].childNodes[0].firstChild.nodeValue,
+                                                 "lineIdShort" : resp.childNodes[ii].childNodes[1].firstChild.nodeValue,
+                                                 "lineName" : resp.childNodes[ii].childNodes[3].firstChild.nodeValue,
+                                             })
+                    } else {
+                        console.log("lineSearch.js: not sending " + resp.childNodes[ii].childNodes[0].firstChild.nodeValue + " : line type " +
                                 resp.childNodes[ii].childNodes[2].firstChild.nodeValue + " : " +
-                                resp.childNodes[ii].childNodes[3].firstChild.nodeValue + " -> " +
-                                resp.childNodes[ii].childNodes[4].firstChild.nodeValue
-                                )
+                                resp.childNodes[ii].childNodes[3].firstChild.nodeValue);
+                    }
                 }
+                WorkerScript.sendMessage({"lineIdLong":"FINISH"})
             }
         } else if (doc.readyState == XMLHttpRequest.ERROR) {
             WorkerScript.sendMessage({"lineIdLong":"ERROR"})
         }
     }
 
-    doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&epsg_out=wgs84&p=111111000&query="+message.searchString);
+    doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&epsg_out=wgs84&p=111001000&query="+message.searchString);
     doc.send();
 }

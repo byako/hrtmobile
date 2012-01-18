@@ -47,7 +47,16 @@ Item {
         source: "lineSearch.js"
 
         onMessage: {
-            console.log("lineInfo.qml: lineSearch worker sent: " + messageObject.lineIdLong)
+            if (messageObject.lineIdLong == "FINISH") {
+                chooseLinesDialog.open()
+            } else if (messageObject.lineIdLong == "NONE") {
+                showError("No lines found")
+            } else if (messageObject.lineIdLong == "ERROR") {
+                showError("Server returned ERROR")
+            } else {
+                searchResultLineInfoModel.append({"name" : messageObject.lineIdShort + " : " + messageObject.lineName });
+            }
+
 /*            stopReachModel.set(messageObject.lineReachNumber, {"stopName" : messageObject.stopName,
                                    "stopIdShort" : messageObject.stopIdShort,
                                    "stopCity" : messageObject.stopCity,
@@ -95,9 +104,10 @@ Item {
                                  })
         }
     }
-    MultiSelectionDialog {   // save lines select dialog
+/*    MultiSelectionDialog {   // save lines select dialog
          id: chooseLinesDialog
          acceptButtonText: "Save"
+
          rejectButtonText: "Cancel"
          titleText: "Lines to save"
          model: searchResultLineInfoModel
@@ -114,7 +124,7 @@ Item {
          onRejected: {
 
          }
-    }
+    } */
     ContextMenu {   // line info context menu
         id: linesContextMenu
         MenuLayout {
@@ -169,19 +179,6 @@ Item {
                     showLineMapStop(searchString, stopReachModel.get(stopsView.currentIndex).stopIdLong)
                 }
             }
-        }
-    }
-    QueryDialog {   // many lines save/select dialog
-        id: saveSelectDialog
-        acceptButtonText: "Save all"
-        rejectButtonText: "Select"
-        message: "Found a lot of lines. Saving all can take a while. Still save all or select which lines to save?"
-        titleText: "Save / Select"
-        onAccepted: {
-            saveAllLines()
-        }
-        onRejected: {
-            fillSearchResultInfoModel()
         }
     }
     Rectangle{      // dark background
@@ -566,17 +563,6 @@ Item {
         infoBanner.text = errorText
         infoBanner.show()
     }
-    function fillSearchResultInfoModel() {
-        var lineInfo;
-        loading.visible = true;
-        searchResultLineInfoModel.clear()
-        for (var ii = 0; ii < JS.response.childNodes.length; ++ii) {
-            lineInfo = "" + JS.response.childNodes[ii].childNodes[1].firstChild.nodeValue + " : " + JS.response.childNodes[ii].childNodes[3].firstChild.nodeValue + " -> " + JS.response.childNodes[ii].childNodes[4].firstChild.nodeValue
-            searchResultLineInfoModel.append({"name" : lineInfo });
-        }
-        loading.visible = false
-        chooseLinesDialog.open()
-    }
     function saveAllLines() {
         loading.visible = true
         var tempCount = lineInfoModel.count
@@ -634,8 +620,9 @@ Item {
     function getXML() {
         console.log("lineInfo.qml: sending lineSearch request")
         // FINISH HERE: search worker will do the stuff. remove also offline search from here
-        lineSearchWorker.sendMessage({"searchString":searchString})
-//        loading.visible = true
+        searchResultLineInfoModel.clear()
+        lineSearchWorker.sendMessage({"searchString":searchString, "save":"true"})
+        // loading.visible = true
     }
     function scheduleClear() {
         scheduleModel.clear()
