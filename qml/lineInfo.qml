@@ -48,21 +48,31 @@ Item {
 
         onMessage: {
             if (messageObject.lineIdLong == "FINISH") {
-                chooseLinesDialog.open()
+                console.log("lineInfo.qml: worker finished")
             } else if (messageObject.lineIdLong == "NONE") {
                 showError("No lines found")
             } else if (messageObject.lineIdLong == "ERROR") {
                 showError("Server returned ERROR")
             } else {
-                searchResultLineInfoModel.append({"name" : messageObject.lineIdShort + " : " + messageObject.lineName });
+                console.log ("lineIdLong: " + messageObject.lineIdLong +
+                          ";\nlineIdShort: " + messageObject.lineIdShort +
+                          ";\nlineStart: " + messageObject.lineStart +
+                          ";\nlineEnd: " + messageObject.lineEnd +
+                          ";\nlineType: " + messageObject.lineType +
+                          ";\nlineTypeName: " + messageObject.lineTypeName +
+                          ";\nfavorite: " + messageObject.favorite +
+                          ";\nstate: " + messageObject.state)
+//                searchResultLineInfoModel.append(messageObject);
             }
 
-/*            stopReachModel.set(messageObject.lineReachNumber, {"stopName" : messageObject.stopName,
-                                   "stopIdShort" : messageObject.stopIdShort,
-                                   "stopCity" : messageObject.stopCity,
-                                   "stopLongitude" : messageObject.stopLongitude,
-                                   "stopLatitude" : messageObject.stopLatitude,
-                               })*/
+/*            lineInfoModel.append({"lineIdLong" : "" + JS.response.childNodes[ii].childNodes[0].firstChild.nodeValue,
+                                 "lineIdShort" : ""+ JS.response.childNodes[ii].childNodes[1].firstChild.nodeValue,
+                                 "lineStart" : "" + JS.response.childNodes[ii].childNodes[3].firstChild.nodeValue,
+                                 "lineEnd" : "" + JS.response.childNodes[ii].childNodes[4].firstChild.nodeValue,
+                                 "lineType" : "" + JS.response.childNodes[ii].childNodes[2].firstChild.nodeValue,
+                                 "lineTypeName" : "" + JS.getLineType(JS.response.childNodes[ii].childNodes[2].firstChild.nodeValue) + " " + JS.response.childNodes[ii].childNodes[1].firstChild.nodeValue,
+                                 "favorite" : "false"
+                                 });*/
         }
     }
     WorkerScript {  // stop name loader
@@ -98,7 +108,7 @@ Item {
         onMessage: {
             lineInfoModel.append({"lineIdLong" : messageObject.lineIdLong, "lineIdShort" : messageObject.lineIdShort,
                                      "lineStart" : messageObject.lineStart, "lineEnd" : messageObject.lineEnd,
-                                     "lineName" : messageObject.lineName, "lineType" : messageObject.lineType,
+                                     "lineType" : messageObject.lineType,
                                      "lineTypeName" : JS.getLineType(messageObject.lineType) + " " + messageObject.lineIdShort,
                                      "favorite" : messageObject.favorite
                                  })
@@ -563,65 +573,12 @@ Item {
         infoBanner.text = errorText
         infoBanner.show()
     }
-    function saveAllLines() {
-        loading.visible = true
-        var tempCount = lineInfoModel.count
-        for (var ii = 0; ii < JS.response.childNodes.length; ++ii) {
-            saveLine(ii)
-        }
-        if (lineInfoModel.count > tempCount) {
-            if (tempCount >= 0) {
-                linesView.currentIndex = tempCount
-                selectedLineIndex = tempCount
-            } else {
-                linesView.currentIndex = 0
-                selectedLineIndex = 0
-            }
-            searchString = lineInfoModel.get(tempCount).lineIdLong
-            showLineInfo()
-        }
-        loading.visible = false
-        gotLinesInfo()
-    }
-    function saveLine(ii) {           // parse lines description, map
-            lineInfoModel.append({"lineIdLong" : "" + JS.response.childNodes[ii].childNodes[0].firstChild.nodeValue,
-                                 "lineIdShort" : ""+ JS.response.childNodes[ii].childNodes[1].firstChild.nodeValue,
-                                 "lineName" : "" + JS.response.childNodes[ii].childNodes[5].firstChild.nodeValue,
-                                 "lineStart" : "" + JS.response.childNodes[ii].childNodes[3].firstChild.nodeValue,
-                                 "lineEnd" : "" + JS.response.childNodes[ii].childNodes[4].firstChild.nodeValue,
-                                 "lineType" : "" + JS.response.childNodes[ii].childNodes[2].firstChild.nodeValue,
-                                 "lineTypeName" : "" + JS.getLineType(JS.response.childNodes[ii].childNodes[2].firstChild.nodeValue) + " " + JS.response.childNodes[ii].childNodes[1].firstChild.nodeValue,
-                                 "favorite" : "false"
-                                 });
-            if ( JS.addLine(""+ JS.response.childNodes[ii].childNodes[0].firstChild.nodeValue +
-                            ";"+ JS.response.childNodes[ii].childNodes[1].firstChild.nodeValue +
-                            ";"+ JS.response.childNodes[ii].childNodes[5].firstChild.nodeValue +
-                            ";" + JS.response.childNodes[ii].childNodes[2].firstChild.nodeValue +
-                            ";" + JS.response.childNodes[ii].childNodes[3].firstChild.nodeValue +
-                            ";" + JS.response.childNodes[ii].childNodes[4].firstChild.nodeValue +
-                            ";" + JS.response.childNodes[ii].childNodes[8].firstChild.firstChild.firstChild.nodeValue +
-                            ";" + JS.response.childNodes[ii].childNodes[8].lastChild.firstChild.firstChild.nodeValue +
-                            ";" + JS.response.childNodes[ii].childNodes[7].firstChild.nodeValue +
-                            ";" + JS.response.childNodes[ii].childNodes[6].firstChild.nodeValue +
-                            ";" + "false" ) == 0 ) {
-                showError("Saved new line: " + JS.response.childNodes[ii].childNodes[1].firstChild.nodeValue)
-            }
-            JS.__db().transaction(
-                function(tx) {
-                    for (var cc = 0; cc < JS.response.childNodes[ii].childNodes[8].childNodes.length; ++cc) {
-                        try { tx.executeSql('INSERT INTO LineStops VALUES(?,?,?)', [JS.response.childNodes[ii].childNodes[0].firstChild.nodeValue,
-                             JS.response.childNodes[ii].childNodes[8].childNodes[cc].firstChild.firstChild.nodeValue,
-                             JS.response.childNodes[ii].childNodes[8].childNodes[cc].lastChild.firstChild.nodeValue]); }
-                        catch(e) { console.log("EXCEPTION: " + e) }
-                    }
-                }
-            )
-    }
+
     function getXML() {
         console.log("lineInfo.qml: sending lineSearch request")
         // FINISH HERE: search worker will do the stuff. remove also offline search from here
         searchResultLineInfoModel.clear()
-        lineSearchWorker.sendMessage({"searchString":searchString, "save":"true"})
+        lineSearchWorker.sendMessage({"searchString":searchString})
         // loading.visible = true
     }
     function scheduleClear() {
@@ -635,11 +592,7 @@ Item {
             showError("Enter search criteria\nline number/line code/Key place\ni.e. 156A or Tapiola")
             return
         }
-        if (checkOffline() != 0) {
-            getXML()
-        } else {
-            gotLinesInfo()
-        }
+        getXML()
     }
     function sendStopsToMap() {
         for (var ii=0; ii < stopReachModel.count; ++ii) {
@@ -665,34 +618,6 @@ Item {
             searchString = loadLine
             buttonClicked()
         }
-    }
-    function checkOffline() {        // check if requested line is already in DB
-        var retVal = 0
-        JS.__db().transaction(
-            function(tx) {
-               try { var rs = tx.executeSql("SELECT lineIdLong, lineIdshort, lineName, lineType, lineStart, lineEnd FROM Lines WHERE lineIdLong=? OR lineIdShort=?", [searchString, searchString]) }
-               catch(e) { console.log("EXCEPTION in checkOffline: " + e) }
-               if (rs.rows.length > 0) {
-                   lineInfoModel.clear()
-                   stopReachModel.clear()
-                   offlineResult = true
-                   for (var ii=0; ii < rs.rows.length; ++ii) {
-                       lineInfoModel.append({"lineIdLong" : rs.rows.item(ii).lineIdLong,
-                                            "lineIdShort" : rs.rows.item(ii).lineIdShort,
-                                            "lineName" : rs.rows.item(ii).lineName,
-                                            "lineStart" : rs.rows.item(ii).lineStart,
-                                            "lineEnd" : rs.rows.item(ii).lineEnd,
-                                            "lineType" : rs.rows.item(ii).lineType,
-                                            "lineTypeName" : JS.getLineType(rs.rows.item(ii).lineType) + " " + rs.rows.item(ii).lineIdShort,
-                                            "favorite" : rs.rows.item(ii).favorite
-                                            });
-                   }
-               } else {
-                   retVal = -1
-               }
-            }
-        )
-        return retVal
     }
     function getStops() {             // load stops from LineStops database table
         var temp_name
