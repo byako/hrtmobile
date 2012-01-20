@@ -49,32 +49,33 @@ Item {
         onMessage: {
             if (messageObject.lineIdLong == "FINISH") {
                 console.log("lineInfo.qml: worker finished")
-                linesView.model = searchResultLineInfoModel
-                linesButton.text = "Filtered"
+                if (searchResultLineInfoModel.count > 2) {
+                    linesView.model = searchResultLineInfoModel
+                    linesButton.text = "Filtered"
+                } else {
+                    for (var ii=0; ii<searchResultLineInfoModel.count; ++ii) {
+                        console.log("lineInfo.qml: sending save request " + searchResultLineInfoModel.get(ii).lineIdLong)
+                        lineSearchWorker.sendMessage({"searchString":searchResultLineInfoModel.get(ii).lineIdLong,"save":"true"})
+                    }
+/*                    infoRect.visible = true;
+                    infoRect.state = "stopsSelected"
+                    dataRect.visible = true
+                    linesView.currentIndex = 0
+                    showLineInfo()*/
+                }
             } else if (messageObject.lineIdLong == "NONE") {
                 showError("No lines found")
             } else if (messageObject.lineIdLong == "ERROR") {
                 showError("Server returned ERROR")
             } else {
-/*                console.log ("lineIdLong: " + messageObject.lineIdLong +
-                          ";\nlineIdShort: " + messageObject.lineIdShort +
-                          ";\nlineStart: " + messageObject.lineStart +
-                          ";\nlineEnd: " + messageObject.lineEnd +
-                          ";\nlineType: " + messageObject.lineType +
-                          ";\nlineTypeName: " + messageObject.lineTypeName +
-                          ";\nfavorite: " + messageObject.favorite +
-                          ";\nstate: " + messageObject.state)*/
-                searchResultLineInfoModel.append(messageObject);
+                if (messageObject.state != "saved") {  // offline || online
+                    searchResultLineInfoModel.append(messageObject);
+                } else {
+                    for (var bb=0; bb < searchResultLineInfoModel.count; ++bb) {
+                        if (searchResultLineInfoModel.get(bb).lineIdLong == messageObject.lineIdLong) lineInfoModel.append(searchResultLineInfoModel.get(bb));
+                    }
+                }
             }
-
-/*            lineInfoModel.append({"lineIdLong" : "" + JS.response.childNodes[ii].childNodes[0].firstChild.nodeValue,
-                                 "lineIdShort" : ""+ JS.response.childNodes[ii].childNodes[1].firstChild.nodeValue,
-                                 "lineStart" : "" + JS.response.childNodes[ii].childNodes[3].firstChild.nodeValue,
-                                 "lineEnd" : "" + JS.response.childNodes[ii].childNodes[4].firstChild.nodeValue,
-                                 "lineType" : "" + JS.response.childNodes[ii].childNodes[2].firstChild.nodeValue,
-                                 "lineTypeName" : "" + JS.getLineType(JS.response.childNodes[ii].childNodes[2].firstChild.nodeValue) + " " + JS.response.childNodes[ii].childNodes[1].firstChild.nodeValue,
-                                 "favorite" : "false"
-                                 });*/
         }
     }
     WorkerScript {  // stop name loader
@@ -108,12 +109,7 @@ Item {
         source: "lineInfoLoadLines.js"
 
         onMessage: {
-            lineInfoModel.append({"lineIdLong" : messageObject.lineIdLong, "lineIdShort" : messageObject.lineIdShort,
-                                     "lineStart" : messageObject.lineStart, "lineEnd" : messageObject.lineEnd,
-                                     "lineType" : messageObject.lineType,
-                                     "lineTypeName" : JS.getLineType(messageObject.lineType) + " " + messageObject.lineIdShort,
-                                     "favorite" : messageObject.favorite
-                                 })
+            lineInfoModel.append(messageObject)
         }
     }
     ContextMenu {   // line info context menu
@@ -270,7 +266,7 @@ Item {
         }
             Button {  // recent lines
                 id: linesButton
-                text: "Saved"
+                text: "Recent"
                 onClicked: {
                     if (linesView.currentIndex != selectedLineIndex) { linesView.currentIndex = selectedLineIndex }
                     if ( infoRect.state != "linesSelected" ) {
@@ -395,14 +391,17 @@ Item {
                 anchors.left: parent.left
 //                anchors.leftMargin: 50
                 wrapMode: Text.WordWrap
-                text: "" + /?????/lineIdShort + " " + lineStart + " -> " + lineEnd;
+                text: "" + lineIdShort + " " + lineStart + " -> " + lineEnd;
                 font.pixelSize: 28;
                 color: "#cdd9ff"
             }
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
-                    if (selectedLineIndex != index) {
+                    if (linesView.model != lineInfoModel) {
+                        console.log("lineInfo.qml: open line from search result:" + lineIdLong)
+                        lineSearchWorker.sendMessage({"searchString": "" + lineIdLong, "save":"true"})
+                    } else if (selectedLineIndex != index) {
                         searchString = lineIdLong
                         selectedLineIndex = index
                         linesView.currentIndex = index
@@ -561,13 +560,6 @@ Item {
         infoBanner.show()
     }
 
-    function getXML() {
-        console.log("lineInfo.qml: sending lineSearch request")
-        // FINISH HERE: search worker will do the stuff. remove also offline search from here
-        searchResultLineInfoModel.clear()
-        lineSearchWorker.sendMessage({"searchString":searchString})
-        // loading.visible = true
-    }
     function scheduleClear() {
         scheduleModel.clear()
         scheduleModel1.clear()
@@ -579,7 +571,8 @@ Item {
             showError("Enter search criteria\nline number/line code/Key place\ni.e. 156A or Tapiola")
             return
         }
-        getXML()
+        searchResultLineInfoModel.clear()
+        lineSearchWorker.sendMessage({"searchString":searchString})
     }
     function sendStopsToMap() {
         for (var ii=0; ii < stopReachModel.count; ++ii) {
@@ -651,27 +644,18 @@ Item {
             scheduleClear()
             stopReachModel.clear()
             getStops()
-            lineShortCodeName.text = lineInfoModel.get(linesView.currentIndex).lineIdShort
-            lineStart.text = "From : " + lineInfoModel.get(linesView.currentIndex).lineStart
-            lineEnd.text = "To : " + lineInfoModel.get(linesView.currentIndex).lineEnd
-            lineType.text = JS.getLineType(lineInfoModel.get(linesView.currentIndex).lineType)
-            searchString = lineInfoModel.get(linesView.currentIndex).lineIdLong
+            lineShortCodeName.text = linesView.model.get(linesView.currentIndex).lineIdShort
+            lineStart.text = "From : " + linesView.model.get(linesView.currentIndex).lineStart
+            lineEnd.text = "To : " + linesView.model.get(linesView.currentIndex).lineEnd
+            lineType.text = JS.getLineType(linesView.model.get(linesView.currentIndex).lineType)
+            searchString = linesView.model.get(linesView.currentIndex).lineIdLong
         } else {
             dataRect.visible = false
             stopReachModel.clear()
             scheduleClear()
         }
     }
-    function gotLinesInfo() {         // after offline search is succeded
-        console.log("DEBUG ME HERE! I DON'T KNOW WHY IS THIS HAPPENING TO ME!!!!! HELP!!")
-        infoRect.visible = true;
-        if (lineInfoModel.count == 1) {
-            infoRect.state = "stopsSelected"
-            dataRect.visible = true
-            linesView.currentIndex = 0
-            showLineInfo()
-        }
-    }
+
     function setFavorite(lineIdLong_,value) {  // checkout stop info from database
         JS.__db().transaction(
             function(tx) {  // TODO

@@ -25,32 +25,37 @@ WorkerScript.onMessage = function (message) {
                 resp=doc.responseXML.documentElement
                 console.log("lineSearch.js: OK, got " + doc.responseXML.documentElement.childNodes.length+ " lines" + (save ? " : for saving" : " : for search"))
                 if (save) {  // push lines to the database with all the data from server
-                    for (var ii = 0; ii < resp.childNodes.length; ++ii) {
-                        try {
-                            rs = tx.executeSql('INSERT INTO Lines VALUES(?,?,?,?,?,?,?,?,?)',
-                                       [ resp.childNodes[ii].childNodes[0].firstChild.nodeValue,
-                                         resp.childNodes[ii].childNodes[1].firstChild.nodeValue,
-                                         resp.childNodes[ii].childNodes[5].firstChild.nodeValue,
-                                         resp.childNodes[ii].childNodes[2].firstChild.nodeValue,
-                                         resp.childNodes[ii].childNodes[3].firstChild.nodeValue,
-                                         resp.childNodes[ii].childNodes[4].firstChild.nodeValue,
-                                         resp.childNodes[ii].childNodes[7].firstChild.nodeValue,
-                                         resp.childNodes[ii].childNodes[6].firstChild.nodeValue ] );
-                        }
-                        catch (e) { console.log("lineSearch.js: save exception " + e); }
+                    db.transaction(  // save line stops
+                        function(tx) {
+                            for (var ii = 0; ii < resp.childNodes.length; ++ii) {
+                                console.log("lineSearch.js: saving procedure: " + resp.childNodes[ii].childNodes[0].firstChild.nodeValue)
+                                try {
+                                    rs = tx.executeSql('INSERT INTO Lines VALUES(?,?,?,?,?,?,?,?,?)',
+                                               [ resp.childNodes[ii].childNodes[0].firstChild.nodeValue,
+                                                 resp.childNodes[ii].childNodes[1].firstChild.nodeValue,
+                                                 resp.childNodes[ii].childNodes[5].firstChild.nodeValue,
+                                                 resp.childNodes[ii].childNodes[2].firstChild.nodeValue,
+                                                 resp.childNodes[ii].childNodes[3].firstChild.nodeValue,
+                                                 resp.childNodes[ii].childNodes[4].firstChild.nodeValue,
+                                                 resp.childNodes[ii].childNodes[7].firstChild.nodeValue,
+                                                 resp.childNodes[ii].childNodes[6].firstChild.nodeValue,
+                                                "false" ] );
+                                }
+                                catch (e) { console.log("lineSearch.js: save exception " + e); }
 
-                        db.transaction(  // save line stops
-                            function(tx) {
-                                console.log("Saving stop " + resp.childNodes[ii].childNodes[0].firstChild.nodeValue)
                                 for (var cc = 0; cc < resp.childNodes[ii].childNodes[8].childNodes.length; ++cc) {
+                                    console.log("Saving stop " + resp.childNodes[ii].childNodes[8].childNodes[cc].firstChild.firstChild.nodeValue)
                                     try { tx.executeSql('INSERT INTO LineStops VALUES(?,?,?)', [resp.childNodes[ii].childNodes[0].firstChild.nodeValue,
                                          resp.childNodes[ii].childNodes[8].childNodes[cc].firstChild.firstChild.nodeValue,
                                          resp.childNodes[ii].childNodes[8].childNodes[cc].lastChild.firstChild.nodeValue]); }
                                     catch(e) { console.log("EXCEPTION: " + e) }
                                 }
+                                WorkerScript.sendMessage({"lineIdLong":resp.childNodes[ii].childNodes[0].firstChild.nodeValue,
+                                                     "state" : "saved"
+                                                 })
                             }
-                        )
-                    }
+                        }
+                    )
                     return
                 } else { // save line end. here quick search starts
                     for (var ii = 0; ii < resp.childNodes.length; ++ii) {   // just push info to the page for user-review
