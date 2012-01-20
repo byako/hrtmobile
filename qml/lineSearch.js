@@ -41,7 +41,7 @@ WorkerScript.onMessage = function (message) {
 
                         db.transaction(  // save line stops
                             function(tx) {
-                                           console.log("Saving stop " + resp.childNodes[ii].childNodes[0].firstChild.nodeValue)
+                                console.log("Saving stop " + resp.childNodes[ii].childNodes[0].firstChild.nodeValue)
                                 for (var cc = 0; cc < resp.childNodes[ii].childNodes[8].childNodes.length; ++cc) {
                                     try { tx.executeSql('INSERT INTO LineStops VALUES(?,?,?)', [resp.childNodes[ii].childNodes[0].firstChild.nodeValue,
                                          resp.childNodes[ii].childNodes[8].childNodes[cc].firstChild.firstChild.nodeValue,

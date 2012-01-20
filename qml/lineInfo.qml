@@ -49,20 +49,22 @@ Item {
         onMessage: {
             if (messageObject.lineIdLong == "FINISH") {
                 console.log("lineInfo.qml: worker finished")
+                linesView.model = searchResultLineInfoModel
+                linesButton.text = "Filtered"
             } else if (messageObject.lineIdLong == "NONE") {
                 showError("No lines found")
             } else if (messageObject.lineIdLong == "ERROR") {
                 showError("Server returned ERROR")
             } else {
-                console.log ("lineIdLong: " + messageObject.lineIdLong +
+/*                console.log ("lineIdLong: " + messageObject.lineIdLong +
                           ";\nlineIdShort: " + messageObject.lineIdShort +
                           ";\nlineStart: " + messageObject.lineStart +
                           ";\nlineEnd: " + messageObject.lineEnd +
                           ";\nlineType: " + messageObject.lineType +
                           ";\nlineTypeName: " + messageObject.lineTypeName +
                           ";\nfavorite: " + messageObject.favorite +
-                          ";\nstate: " + messageObject.state)
-//                searchResultLineInfoModel.append(messageObject);
+                          ";\nstate: " + messageObject.state)*/
+                searchResultLineInfoModel.append(messageObject);
             }
 
 /*            lineInfoModel.append({"lineIdLong" : "" + JS.response.childNodes[ii].childNodes[0].firstChild.nodeValue,
@@ -114,27 +116,6 @@ Item {
                                  })
         }
     }
-/*    MultiSelectionDialog {   // save lines select dialog
-         id: chooseLinesDialog
-         acceptButtonText: "Save"
-
-         rejectButtonText: "Cancel"
-         titleText: "Lines to save"
-         model: searchResultLineInfoModel
-         onAccepted: {
-            var tempCount = lineInfoModel.count
-            for (var i=0;i<selectedIndexes.length;++i) {
-                saveLine(selectedIndexes[i])
-            }
-            if (lineInfoModel.count > tempCount) {
-                linesView.currentIndex = tempCount
-                showLineInfo()
-            }
-         }
-         onRejected: {
-
-         }
-    } */
     ContextMenu {   // line info context menu
         id: linesContextMenu
         MenuLayout {
@@ -289,15 +270,20 @@ Item {
         }
             Button {  // recent lines
                 id: linesButton
-                text: "Saved lines"
+                text: "Saved"
                 onClicked: {
-                    infoRect.state = "linesSelected"
-                    if (linesView.currentIndex != selectedLineIndex) {
-                        linesView.currentIndex = selectedLineIndex
-                    } else if (offlineResult == true) {
+                    if (linesView.currentIndex != selectedLineIndex) { linesView.currentIndex = selectedLineIndex }
+                    if ( infoRect.state != "linesSelected" ) {
+                         infoRect.state = "linesSelected";
+                    } else if (linesView.model != lineInfoModel) {
+                        searchString = ""
+                        linesView.model = lineInfoModel
+                        searchResultLineInfoModel.clear()
+                        text = "Recent"
+                        dataRect.visible=false
+                    } else {
                         lineInfoModel.clear()
                         lineInfoLoadLines.sendMessage("")
-                        offlineResult = false
                     }
                 }
             }
@@ -407,9 +393,9 @@ Item {
             Text{
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: parent.left
-                anchors.leftMargin: 50
+//                anchors.leftMargin: 50
                 wrapMode: Text.WordWrap
-                text: lineStart + " -> " + lineEnd;
+                text: "" + /?????/lineIdShort + " " + lineStart + " -> " + lineEnd;
                 font.pixelSize: 28;
                 color: "#cdd9ff"
             }
@@ -457,6 +443,7 @@ Item {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         visible: true;
+        state: linesSelected;
         ListView {  // Lines list
             id: linesView
             anchors.fill:  parent
