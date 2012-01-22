@@ -12,6 +12,7 @@ Item {
     property string searchString: ""
     property int selectedLineIndex : -1
     property bool offlineResult : false
+    property int linesToSave : 0
 
     signal showLineMap(string lineIdLong)
     signal showLineMapStop(string lineIdLong, string stopIdLong)
@@ -23,13 +24,11 @@ Item {
     width: 480
     height: 745
 
-    Component.onCompleted: { // load config and recent lines
-        refreshConfig()
+    Component.onCompleted: { // load and recent lines
         checkLineLoadRequest()
         lineInfoLoadLines.sendMessage("")
     }
 
-    Config { id: config }
     InfoBanner {    // info banner
         id: infoBanner
         text: "info description here"
@@ -39,7 +38,10 @@ Item {
     Loading {          // busy indicator
         id: loading
         visible: false
-        anchors.fill: parent
+        anchors.top: dataRect.bottom
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
         z: 8
     }
     WorkerScript {  // lineSearch
@@ -52,7 +54,9 @@ Item {
                 if (searchResultLineInfoModel.count > 2) {
                     linesView.model = searchResultLineInfoModel
                     linesButton.text = "Filtered"
+                    loading.visible = false
                 } else {
+                    linesToSave = searchResultLineInfoModel.count
                     for (var ii=0; ii<searchResultLineInfoModel.count; ++ii) {
                         console.log("lineInfo.qml: sending save request " + searchResultLineInfoModel.get(ii).lineIdLong)
                         lineSearchWorker.sendMessage({"searchString":searchResultLineInfoModel.get(ii).lineIdLong,"save":"true"})
@@ -64,23 +68,36 @@ Item {
                     showLineInfo()*/
                 }
             } else if (messageObject.lineIdLong == "NONE") {
+                loading.visible = true
                 showError("No lines found")
             } else if (messageObject.lineIdLong == "ERROR") {
+                loading.visible = true
                 showError("Server returned ERROR")
             } else {
                 if (messageObject.state != "saved") {  // offline || online
+                    for (var bb=0; bb < searchResultLineInfoModel.count; ++bb) {
+                        if (searchResultLineInfoModel.get(bb).lineIdLong == messageObject.lineIdLong){
+                            return;
+                        }
+                    }
                     searchResultLineInfoModel.append(messageObject);
                 } else {
+                    --linesToSave;
+                    if (!linesToSave) loading.visible = false
                     for (var bb=0; bb < searchResultLineInfoModel.count; ++bb) {
-                        if (searchResultLineInfoModel.get(bb).lineIdLong == messageObject.lineIdLong) lineInfoModel.append(searchResultLineInfoModel.get(bb));
+                        if (searchResultLineInfoModel.get(bb).lineIdLong == messageObject.lineIdLong){
+                            searchResultLineInfoModel.set(bb,{"state":"offline"})
+                            lineInfoModel.append(searchResultLineInfoModel.get(bb));
+                        }
                     }
+                    showLineInfo()
                 }
             }
         }
     }
     WorkerScript {  // stop name loader
         id: stopReachLoader
-        source: "lineInfo.js"
+        source: "stopName.js"
 
         onMessage: {
             stopReachModel.set(messageObject.lineReachNumber, {"stopName" : messageObject.stopName,
@@ -109,7 +126,11 @@ Item {
         source: "lineInfoLoadLines.js"
 
         onMessage: {
-            lineInfoModel.append(messageObject)
+            if (messageObject.lineIdLong != "FINISH") {
+                lineInfoModel.append(messageObject)
+            } else {
+                linesView.currentIndex = selectedLineIndex
+            }
         }
     }
     ContextMenu {   // line info context menu
@@ -212,14 +233,22 @@ Item {
                 }
                 id: favoriteButton
                 anchors.fill: parent
-                iconSource: (lineInfoModel.get(selectedLineIndex).favorite == "true") ? "image://theme/icon-m-toolbar-favorite-mark-white" : "image://theme/icon-m-toolbar-favorite-unmark-white"
+                iconSource: (linesView.model.get(selectedLineIndex).favorite == "true") ? "image://theme/icon-m-toolbar-favorite-mark-white" : "image://theme/icon-m-toolbar-favorite-unmark-white"
                 onClicked: {
-                    if (lineInfoModel.get(selectedLineIndex).favorite == "true") {
+                    if (linesView.model.get(selectedLineIndex).favorite == "true") {
                         setFavorite(searchString, "false")
-                        lineInfoModel.set(selectedLineIndex, {"favorite":"false"})
+                        linesView.model.set(selectedLineIndex, {"favorite":"false"})
+                        for (var ii=0; ii < lineInfoModel.count; ii++) {
+                            if (lineInfoModel.get(ii).lineIdLong == searchString)
+                                lineInfoModel.set(ii, {"favorite":"false"})
+                        }
                     } else {
                         setFavorite(searchString, "true")
                         lineInfoModel.set(selectedLineIndex, {"favorite":"true"})
+                        for (var ii=0; ii < lineInfoModel.count; ii++) {
+                            if (lineInfoModel.get(ii).lineIdLong == searchString)
+                                lineInfoModel.set(ii, {"favorite":"true"})
+                        }
                     }
                     lineInfoPageItem.refreshFavorites()
                 }
@@ -272,11 +301,15 @@ Item {
                     if ( infoRect.state != "linesSelected" ) {
                          infoRect.state = "linesSelected";
                     } else if (linesView.model != lineInfoModel) {
-                        searchString = ""
                         linesView.model = lineInfoModel
                         searchResultLineInfoModel.clear()
                         text = "Recent"
-                        dataRect.visible=false
+                        for (var ii=0; ii < lineInfoModel.count; ++ii) {
+                            if (lineInfoModel.get(ii).lineIdLong == searchString) {
+                                selectedLineIndex = ii
+                                linesView.currentIndex = ii
+                            }
+                        }
                     } else {
                         lineInfoModel.clear()
                         lineInfoLoadLines.sendMessage("")
@@ -391,27 +424,39 @@ Item {
                 anchors.left: parent.left
 //                anchors.leftMargin: 50
                 wrapMode: Text.WordWrap
-                text: "" + lineIdShort + " " + lineStart + " -> " + lineEnd;
+                text: "" + lineIdShort + "  " + lineStart + " -> " + lineEnd;
                 font.pixelSize: 28;
                 color: "#cdd9ff"
             }
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
-                    if (linesView.model != lineInfoModel) {
-                        console.log("lineInfo.qml: open line from search result:" + lineIdLong)
-                        lineSearchWorker.sendMessage({"searchString": "" + lineIdLong, "save":"true"})
+                    if (linesView.model != lineInfoModel && index != selectedLineIndex) {
+                        console.log("lineInfo.qml: open line from search result:" + lineIdLong + ": saving")
+                        searchString = lineIdLong
+                        stopReachModel.clear()
+                        scheduleClear()
+                        console.log("lineInfo: selected line " + lineIdLong + " : " + linesView.model.get(index).state)
+                        if (linesView.model.get(index).state == "online") {
+                            lineSearchWorker.sendMessage({"searchString": "" + lineIdLong, "save":"true"})
+                        } else {
+                            showLineInfo()
+                        }
+                        selectedLineIndex = index
+                        linesView.currentIndex = index
+                        showLineInfo()
                     } else if (selectedLineIndex != index) {
                         searchString = lineIdLong
                         selectedLineIndex = index
                         linesView.currentIndex = index
-                        tabRect.checkedButton = stopsButton
                         showLineInfo()
                     }
                 }
                 onPressAndHold: {
-                    linesView.currentIndex = index
-                    linesContextMenu.open()
+                    if (linesView.model == lineInfoModel) {
+                        linesView.currentIndex = index
+                        linesContextMenu.open()
+                    }
                 }
             }
         }
@@ -442,7 +487,7 @@ Item {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         visible: true;
-        state: linesSelected;
+        state: "linesSelected";
         ListView {  // Lines list
             id: linesView
             anchors.fill:  parent
@@ -572,6 +617,7 @@ Item {
             return
         }
         searchResultLineInfoModel.clear()
+        loading.visible = true
         lineSearchWorker.sendMessage({"searchString":searchString})
     }
     function sendStopsToMap() {
@@ -635,7 +681,7 @@ Item {
     }
     function showLineInfo() {        // triggered when one of saved line selected by user
         if (linesView.currentIndex >= 0) {
-            console.log("ShowLineInfo:  current index is " + linesView.currentIndex)
+            console.log("ShowLineInfo:  current index is " + selectedLineIndex)
             infoRect.state = "stopsSelected"
             tabRect.checkedButton = stopsButton
             dataRect.visible = true
@@ -644,11 +690,11 @@ Item {
             scheduleClear()
             stopReachModel.clear()
             getStops()
-            lineShortCodeName.text = linesView.model.get(linesView.currentIndex).lineIdShort
-            lineStart.text = "From : " + linesView.model.get(linesView.currentIndex).lineStart
-            lineEnd.text = "To : " + linesView.model.get(linesView.currentIndex).lineEnd
-            lineType.text = JS.getLineType(linesView.model.get(linesView.currentIndex).lineType)
-            searchString = linesView.model.get(linesView.currentIndex).lineIdLong
+            lineShortCodeName.text = linesView.model.get(selectedLineIndex).lineIdShort
+            lineStart.text = "From : " + linesView.model.get(selectedLineIndex).lineStart
+            lineEnd.text = "To : " + linesView.model.get(selectedLineIndex).lineEnd
+            lineType.text = linesView.model.get(selectedLineIndex).lineTypeName
+            searchString = linesView.model.get(selectedLineIndex).lineIdLong
         } else {
             dataRect.visible = false
             stopReachModel.clear()
@@ -663,9 +709,6 @@ Item {
                 catch(e) { console.log("lineInfo: setFavorite EXCEPTION: " + e) }
             }
         )
-    }
-    function refreshConfig() {        // reload config from database - same function on every page
-        JS.loadConfig(config)
     }
 /*<----------------------------------------------------------------------->*/
 }

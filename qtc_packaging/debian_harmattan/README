@@ -1,6 +1,15 @@
-The Debian Package hrtmobile
+The Debian Package hrt_rns
 ----------------------------
 
 This is a free online/offline client for Helsinki Regional Transport system.
+Intended to be used as a quick transport information service with stops names,
+addresses, schedules; bus, tram, VR, U, metro traffic lines names, routes,
+stops, schedules.
+
+It is possible that there will be some minor updates and improvements, but mostly
+this software comes with no warranty and totally free distributed. Nevertheless
+this software require internet network connection, data transfer charges may apply
+if you don't have unlimited dataplan. If you in doubts, consult your mobie network
+provider about software application with network data transfer requirement.
 
  -- Alexey Fomenko <alexey.fomenko@gmail.com>  Fri, 22 Jul 2011 09:48:11 +0300

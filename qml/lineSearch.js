@@ -41,14 +41,16 @@ WorkerScript.onMessage = function (message) {
                                                  resp.childNodes[ii].childNodes[6].firstChild.nodeValue,
                                                 "false" ] );
                                 }
-                                catch (e) { console.log("lineSearch.js: save exception " + e); }
-
+                                catch (e) {
+                                    console.log("lineSearch.js: save exception " + e);
+                                    return;
+                                }
+                                console.log("Saving stops: " + resp.childNodes[ii].childNodes[8].childNodes.length)
                                 for (var cc = 0; cc < resp.childNodes[ii].childNodes[8].childNodes.length; ++cc) {
-                                    console.log("Saving stop " + resp.childNodes[ii].childNodes[8].childNodes[cc].firstChild.firstChild.nodeValue)
                                     try { tx.executeSql('INSERT INTO LineStops VALUES(?,?,?)', [resp.childNodes[ii].childNodes[0].firstChild.nodeValue,
                                          resp.childNodes[ii].childNodes[8].childNodes[cc].firstChild.firstChild.nodeValue,
                                          resp.childNodes[ii].childNodes[8].childNodes[cc].lastChild.firstChild.nodeValue]); }
-                                    catch(e) { console.log("EXCEPTION: " + e) }
+                                    catch(e) { console.log("EXCEPTION: " + e); return; }
                                 }
                                 WorkerScript.sendMessage({"lineIdLong":resp.childNodes[ii].childNodes[0].firstChild.nodeValue,
                                                      "state" : "saved"
@@ -92,7 +94,7 @@ WorkerScript.onMessage = function (message) {
     if (! save) { // search only if no save requested
         db.transaction(  // offline search
             function(tx) {
-               try { var rs = tx.executeSql("SELECT Lines.lineIdLong, Lines.lineIdshort, Lines.lineName, Lines.lineType, Lines.lineStart, Lines.lineEnd, LineTypes.lineTypeName, favorite FROM Lines LEFT OUTER JOIN LineTypes ON Lines.lineType=LineTypes.lineType WHERE lineIdLong=? OR lineIdShort=?", [message.searchString, message.searchString]) }
+               try { var rs = tx.executeSql("SELECT Lines.lineIdLong, Lines.lineIdshort, Lines.lineName, Lines.lineType, Lines.lineStart, Lines.lineEnd, LineTypes.lineTypeName, favorite FROM Lines LEFT OUTER JOIN LineTypes ON Lines.lineType=LineTypes.lineType WHERE lineIdLong=? OR lineIdShort=? OR lineStart=? OR lineEnd=?", [message.searchString, message.searchString, message.searchString, message.searchString]) }
                catch(e) { console.log("lineSearch.js: offline search exception: " + e) }
                if (rs.rows.length > 0) {
                    console.log("lineSearch.js: offline found " + rs.rows.length)

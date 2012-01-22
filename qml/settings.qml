@@ -27,6 +27,16 @@ Item {
     Column {
         spacing: 20
         anchors.horizontalCenter: parent.horizontalCenter
+        Label {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: "HUOMIO! ATTENTION!\nACHTUNG! ВНИМАНИЕ!"
+            color: "#cdd9ff"
+        }
+        Label {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: "Press this button only if real need\nIt will wipe all HRT R&S saved data"
+            color: "#cdd9ff"
+        }
         Button {
             style: ButtonStyle {
                 inverted: true
@@ -43,7 +53,27 @@ Item {
         }
         Label {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: "HRTMobile version 0.6.5 (20111215)"
+            text: "HRTMobile version 0.6.7 (20120122)"
+            color: "#cdd9ff"
+        }
+        Label {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: "Address for feedback"
+            color: "#cdd9ff"
+        }
+        Label {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: "alexey.fomenko@gmail.com"
+            color: "#cdd9ff"
+        }
+        Label {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: "This is free software distributed under\n GPLv3 license. Data charges may apply"
+            color: "#cdd9ff"
+        }
+        Label {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: "Sources: git://[git-address].git"
             color: "#cdd9ff"
         }
     }

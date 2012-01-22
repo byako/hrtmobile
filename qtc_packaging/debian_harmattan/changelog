@@ -1,6 +1,13 @@
+hrtmobile (0.6.7) unstable; urgency=low
+
+  * Optimized API calls. Great improved speed of response
+
+ -- Alexey Fomenko <alexey.fomenko@gmail.com>  Sun, 22 Jan 2012 22:05:06 +0200
+
 hrtmobile (0.6.6) unstable; urgency=low
 
   * Splash screen
+  * Small improvements
 
  -- Alexey Fomenko <alexey.fomenko@gmail.com>  Tue, 10 Jan 2012 16:07:36 +0200
 
@@ -12,43 +19,43 @@ hrtmobile (0.6.5) unstable; urgency=low
 
 hrtmobile (0.6.4) unstable; urgency=low
 
-  * map info interactive
+  * Map info interactive
 
  -- Alexey Fomenko <alexey.fomenko@gmail.com>  Thu, 15 Dec 2011 11:31:34 +0200
 
 hrtmobile (0.6.3) unstable; urgency=low
 
-  * favorites interactive
-  * stops deletion/selection indexes fixed
+  * Favorites interactive
+  * Stops deletion/selection indexes fixed
 
  -- Alexey Fomenko <alexey.fomenko@gmail.com>  Mon, 12 Dec 2011 10:27:51 +0200
 
 hrtmobile (0.6.2) unstable; urgency=low
 
-  * geocode api: faster
-  * stops find\deletion improved
+  * Geocode api: faster
+  * Stops find\deletion improved
 
  -- Alexey Fomenko <alexey.fomenko@gmail.com>  Mon, 12 Dec 2011 10:27:51 +0200
 
 hrtmobile (0.6.1) unstable; urgency=low
 
-  * favorites page(non-interactive)
-  * half-interactive map
-  * remove color differenciation
+  * Favorites page(non-interactive)
+  * Half-interactive map
+  * Remove color differenciation
 
  -- Alexey Fomenko <alexey.fomenko@gmail.com>  Mon, 12 Dec 2011 10:27:50 +0200
 
 hrtmobile (0.6.0) unstable; urgency=low
 
-  * add favorites support
-  * add color differentiation
+  * Add favorites support
+  * Add color differentiation
 
  -- Alexey Fomenko <alexey.fomenko@gmail.com>  Tue, 29 Nov 2011 23:19:24 +0200
 
 hrtmobile (0.5.0) unstable; urgency=low
 
-  * experimental API support
-  * improvements\fixes
+  * Experimental API support
+  * Improvements\fixes
 
  -- Alexey Fomenko <alexey.fomenko@gmail.com>  Sun, 27 Nov 2011 22:12:30 +0200
 

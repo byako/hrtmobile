@@ -145,8 +145,6 @@ Page {
                     stopInfoLoader.source = "stopInfo.qml"
                     stopInfoLoader.parent = stopInfoPageContainer
                 }
-//                if (stopInfoLoader.status == Loader.Ready) stopInfoLoader.item.refreshConfig()
-//                if (settingsLoader.status == Loader.Ready) settingsLoader.item.refreshConfig()
             }
             onLoadStop: {
                 console.log("favorites signal: loadStop")
@@ -175,8 +173,8 @@ Page {
             target: settingsLoader.item
             onDbclean: {
                 console.log("db cleaned: resetting stop and line info pages")
-                if (lineInfoLoader.status == Loader.Ready) lineInfoLoader.item.refreshConfig()
-                if (stopInfoLoader.status == Loader.Ready) stopInfoLoader.item.refreshConfig()
+//                if (lineInfoLoader.status == Loader.Ready) lineInfoLoader.item.()
+//                if (stopInfoLoader.status == Loader.Ready) stopInfoLoader.item.()
             }
         }
         Connections {  // map page

@@ -1,24 +1,21 @@
-This package was debianized by alex <alex@unknown> on
+This package was debianized by Alexey Fomenko <alexey.fomenko@gmail.com> on
 Fri, 22 Jul 2011 09:48:11 +0300.
 
 It was downloaded from <url://example.com>
 
 Upstream Author(s):
 
-    <put author's name and email here>
-    <likewise for another author>
+    Alexey Fomenko <alexey.fomenko@gmail.com>
 
 Copyright:
 
-    <Copyright (C) YYYY Name OfAuthor>
-    <likewise for another author>
+    Copyright (C) 2012 Alexey Fomenko
 
 License:
 
     This package is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
+    the Free Software Foundation version 3
 
     This package is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -32,7 +29,7 @@ License:
 On Debian systems, the complete text of the GNU General
 Public License can be found in `/usr/share/common-licenses/GPL'.
 
-The Debian packaging is (C) 2011, alex <alex@unknown> and
+The Debian packaging is (C) 2012, Alexey Fomenko <alexey.fomenko@gmail.com> and
 is licensed under the GPL, see above.
 
 

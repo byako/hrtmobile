@@ -17,8 +17,7 @@ Item {
     width: 480
     height: 745
 
-    Component.onCompleted: { refreshConfig(); infoModel.clear(); fillModel(); }
-    Config { id: config }
+    Component.onCompleted: { fillModel(); }
     Rectangle {              // dark background
         color: "#000000";
         anchors.fill: parent
@@ -62,31 +61,6 @@ Item {
             }
         }
     }
-    WorkerScript {           // load stop info from web or database
-        id: loadStopInfo
-        source: "stopInfoLoadInfo.js"
-        onMessage: {
-            if (messageObject.action == "SAVED") {  // stop has been saved from server reply
-                loadingMap.visible = false
-                searchString = messageObject.stopIdLong
-                console.log("WORKER SENT stopIdLong: setting searchString = " + messageObject.stopIdLong)
-                infoModel.clear()
-                linesModel.clear()
-                fillModel()
-                fillLinesModel()
-                fillInfoModel()
-                showError("Saved stop information")
-            } else if (messageObject.action == "LOAD") { // stop has been found in database
-                // TODO load stop from offline DATABASE
-            } else if (messageObject.action == "ERROR") {
-                showError("Server returned ERROR");
-            } else if (messageObject.action == "FAILED") {
-                showError("Couldn't open information")
-            } else {
-                console.log("stopInfo: loadStopInfo worker: unknown action: " + messageBoject.action)
-            }
-        }
-    }
     WorkerScript {           // fast schedule loader: API 1.0
         id: loadStopSchedule
         source: "stopInfoScheduleLoad.js"
@@ -98,8 +72,7 @@ Item {
             } else if (messageObject.departName == "ERROR") {
                 showError("Server returned ERROR")
                 loading.visible = false
-                loadingMap.visible = false
-                dataRect.visible = false
+//                loadingMap.visible = false
             } else if (messageObject.departName == "FINISHED"){
                 loading.visible = false
             } else {
@@ -114,7 +87,10 @@ Item {
     Loading {                // busy indicator
         id: loading
         visible: false
-        anchors.fill: parent
+        anchors.bottom: parent.bottom
+        anchors.top: dataRect.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
         z: 8
     }
     InfoBanner {             // info banner
@@ -141,7 +117,6 @@ Item {
                             dataRect.visible = false
                             trafficModel.clear()
                             linesModel.clear()
-                            infoModel.clear()
                         } else if (selectedStopIndex > stopsView.currentIndex) {
                             selectedStopIndex -= 1
                         }
@@ -181,7 +156,6 @@ Item {
                     selectedStopIndex = -1
                     trafficModel.clear()
                     linesModel.clear()
-                    infoModel.clear()
                     dataRect.visible = false
                 }
             }
@@ -368,13 +342,6 @@ Item {
                 infoRect.state = "linesSelected"
             }
         }
-        Button {
-            id: stopInfo
-            text: "Info"
-            onClicked: {
-                infoRect.state = "infoSelected"
-            }
-        }
     }
 /*<----------------------------------------------------------------------->*/
     ListModel {              // search result stopInfo list model
@@ -443,12 +410,10 @@ Item {
                         stopsView.currentIndex = index
                         searchString = "" + stopsView.model.get(index).stopIdLong
                         showMapButton.visible = true
-                        fillInfoModel()
                         fillLinesModel()
                         stopNameValue.text = stopName
                         stopAddressValue.text = stopAddress
                         stopCityValue.text = stopCity
-                        dataRect.visible = true
                         showMapButton.visible = true
                         fillSchedule()
                     } else if (stopsView.currentIndex != selectedStopIndex){
@@ -506,36 +471,6 @@ Item {
             }
         }
     }
-    ListModel {              // stop info model
-        id:infoModel
-//        ListElement {
-//            propName: ""
-//            propValue: ""
-//        }
-    }
-    Component {              // stop info delegate
-        id: infoDelegate
-        Item {
-            width: infoView.width
-            height: 50
-            Row {
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 10
-                Text{
-                    text: propName
-                    font.pixelSize: 30
-                    color: "#cdd9ff"
-                    width: 400
-                }
-                Text{
-                    text: propValue
-                    font.pixelSize: 30
-                    color: "#cdd9ff"
-                }
-            }
-        }
-    }
     ListModel {              // lines passing model
         id: linesModel
 //        ListElement {
@@ -546,7 +481,7 @@ Item {
     Component {              // lines passing delegate
         id: linesDelegate
         Item {
-            width: infoView.width
+            width: linesView.width
             height: 50
             Row {
                 anchors.left: parent.left
@@ -639,16 +574,6 @@ Item {
             currentIndex: -1
             clip: true
         }
-        ListView {  // stop info infoView
-            id: infoView
-            visible: false
-            anchors.fill: parent
-            delegate:  infoDelegate
-            model: infoModel
-            highlight: Rectangle { color:"#666666"; radius:  5 }
-            currentIndex: -1
-            clip: true
-        }
 
     states: [
         State {
@@ -657,7 +582,6 @@ Item {
             PropertyChanges { target: scheduleView; visible: false }
 //            PropertyChanges { target: scheduleButtons; visible: false }
             PropertyChanges { target: linesView; visible: false }
-            PropertyChanges { target: infoView; visible: false }
         },
         State {
             name: "scheduleSelected"
@@ -665,7 +589,6 @@ Item {
             PropertyChanges { target: scheduleView; visible: true}
 //            PropertyChanges { target: scheduleButtons; visible: true }
             PropertyChanges { target: linesView; visible: false }
-            PropertyChanges { target: infoView; visible: false }
         },
         State {
             name: "linesSelected"
@@ -673,15 +596,6 @@ Item {
             PropertyChanges { target: scheduleView; visible: false }
 //            PropertyChanges { target: scheduleButtons; visible: false }
             PropertyChanges { target: linesView; visible: true }
-            PropertyChanges { target: infoView; visible: false }
-        },
-        State {
-            name: "infoSelected"
-            PropertyChanges { target: stopsView; visible: false }
-            PropertyChanges { target: scheduleView; visible: false }
-//            PropertyChanges { target: scheduleButtons; visible: false }
-            PropertyChanges { target: linesView; visible: false }
-            PropertyChanges { target: infoView; visible: true }
         }
     ]
 
@@ -706,19 +620,6 @@ Item {
             }
         )
 
-    }
-    function fillInfoModel() {  // checkout stop info from database
-        JS.__db().transaction(
-            function(tx) {
-                try { var rs = tx.executeSql("SELECT option,value FROM StopInfo WHERE stopIdLong=?",[searchString]); }
-                catch(e) { console.log("FillInfoModel EXCEPTION: " + e) }
-                infoModel.clear();
-                for (var i=0; i<rs.rows.length; ++i) {
-                    infoModel.append({"propName" : rs.rows.item(i).option,
-                                      "propValue" : rs.rows.item(i).value})
-                }
-            }
-        )
     }
     function fillLinesModel() {  // checkout stop info from database
         JS.__db().transaction(
@@ -757,7 +658,6 @@ Item {
                         stopsView.currentIndex = j
                         searchString = "" + recentModel.get(j).stopIdLong
                         showMapButton.visible = true
-                        fillInfoModel()
                         fillLinesModel()
                         stopNameValue.text = recentModel.get(selectedStopIndex).stopName
                         stopAddressValue.text = recentModel.get(selectedStopIndex).stopAddress
@@ -776,7 +676,6 @@ Item {
             stopsView.currentIndex = -1
             dataRect.visible = false
             trafficModel.clear()
-            infoModel.clear()
             linesModel.clear()
             stopsLookup.sendMessage({"searchString" : searchString})
         }
@@ -788,9 +687,6 @@ Item {
                 catch(e) { console.log("stopInfo: setFavorite EXCEPTION: " + e) }
             }
         )
-    }
-    function refreshConfig() {
-        JS.loadConfig(config)
     }
 /*<----------------------------------------------------------------------->*/
 }

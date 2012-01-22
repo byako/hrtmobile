@@ -42,22 +42,20 @@ OTHER_FILES += \
     qml/route.qml \
     qml/settings.qml \
     qml/realtimeSchedule.qml \
-    qml/MyQueryDialog.qml \
     qml/Spinner.qml \
     qml/database.js \
     qml/Config.qml \
-    qml/lineInfo.js \
     qml/route.js \
     qml/lineInfoSchedule.js \
     qml/lineInfoLoadLines.js \
     qml/mapStopsSearch.js \
     qml/stopInfoScheduleLoad.js \
-    qml/stopInfoLoadInfo.js \
     qml/SearchDialog.qml \
     qml/stopSearch.js \
     qml/Loading.qml \
     qml/Favorites.qml \
-    qml/lineSearch.js
+    qml/lineSearch.js \
+    qml/stopName.js
 
 RESOURCES += \
     res.qrc
@@ -83,6 +81,10 @@ contains(MEEGO_EDITION,harmattan) {
     target.path = /opt/hrtmobile/bin
     INSTALLS += target
 }
+
+
+
+
 
 
 

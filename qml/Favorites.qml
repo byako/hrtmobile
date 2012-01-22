@@ -183,7 +183,6 @@ Item {
     }
     //-===========================================================================-
     function loadLines() {
-        lineInfoModel.clear()
         JS.__db().transaction(
             function(tx) {
                 try { var rs = tx.executeSql('SELECT lineIdLong, lineIdShort, lineName, lineStart, lineEnd, lineType, favorite FROM Lines WHERE favorite=?', ["true"]); }
@@ -201,7 +200,6 @@ Item {
         )
     }
     function loadStops() {
-        recentModel.clear()
         JS.__db().transaction(
             function(tx) {
                 try { var rs = tx.executeSql('SELECT * FROM Stops WHERE favorite=?', ["true"]); }

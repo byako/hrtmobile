@@ -13,11 +13,11 @@ WorkerScript.onMessage = function (message) {
             } else {
                 var a = doc.responseXML.documentElement
                 var lonlat = new Array
-                lonlat = a.childNodes[0].childNodes[6].firstChild.nodeValue.split(",")
-                WorkerScript.sendMessage({"stopIdLong" : a.childNodes[0].childNodes[7].childNodes[0].firstChild.nodeValue,
-                                          "stopIdShort" : a.childNodes[0].childNodes[7].childNodes[1].firstChild.nodeValue,
-                                          "stopName" : a.childNodes[0].childNodes[2].firstChild.nodeValue,
-                                          "stopCity" : a.childNodes[0].childNodes[5].firstChild.nodeValue,
+                lonlat = a.firstChild.childNodes[4].firstChild.nodeValue.split(",")
+                WorkerScript.sendMessage({"stopIdLong" : a.firstChild.childNodes[0].firstChild.nodeValue,
+                                          "stopIdShort" : a.firstChild.childNodes[1].firstChild.nodeValue,
+                                          "stopName" : a.firstChild.childNodes[2].firstChild.nodeValue,
+                                          "stopCity" : a.firstChild.childNodes[3].firstChild.nodeValue,
                                           "stopLongitude" : lonlat[0],
                                           "stopLatitude" : lonlat[1],
                                           "lineReachNumber" : message.lineReachNumber
@@ -27,7 +27,6 @@ WorkerScript.onMessage = function (message) {
             showError("Request error. Is Network available?")
         }
     }
-    doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=geocode&user=byako&pass=gfccdjhl&format=xml&epsg_out=wgs84&key=" + message.stopIdLong);
-             http://api.reittiopas.fi/public-ytv/fi/api/?stop="+ message.stopIdLong+"&user=byako&pass=gfccdjhl");
+    doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=stop&user=byako&pass=gfccdjhl&format=xml&p=1110100010000&code=" + message.stopIdLong);
     doc.send();
 }

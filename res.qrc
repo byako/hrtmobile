@@ -4,11 +4,9 @@
         <file>qml/MainPage.qml</file>
         <file>qml/lineInfo.qml</file>
         <file>qml/stopInfo.qml</file>
-        <file>qml/lineInfo.js</file>
         <file>qml/route.qml</file>
         <file>qml/settings.qml</file>
         <file>qml/realtimeSchedule.qml</file>
-        <file>qml/MyQueryDialog.qml</file>
         <file>images/loading.png</file>
         <file>qml/Spinner.qml</file>
         <file>qml/database.js</file>
@@ -18,11 +16,11 @@
         <file>qml/lineInfoLoadLines.js</file>
         <file>qml/mapStopsSearch.js</file>
         <file>qml/stopInfoScheduleLoad.js</file>
-        <file>qml/stopInfoLoadInfo.js</file>
         <file>qml/SearchDialog.qml</file>
         <file>qml/stopSearch.js</file>
         <file>qml/Loading.qml</file>
         <file>qml/Favorites.qml</file>
         <file>qml/lineSearch.js</file>
+        <file>qml/stopName.js</file>
     </qresource>
 </RCC>

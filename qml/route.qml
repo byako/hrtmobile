@@ -79,9 +79,9 @@ Item {
 
         }
     }
-    WorkerScript {  // line stops info load
+    WorkerScript {  // stop name fetching
         id: stopInfoLoad
-        source: "lineInfo.js"
+        source: "stopName.js"
         onMessage: {
             for (var ii=0; ii < stopsLoaded.count; ++ii) {
                 if (stopsLoaded.get(ii).stopIdLong == "" + messageObject.stopIdLong) {
@@ -90,10 +90,10 @@ Item {
                         stopsLoaded.set(ii, {"status" : "-1"})
                         return
                     }
-                    stopsLoaded.set(ii,{"stopAddress" : messageObject.stopAddress, "stopName" : messageObject.stopName})
+                    stopsLoaded.set(ii,{"stopName" : messageObject.stopName})
                     if (stopsLoaded.get(ii).status == "2") {
                         stopsLoaded.set(ii, {"status" : "1"})
-                        infoBanner.text = "Name: " + messageObject.stopName + " Address: " + messageObject.stopAddress
+                        infoBanner.text = "Name: " + messageObject.stopName
                         infoBanner.show()
                     }
                     break
@@ -330,7 +330,7 @@ Item {
                     infoBanner.text = "Error: no info on server"
                     infoBanner.show()
                 } else  { // print current ifo
-                    infoBanner.text = "Name: " + stopsLoaded.get(ii).stopName + " Address: " + stopsLoaded.get(ii).stopAddress
+                    infoBanner.text = "Name: " + stopsLoaded.get(ii).stopName
                     infoBanner.show()
                 }
             }
@@ -458,7 +458,6 @@ Item {
                                                         '"; center : Coordinate { longitude : ' + stopLongitude_ +
                                                         '; latitude : ' + stopLatitude_ +
                                                         '} color : "#80FF0000"; radius: 30.0' +
-                                                        '; signal pupUp()' +
                                                         '; property string stopIdShort : "' + stopIdShort_ +
                                                         '"; property string stopIdLong : "' + stopIdLong_ +
                                                         '"; property string stopName : "' + stopName_ +

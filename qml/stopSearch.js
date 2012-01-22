@@ -11,6 +11,7 @@ WorkerScript.onMessage = function(message) {
             var a = doc.responseXML.documentElement
             var lonlat = new Array
 //            var coords = new String
+            console.log("stopSearch.js: found " + a.childNodes.length + " stops online")
             for (var ii = 0; ii < a.childNodes.length; ++ii) { // check all entries in retrieved QML, filter out all who's not "stop"
                 if (a.childNodes[ii].childNodes[0].firstChild.nodeValue == "stop") {
                     __db.transaction( // check if we have this stop in DB already
@@ -45,7 +46,7 @@ WorkerScript.onMessage = function(message) {
                                         console.log("StopSearch worker exception 3: " + e)
                                     }
                                 }
-                                console.log("StopSearch: saved stop " + a.childNodes[ii].childNodes[7].childNodes[0].firstChild.nodeValue)
+                                console.log("stopSearch.js: saved stop " + a.childNodes[ii].childNodes[7].childNodes[0].firstChild.nodeValue)
                                 WorkerScript.sendMessage({"stopIdShort": a.childNodes[ii].childNodes[7].childNodes[1].firstChild.nodeValue,
                                                           "stopIdLong" : a.childNodes[ii].childNodes[7].childNodes[0].firstChild.nodeValue,
                                                           "stopAddress" : "",
@@ -85,6 +86,6 @@ WorkerScript.onMessage = function(message) {
     )
     console.log("stopSearch.js: Online stop search initiated");
 
-    doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=geocode&user=byako&epsg_out=wgs84&pass=gfccdjhl&format=xml&key=" + message.searchString)
+    doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=geocode&user=byako&epsg_out=wgs84&loc_types=stop&pass=gfccdjhl&format=xml&key=" + message.searchString)
     doc.send();
 }

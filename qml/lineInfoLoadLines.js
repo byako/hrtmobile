@@ -12,6 +12,7 @@ WorkerScript.onMessage = function (message) {
                  for (var i=0; i<rs.rows.length; ++i) {
                     WorkerScript.sendMessage(rs.rows.item(i))
                  }
+                 WorkerScript.sendMessage({"lineIdLong":"FINISH"})
              }
     )
 }
