@@ -53,7 +53,9 @@ Item {
                 console.log("lineInfo.qml: worker finished")
                 if (searchResultLineInfoModel.count > 2) {
                     linesView.model = searchResultLineInfoModel
-                    linesButton.text = "Filtered"
+                    console.log("lineInfo.qml: RECENTBUTTON: FILTERED SIGN")
+                    recentText.text = "Filtered"
+                    recentButtonAnimation.running = "true"
                     loading.visible = false
                 } else {
                     linesToSave = searchResultLineInfoModel.count
@@ -295,7 +297,20 @@ Item {
         }
             Button {  // recent lines
                 id: linesButton
-                text: "Recent"
+                Text {
+                    id: recentText
+                    anchors.centerIn: parent
+                    SequentialAnimation on color {
+                        running: false
+                        id: recentButtonAnimation
+                        loops: Animation.Infinite;
+                        ColorAnimation { from: "white"; to: "black"; duration: 800; }
+                        ColorAnimation { from: "black"; to: "white"; duration: 800; }
+                    }
+                    text: "Recent"
+                    font.pixelSize: 25
+                    color: "#eeeeee"
+                }
                 onClicked: {
                     if (linesView.currentIndex != selectedLineIndex) { linesView.currentIndex = selectedLineIndex }
                     if ( infoRect.state != "linesSelected" ) {
@@ -303,7 +318,9 @@ Item {
                     } else if (linesView.model != lineInfoModel) {
                         linesView.model = lineInfoModel
                         searchResultLineInfoModel.clear()
-                        text = "Recent"
+                        recentText.text = "Recent"
+                        recentText.color = "white"
+                        recentButtonAnimation.running = "false"
                         for (var ii=0; ii < lineInfoModel.count; ++ii) {
                             if (lineInfoModel.get(ii).lineIdLong == searchString) {
                                 selectedLineIndex = ii

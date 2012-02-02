@@ -10,8 +10,6 @@ general:
 
 lineInfo:
  - To fix
-	* after search fill data in search result model so main model is untouched and can be shown again. Allow switch between models
-	* add possibility to search online even when offline data found
  - To implement
 	* when moving to stop info pass the line number to highlight
 	* save schedule to database
@@ -56,6 +54,8 @@ route
 
 Done:
 * stopInfo: if only one stop has been found - open it
+* add possibility to search online even when offline data found
+* after search fill data in search result model so main model is untouched and can be shown again. Allow switch between models
 
 2011 12 15
 * version increase
