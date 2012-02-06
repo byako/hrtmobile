@@ -29,27 +29,27 @@ WorkerScript.onMessage = function(message) {
                                return
                             } else {  // save basic data
                                 lonlat = a.childNodes[ii].childNodes[6].firstChild.nodeValue.split(",")
-                                try { rs = tx.executeSql('INSERT INTO Stops VALUES(?,?,?,?,?,?,?,?)', [a.childNodes[ii].childNodes[7].childNodes[0].firstChild.nodeValue,
-                                                                                                       a.childNodes[ii].childNodes[7].childNodes[1].firstChild.nodeValue,
+                                try { rs = tx.executeSql('INSERT INTO Stops VALUES(?,?,?,?,?,?,?,?)', [a.childNodes[ii].childNodes[7].childNodes[1].firstChild.nodeValue,
+                                                                                                       a.childNodes[ii].childNodes[7].childNodes[2].firstChild.nodeValue,
                                                                                                        a.childNodes[ii].childNodes[2].firstChild.nodeValue,
-                                                                                                       "",
+                                                                                                       a.childNodes[ii].childNodes[7].childNodes[0].firstChild.nodeValue,
                                                                                                        a.childNodes[ii].childNodes[5].firstChild.nodeValue,
                                                                                                      lonlat[0],
                                                                                                      lonlat[1], false]) }
                                 catch (e) { console.log("StopSearch worker exception 2: " + e); return; }
-                                for (var g=0; g < a.childNodes[ii].childNodes[7].childNodes[3].childNodes.length; ++g) {
+                                for (var g=0; g < a.childNodes[ii].childNodes[7].childNodes[4].childNodes.length; ++g) {
                                     try {
-                                        lonlat = a.childNodes[ii].childNodes[7].childNodes[3].childNodes[g].firstChild.nodeValue.split(":");
-                                        tx.executeSql("INSERT INTO stopLines VALUES(?,?,?)", [a.childNodes[ii].childNodes[7].childNodes[0].firstChild.nodeValue,
+                                        lonlat = a.childNodes[ii].childNodes[7].childNodes[4].childNodes[g].firstChild.nodeValue.split(":");
+                                        tx.executeSql("INSERT INTO stopLines VALUES(?,?,?)", [a.childNodes[ii].childNodes[7].childNodes[1].firstChild.nodeValue,
                                                                                               lonlat[0],lonlat[1]])
                                     } catch (e) {
                                         console.log("StopSearch worker exception 3: " + e)
                                     }
                                 }
-                                console.log("stopSearch.js: saved stop " + a.childNodes[ii].childNodes[7].childNodes[0].firstChild.nodeValue)
-                                WorkerScript.sendMessage({"stopIdShort": a.childNodes[ii].childNodes[7].childNodes[1].firstChild.nodeValue,
-                                                          "stopIdLong" : a.childNodes[ii].childNodes[7].childNodes[0].firstChild.nodeValue,
-                                                          "stopAddress" : "",
+                                console.log("stopSearch.js: saved stop " + a.childNodes[ii].childNodes[7].childNodes[1].firstChild.nodeValue)
+                                WorkerScript.sendMessage({"stopIdShort": a.childNodes[ii].childNodes[7].childNodes[2].firstChild.nodeValue,
+                                                          "stopIdLong" : a.childNodes[ii].childNodes[7].childNodes[1].firstChild.nodeValue,
+                                                          "stopAddress" : a.childNodes[ii].childNodes[7].childNodes[0].firstChild.nodeValue,
                                                           "stopCity" : a.childNodes[ii].childNodes[5].firstChild.nodeValue,
                                                           "stopName" : a.childNodes[ii].childNodes[2].firstChild.nodeValue,
                                                           "stopLongitude" : lonlat[0],

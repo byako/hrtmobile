@@ -65,11 +65,7 @@ Item {
         id: loadStopSchedule
         source: "stopInfoScheduleLoad.js"
         onMessage: {
-            if (messageObject.departName == "STOPNAME") {
-                stopNameValue.text = messageObject.stopName
-                stopAddressValue.text = messageObject.stopAddress
-                stopCityValue.text = messageObject.stopCity
-            } else if (messageObject.departName == "ERROR") {
+            if (messageObject.departName == "ERROR") {
                 showError("Server returned ERROR")
                 loading.visible = false
 //                loadingMap.visible = false

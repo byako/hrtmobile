@@ -7,32 +7,6 @@ var response
 function __db(){
     return openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
 }
-function setTheme(themeName) {
-    var currentTheme = getCurrent("theme")
-    __db().transaction(
-        function(tx) {
-            if (themeName != currentTheme && themeName != "") {
-                try{
-                    tx.executeSql("DELETE FROM Current WHERE option=?", ["theme"])
-                    tx.executeSql("INSERT INTO Current VALUES(?, ?)",["theme",themeName])
-                }
-                catch (e) {
-                    console.log("exception: "+e)
-                }
-                currentTheme = themeName
-            }
-            try {
-                var rs = tx.executeSql('SELECT * FROM Config WHERE theme=?',[currentTheme]);
-            } catch (e) {
-                console.log("exception: "+e)
-            }
-            for(var i = 0; i < rs.rows.length; i++) {
-                tx.executeSql("DELETE FROM Current WHERE option=?", [rs.rows.item(i).option])
-                tx.executeSql("INSERT INTO Current VALUES(?, ?)",[rs.rows.item(i).option,rs.rows.item(i).value])
-            }
-        }
-    )
-}
 function loadConfig(config2) {
     __db().transaction(
         function(tx) {
