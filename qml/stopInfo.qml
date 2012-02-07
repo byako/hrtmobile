@@ -8,7 +8,6 @@ Item {
     objectName: "stopInfoPage"
     property string searchString: ""    // keep stopIdLong here. If stopIdShort supplied (request from lineInfo) -> remove and place stopIdLong
     property int selectedStopIndex: -1
-
     signal showStopMap(string stopIdLong)
     signal showStopMapLine(string stopIdLong, string lineIdLong)
     signal showLineMap(string lineIdLong)
@@ -17,7 +16,9 @@ Item {
     width: 480
     height: 745
 
-    Component.onCompleted: { fillModel(); }
+
+    Config { id: config }
+    Component.onCompleted: { refreshConfig(); fillModel(); }
     Rectangle {              // dark background
         color: "#000000";
         anchors.fill: parent
@@ -605,7 +606,8 @@ Item {
         recentModel.clear();
         JS.__db().transaction(
             function(tx) {
-                var rs = tx.executeSql("SELECT * FROM Stops ORDER BY stopName ASC");
+                        try { var rs = tx.executeSql("SELECT * FROM Stops " + (config.stopsShowAll == "false" ? "WHERE favorite=\"true\" " : "") + "ORDER BY stopName ASC" ); }
+                    catch(e) {console.log("stopInfo.qml fill model exception" + e) }
                     for (var i=0; i<rs.rows.length; ++i) {
                         recentModel.append(rs.rows.item(i))
                         if (rs.rows.item(i).stopIdLong == searchString) {
@@ -683,6 +685,9 @@ Item {
                 catch(e) { console.log("stopInfo: setFavorite EXCEPTION: " + e) }
             }
         )
+    }
+    function refreshConfig() {        // reload config from database - same function on every page
+        JS.loadConfig(config)
     }
 /*<----------------------------------------------------------------------->*/
 }

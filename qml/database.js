@@ -77,6 +77,8 @@ function createDefaultConfig() {
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'highlightColor', '#00ee10', "black"]);
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'highlightColorBg', '#666666', "black"]);
                 tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'bgImage', '', "black"]);
+                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'stopsShowAll', 'false', "black"]);
+                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'linesShowAll', 'false', "black"]);
                 tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '1', 'Helsinki Bus']);
                 tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '2', 'Tram']);
                 tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '3', 'Espoo Bus']);

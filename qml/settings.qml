@@ -76,6 +76,16 @@ Item {
             text: "Sources: git://[git-address].git"
             color: "#cdd9ff"
         }
+        Label {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: "stopsShowAll : FALSE"
+            color: "#cdd9ff"
+        }
+        Label {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: "linesShowAll : FALSE"
+            color: "#cdd9ff"
+        }
     }
 //----------------------------------------------------------------------------//
     function showError(errorText) {  // show popup splash window with error

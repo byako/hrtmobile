@@ -6,13 +6,12 @@ Page {
     id: mainPage
     objectName: "mainPage"
     orientationLock: PageOrientation.LockPortrait
-    Config { id: config }
     Rectangle{      // dark background
-        color: config.bgColor
+        color: "#000000"
         anchors.fill: parent
     }
 
-    Component.onCompleted: { JS.loadConfig(config) }
+//    Component.onCompleted: { }
 
     SearchDialog {
         id: searchDialog
@@ -43,7 +42,6 @@ Page {
                          searchDialog.open()
                      } else if (lineInfoLoader.status != Loader.Ready){
                         lineInfoLoader.source = "lineInfo.qml"
-                        lineInfoLoader.parent = lineInfoPageContainer
                      }
                      tabGroup.lastTab = 0
                 }
@@ -59,7 +57,6 @@ Page {
                         searchDialog.open()
                     } else if (stopInfoLoader.status != Loader.Ready){
                         stopInfoLoader.source = "stopInfo.qml"
-                        stopInfoLoader.parent = stopInfoPageContainer
                     }
                     tabGroup.lastTab = 1
                 }
@@ -102,35 +99,34 @@ Page {
             Favorites {
                 id: favoritesPageItem
             }
-/*            Label {
-                style: LabelStyle { inverted: true }
-                anchors.centerIn: parent
-                text: "Recent lines/stops/places"
-            }*/
         }
 
         Page {
             id: lineInfoPageContainer
             Loader {
                 id: lineInfoLoader
+                parent: lineInfoPageContainer
             }
         }
         Page {
             id: stopInfoPageContainer
             Loader {
                 id: stopInfoLoader
+                parent: stopInfoPageContainer
             }
         }
         Page {
             id: routePageContainer
             Loader {
                 id: mapLoader
+                parent: routePageContainer
             }
         }
         Page {
             id: settingsPageContainer
             Loader {
                 id: settingsLoader
+                parent: settingsPageContainer
             }
         }
         Connections {  // favorites
@@ -139,11 +135,9 @@ Page {
                 console.log("loading pages")
                 if (lineInfoLoader.status != Loader.Ready) {
                     lineInfoLoader.source = "lineInfo.qml"
-                    lineInfoLoader.parent = lineInfoPageContainer
                 }
                 if (stopInfoLoader.status != Loader.Ready) {
                     stopInfoLoader.source = "stopInfo.qml"
-                    stopInfoLoader.parent = stopInfoPageContainer
                 }
             }
             onLoadStop: {

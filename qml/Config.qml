@@ -7,4 +7,6 @@ Item {      // config object
     property string bgImage: ""
     property string highlightColorBg: ""
     property string lineGroup: "false"
+    property string stopsShowAll: "false"
+    property string linesShowAll: "false"
 }
