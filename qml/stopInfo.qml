@@ -32,7 +32,7 @@ Item {
         onMessage: {
             if (messageObject.stopIdShort != "FINISHED") {
 //                console.log("WORKER SENT stopIdLong: " + messageObject.stopIdLong + "; stopIdShort: " + messageObject.stopIdShort + "; state: " + messageObject.state)
-                if (messageObject.state == "load") { // load stop short info from recentModel to searchResultStopInfoModel
+/*                if (messageObject.state == "") { // load stop short info from recentModel to searchResultStopInfoModel
                     for (var i=0;i<searchResultStopInfoModel.count;++i) {
                         if (searchResultStopInfoModel.get(i).stopIdLong == messageObject.stopIdLong)
                             return
@@ -43,21 +43,23 @@ Item {
                             break
                         }
                     }
-                } else if (messageObject.state == "online") {
-                    searchResultStopInfoModel.append(messageObject)
-                    recentModel.append(messageObject)
-                }
+                } else if (messageObject.state == "online") { */
+                console.log("stopInfo.qml: received from stopSearch.js: " + messageObject.stopIdLong + "; state: " + messageObject.state)
+                searchResultStopInfoModel.append(messageObject)
+//                    recentModel.append(messageObject)
+//                }
             } else {
-                loading.visible = false
                 console.log("stopInfo geocode API FINISHED request " + searchString);
-                searchString = ""
-                if (searchResultStopInfoModel.count > 1) {
+                loading.visible = false
+//                if (searchResultStopInfoModel.count > 1 || searchResultStopInfoModel.get(0).state != "offline") {
+                    searchString = ""
                     stopsView.model = searchResultStopInfoModel
                     recentButton.text = "Filtered"
-                } else { // if only one stop has been found - show it immediately without showing a list of found stops
-                    searchString = searchResultStopInfoModel.get(0).stopIdLong
-                    searchResultStopInfoModel.clear()
-                    buttonClicked()
+                if (searchResultStopInfoModel.count == 1 || searchResultStopInfoModel.get(0).state == "offline")  { // if only one stop has been found - show it immediately without showing a list of found stops, it should have been saved already
+                    // searchString = searchResultStopInfoModel.get(0).stopIdLong
+                    // searchResultStopInfoModel.clear()
+                    // buttonClicked()
+                    openStop(0)
                 }
             }
         }
@@ -402,21 +404,11 @@ Item {
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
-                    if (selectedStopIndex != index || stopNameValue != stopName ) {
-                        selectedStopIndex = index
-                        stopsView.currentIndex = index
-                        searchString = "" + stopsView.model.get(index).stopIdLong
-                        showMapButton.visible = true
-                        fillLinesModel()
-                        stopNameValue.text = stopName
-                        stopAddressValue.text = stopAddress
-                        stopCityValue.text = stopCity
-                        showMapButton.visible = true
-                        fillSchedule()
-                    } else if (stopsView.currentIndex != selectedStopIndex){
-                        stopsView.currentIndex = index
+                    if (state == "offline") {
+                        openStop(index)
+                    } else {
+                        // FIX ME HERE! FINISH ME BASTARD!
                     }
-                    infoRect.state="scheduleSelected"
                 }
                 onPressAndHold: {
                     stopsView.currentIndex = index
@@ -602,6 +594,24 @@ Item {
         infoBanner.text = errorText
         infoBanner.show()
     }
+    function openStop(index) {
+        if (selectedStopIndex != index || stopNameValue != stopName ) {
+            selectedStopIndex = index
+            stopsView.currentIndex = index
+            searchString = "" + stopsView.model.get(index).stopIdLong
+            showMapButton.visible = true
+            fillLinesModel()
+            stopNameValue.text = stopsView.model.get(index).stopName
+            stopAddressValue.text = stopsView.model.get(index).stopAddress
+            stopCityValue.text = stopsView.model.get(index).stopCity
+            showMapButton.visible = true
+            fillSchedule()
+        } else if (stopsView.currentIndex != selectedStopIndex){
+            stopsView.currentIndex = index
+        }
+        infoRect.state="scheduleSelected"
+    }
+
     function fillModel() {      // checkout recent stops from database
         recentModel.clear();
         JS.__db().transaction(
