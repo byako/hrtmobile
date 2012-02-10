@@ -22,5 +22,6 @@
         <file>qml/Favorites.qml</file>
         <file>qml/lineSearch.js</file>
         <file>qml/stopName.js</file>
+        <file>qml/About.qml</file>
     </qresource>
 </RCC>

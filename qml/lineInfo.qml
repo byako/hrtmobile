@@ -24,7 +24,9 @@ Item {
     width: 480
     height: 745
 
+    Config { id: config }
     Component.onCompleted: { // load and recent lines
+        refreshConfig();
         checkLineLoadRequest()
         lineInfoLoadLines.sendMessage("")
     }
@@ -726,6 +728,13 @@ Item {
                 catch(e) { console.log("lineInfo: setFavorite EXCEPTION: " + e) }
             }
         )
+    }
+    function fillModel() {
+        lineInfoModel.clear()
+        lineInfoLoadLines.sendMessage("")
+    }
+    function refreshConfig() {        // reload config from database - same function on every page
+        JS.loadConfig(config)
     }
 /*<----------------------------------------------------------------------->*/
 }

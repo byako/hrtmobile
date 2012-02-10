@@ -7,9 +7,13 @@ Item {
     id: settingsPage
     objectName: "SettingsPageItem"
     property string currentTheme: ""
+    signal updateConfig
     signal dbclean()
     width: 480
     height: 745
+
+    Component.onCompleted: { refreshConfig(); }
+    Config { id: config }
 
     InfoBanner {// info banner
         id: infoBanner
@@ -45,51 +49,73 @@ Item {
             id: resetButton
             text: "Reset database"
             onClicked: {
-                JS.cleanAll()
-                JS.initDB()
+                JS.resetDatabase()
                 settingsPage.dbclean()
                 showError("Database cleaned")
             }
         }
-        Label {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: "HRTMobile version 0.6.7 (20120122)"
-            color: "#cdd9ff"
+
+        Row {
+            Label {
+                text: "Show all saved lines"
+                color: "#cdd9ff"
+                width: 380
+            }
+            Switch {
+                style: SwitchStyle {
+                    inverted: true
+                }
+                id: linesShowAllSwitch
+                anchors.verticalCenter: parent.verticalCenter
+                checked: config.linesShowAll
+                onCheckedChanged: {
+                    if (checked == true) {
+                        JS.setCurrent("linesShowAll", "true")
+                    } else {
+                        JS.setCurrent("linesShowAll", "false")
+                    }
+                    settingsPage.updateConfig()
+                }
+            }
         }
-        Label {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: "Address for feedback"
-            color: "#cdd9ff"
+        Row {
+            Label {
+                text: "Show all saved stops"
+                color: "#cdd9ff"
+                width: 380
+            }
+            Switch {
+                style: SwitchStyle {
+                    inverted: true
+                }
+                id: stopsShowAllSwitch
+                anchors.verticalCenter: parent.verticalCenter
+                checked: config.stopsShowAll
+                onCheckedChanged: {
+                    if (checked == true) {
+                        JS.setCurrent("stopsShowAll", "true")
+                    } else {
+                        JS.setCurrent("stopsShowAll", "false")
+                    }
+                    settingsPage.updateConfig()
+                }
+            }
         }
-        Label {
+
+        Button {
+            style: ButtonStyle {inverted: true }
             anchors.horizontalCenter: parent.horizontalCenter
-            text: "alexey.fomenko@gmail.com"
-            color: "#cdd9ff"
-        }
-        Label {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: "This is free software distributed under\n GPLv3 license. Data charges may apply"
-            color: "#cdd9ff"
-        }
-        Label {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: "Sources: git://[git-address].git"
-            color: "#cdd9ff"
-        }
-        Label {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: "stopsShowAll : FALSE"
-            color: "#cdd9ff"
-        }
-        Label {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: "linesShowAll : FALSE"
-            color: "#cdd9ff"
+            id: aboutButton
+            text: "About"
+            onClicked: pageStack.push(Qt.resolvedUrl("About.qml"))
         }
     }
 //----------------------------------------------------------------------------//
     function showError(errorText) {  // show popup splash window with error
         infoBanner.text = errorText
         infoBanner.show()
+    }
+    function refreshConfig() {
+        JS.loadConfig(config)
     }
 }

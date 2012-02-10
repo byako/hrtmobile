@@ -170,6 +170,16 @@ Page {
 //                if (lineInfoLoader.status == Loader.Ready) lineInfoLoader.item.()
 //                if (stopInfoLoader.status == Loader.Ready) stopInfoLoader.item.()
             }
+            onUpdateConfig: {
+                if (lineInfoLoader.status == Loader.Ready) {
+                    lineInfoLoader.item.refreshConfig()
+                    lineInfoLoader.item.fillModel()
+                }
+                if (stopInfoLoader.status == Loader.Ready) {
+                    stopInfoLoader.item.refreshConfig()
+                    stopInfoLoader.item.fillModel()
+                }
+            }
         }
         Connections {  // map page
             target: mapLoader.item

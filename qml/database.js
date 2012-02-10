@@ -5,36 +5,55 @@
 //-------------------------------------- ** --------------------------------------------
 var response
 function __db(){
+/*    var db_ = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
+    db_.transaction(
+            function(tx) {
+                tx.executeSql("DROP TABLE IF EXISTS Config");
+                tx.executeSql("DROP TABLE IF EXISTS Stops");
+                tx.executeSql("DROP TABLE IF EXISTS Lines");
+                tx.executeSql("DROP TABLE IF EXISTS StopSchedule");
+                tx.executeSql("DROP TABLE IF EXISTS LineStops");
+                tx.executeSql("DROP TABLE IF EXISTS LineCoords");
+                tx.executeSql('DROP TABLE IF EXISTS Current');
+                tx.executeSql('DROP TABLE IF EXISTS LineTypes');
+                tx.executeSql('DROP TABLE IF EXISTS StopLines');
+                tx.executeSql('DROP TABLE IF EXISTS StopInfo');
+                tx.executeSql('DROP TABLE IF EXISTS LineSchedule');
+                    tx.executeSql('CREATE TABLE IF NOT EXISTS Config(option TEXT UNIQUE, value TEXT, PRIMARY KEY(option) )')
+
+                    tx.executeSql('CREATE TABLE IF NOT EXISTS LineTypes(lineType TEXT UNIQUE, lineTypeName TEXT, PRIMARY KEY(lineType) )')
+                    tx.executeSql('CREATE TABLE IF NOT EXISTS Lines(lineIdLong TEXT UNIQUE PRIMARY KEY, lineIdShort TEXT, lineName TEXT, lineType TEXT, lineStart TEXT, lineEnd TEXT, lineShape TEXT, lineSchedule TEXT, favorite TEXT, FOREIGN KEY(lineType) REFERENCES LineTypes(lineType))')
+                    tx.executeSql('CREATE TABLE IF NOT EXISTS LineStops(lineIdLong TEXT, stopIdLong TEXT, stopReachTime TEXT, FOREIGN KEY(lineIdLong) REFERENCES Lines(lineIdLong))')
+                    tx.executeSql('CREATE TABLE IF NOT EXISTS LineSchedule(lineIdLong TEXT, weekDay TEXT, departTime TEXT, PRIMARY KEY(lineIdLong,weekDay,departTime))')  // not used for now
+
+                    tx.executeSql('CREATE TABLE IF NOT EXISTS Stops(stopIdLong TEXT UNIQUE PRIMARY KEY, stopIdShort TEXT, stopName TEXT, stopAddress TEXT, stopCity TEXT, stopLongitude TEXT, stopLatitude TEXT, favorite TEXT)')
+                    tx.executeSql('CREATE TABLE IF NOT EXISTS StopLines(stopIdLong TEXT, lineIdLong TEXT, lineEnd TEXT, PRIMARY KEY(stopIdLong,lineIdLong), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong))')
+                    tx.executeSql('CREATE TABLE IF NOT EXISTS StopInfo(stopIdLong TEXT, option TEXT, value TEXT, PRIMARY KEY(stopIdLong,option), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong))')
+                    tx.executeSql('CREATE TABLE IF NOT EXISTS StopSchedule(stopIdLong, weekTime TEXT, departTime TEXT, lineId TEXT)')  // not used for now
+            }
+    ) */
+
     return openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
 }
-function loadConfig(config2) {
-    __db().transaction(
-        function(tx) {
-            try { var rs = tx.executeSql("SELECT * FROM CONFIG WHERE option=?", ["theme"]) }
-            catch(e) { console.log("DB is not initialized. Creating all data from scratch.");cleanAll(); initDB(); }
-        }
-    )
-    config2.bgColor = getCurrent("bgColor")
-    config2.bgImage = getCurrent("bgImage")
-    config2.highlightColor = getCurrent("highlightColor")
-    config2.textColor = getCurrent("textColor")
-    config2.highlightColorBg = getCurrent("highlightColorBg")
-    config2.lineGroup = getCurrent("lineGroup")
+function resetDatabase() {
+    console.log("Cleaning database")
+    cleanAll()
+    initDB()
 }
+
 function initDB() {
     console.log("initializing Database ")
     __db().transaction(
         function(tx) {
             try {
-                tx.executeSql('CREATE TABLE IF NOT EXISTS Config(option TEXT, value TEXT, theme TEXT, PRIMARY KEY(option, theme))')
-                tx.executeSql('CREATE TABLE IF NOT EXISTS Current(option TEXT PRIMARY KEY, value TEXT)')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS Config(option TEXT UNIQUE, value TEXT, PRIMARY KEY(option) )')
 
-                tx.executeSql('CREATE TABLE IF NOT EXISTS LineTypes(lineType TEXT, lineTypeName TEXT, PRIMARY KEY(lineType) )')
-                tx.executeSql('CREATE TABLE IF NOT EXISTS Lines(lineIdLong TEXT PRIMARY KEY, lineIdShort TEXT, lineName TEXT, lineType TEXT, lineStart TEXT, lineEnd TEXT, lineShape TEXT, lineSchedule TEXT, favorite TEXT, FOREIGN KEY(lineType) REFERENCES LineTypes(lineType))')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS LineTypes(lineType TEXT UNIQUE, lineTypeName TEXT, PRIMARY KEY(lineType) )')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS Lines(lineIdLong TEXT UNIQUE PRIMARY KEY, lineIdShort TEXT, lineName TEXT, lineType TEXT, lineStart TEXT, lineEnd TEXT, lineShape TEXT, lineSchedule TEXT, favorite TEXT, FOREIGN KEY(lineType) REFERENCES LineTypes(lineType))')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS LineStops(lineIdLong TEXT, stopIdLong TEXT, stopReachTime TEXT, FOREIGN KEY(lineIdLong) REFERENCES Lines(lineIdLong))')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS LineSchedule(lineIdLong TEXT, weekDay TEXT, departTime TEXT, PRIMARY KEY(lineIdLong,weekDay,departTime))')  // not used for now
 
-                tx.executeSql('CREATE TABLE IF NOT EXISTS Stops(stopIdLong TEXT PRIMARY KEY, stopIdShort TEXT, stopName TEXT, stopAddress TEXT, stopCity TEXT, stopLongitude TEXT, stopLatitude TEXT, favorite TEXT)')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS Stops(stopIdLong TEXT UNIQUE PRIMARY KEY, stopIdShort TEXT, stopName TEXT, stopAddress TEXT, stopCity TEXT, stopLongitude TEXT, stopLatitude TEXT, favorite TEXT)')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS StopLines(stopIdLong TEXT, lineIdLong TEXT, lineEnd TEXT, PRIMARY KEY(stopIdLong,lineIdLong), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong))')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS StopInfo(stopIdLong TEXT, option TEXT, value TEXT, PRIMARY KEY(stopIdLong,option), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong))')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS StopSchedule(stopIdLong, weekTime TEXT, departTime TEXT, lineId TEXT)')  // not used for now
@@ -45,22 +64,25 @@ function initDB() {
 	}
     )
     createDefaultConfig()
-    setTheme("")
 }
 function cleanAll() {
+    console.log("clean all initiated")
     __db().transaction(
         function(tx) {
-            tx.executeSql("DROP TABLE IF EXISTS Config");
-            tx.executeSql("DROP TABLE IF EXISTS Stops");
-            tx.executeSql("DROP TABLE IF EXISTS Lines");
-            tx.executeSql("DROP TABLE IF EXISTS StopSchedule");
-            tx.executeSql("DROP TABLE IF EXISTS LineStops");
-            tx.executeSql("DROP TABLE IF EXISTS LineCoords");
-            tx.executeSql('DROP TABLE IF EXISTS Current');
-            tx.executeSql('DROP TABLE IF EXISTS LineTypes');
-            tx.executeSql('DROP TABLE IF EXISTS StopLines');
-            tx.executeSql('DROP TABLE IF EXISTS StopInfo');
-            tx.executeSql('DROP TABLE IF EXISTS LineSchedule');
+            try {
+                tx.executeSql("DROP TABLE IF EXISTS Config");
+                tx.executeSql("DROP TABLE IF EXISTS Stops");
+                tx.executeSql("DROP TABLE IF EXISTS Lines");
+                tx.executeSql("DROP TABLE IF EXISTS StopSchedule");
+                tx.executeSql("DROP TABLE IF EXISTS LineStops");
+                tx.executeSql("DROP TABLE IF EXISTS LineCoords");
+                tx.executeSql('DROP TABLE IF EXISTS Current');
+                tx.executeSql('DROP TABLE IF EXISTS LineTypes');
+                tx.executeSql('DROP TABLE IF EXISTS StopLines');
+                tx.executeSql('DROP TABLE IF EXISTS StopInfo');
+                tx.executeSql('DROP TABLE IF EXISTS LineSchedule');
+            }
+            catch(e) { console.log("cleanAll EXCEPTION: " + e) }
         }
     )
 }
@@ -70,15 +92,9 @@ function createDefaultConfig() {
     db.transaction(
         function(tx) {
             try {
-                tx.executeSql("INSERT INTO Current VALUES(?, ?)",["theme","black"])
-                tx.executeSql("INSERT INTO Current VALUES(?, ?)",["lineGroup","true"])
-                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'bgColor', '#000000' , "black"]);
-                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'textColor', '#cdd9ff', "black"]);
-                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'highlightColor', '#00ee10', "black"]);
-                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'highlightColorBg', '#666666', "black"]);
-                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'bgImage', '', "black"]);
-                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'stopsShowAll', 'false', "black"]);
-                tx.executeSql('INSERT INTO Config VALUES(?, ?, ?)', [ 'linesShowAll', 'false', "black"]);
+                tx.executeSql("INSERT INTO Config VALUES(?, ?)",["lineGroup","true"])
+                tx.executeSql('INSERT INTO Config VALUES(?, ?)', [ 'stopsShowAll', 'false']);
+                tx.executeSql('INSERT INTO Config VALUES(?, ?)', [ 'linesShowAll', 'false']);
                 tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '1', 'Helsinki Bus']);
                 tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '2', 'Tram']);
                 tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '3', 'Espoo Bus']);
@@ -98,58 +114,25 @@ function createDefaultConfig() {
                 tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '24', 'Vantaa service line']);
                 tx.executeSql('INSERT INTO LineTypes VALUES(?, ?)', [ '25', 'Regional night traffic']);
             } catch(e) {
-                console.log("Exception: " + e)
+                console.log("createDefaultConfig Exception: " + e)
             }
         }
     )
 }
 
-function addLine(string) {
-    var returnVal = 0
-    var fields = new Array
-    fields = string.split(";")
-    if (fields.length < 11) {
-        returnVal = -1
-    } else {
-        __db().transaction(
-            function(tx) {
-                try {
-                    var rs = tx.executeSql('SELECT * FROM Lines WHERE lineIdLong=?', [fields[0]]);
-                }
-                catch(e) {
-                    console.log("addLine: Exception while selecting line from DB")
-                    returnVal = -1
-                    return
-                }
-                if (rs.rows.length > 0) {
-                    for (var ii=0; ii<rs.rows.length; ++ii) {
-                        console.log("Add line: found: " + rs.rows.item(ii).lineIdLong +" : "+ rs.rows.item(ii).lineName)
-                        returnVal = 1
-                    }
-                } else {
-                    rs = tx.executeSql('INSERT INTO Lines VALUES(?,?,?,?,?,?,?,?,?,?,?)', [fields[0], fields[1], fields[2], fields[3], fields[4], fields[5], fields[6], fields[7], fields[8], fields[9], fields[10]])
-                }
-            }
-        )
-    }
-    return returnVal
-}
-function addLineStop(string) {
-    var returnVal = 0
-    var fields = new Array
-    fields = string.split(";")
-    if (fields.length < 3) {
-        returnVal = -1
-        return returnVal
-    }
+function loadConfig(config2) {
+    console.log("loading config within request")
     __db().transaction(
         function(tx) {
-                try { var rs = tx.executeSql('INSERT INTO LineStops VALUES(?,?,?)', [fields[0], fields[1], fields[2]]); }
-                catch(e) { console.log("EXCEPTION: " + e); returnVal = 1 }
+            try { var rs = tx.executeSql("SELECT * FROM CONFIG") }
+            catch(e) { console.log("DB is not initialized. Creating all data from scratch."); cleanAll(); initDB(); }
         }
     )
-    return returnVal
+    config2.lineGroup = getConfigValue("lineGroup")
+    config2.linesShowAll = getConfigValue("linesShowAll")
+    config2.stopsShowAll = getConfigValue("stopsShowAll")
 }
+
 function deleteStop(string) {
     var retVal = 0;
     __db().transaction(
@@ -175,6 +158,7 @@ function deleteStop(string) {
     )
     return retVal
 }
+
 function deleteLine(string) {
     var retVal = 0;
     __db().transaction(
@@ -198,14 +182,15 @@ function deleteLine(string) {
     )
     return retVal
 }
-function getCurrent(string) {
+
+function getConfigValue(string) {
     var return_v=""
     __db().transaction(
         function(tx) {
             try {
                 var rs = tx.executeSql("SELECT option,value FROM Current WHERE option=?", [string])
             } catch(e) {
-                console.log("EXCEPTION: " + e)
+                console.log("getConfigValue EXCEPTION: " + e)
             }
             if (rs.rows.length > 0) {
                 return_v = rs.rows.item(0).value
@@ -214,15 +199,16 @@ function getCurrent(string) {
     )
     return return_v
 }
+
 function setCurrent(option_,value_) {
     var return_v = 0
     __db().transaction(
         function(tx) {
             try {
                 tx.executeSql("DELETE FROM Current WHERE option=?", [option_])
-                tx.executeSql("INSERT INTO Current VALUES(?, ?)",[option_, value_])
+                tx.executeSql("INSERT OR REPLACE INTO Current VALUES(?, ?)",[option_, value_])
             } catch(e) {
-                console.log("EXCEPTION: " + e)
+                console.log("setCurrent EXCEPTION: " + e)
                 return_v = 1
             }
         }
@@ -236,7 +222,7 @@ function getLineType(string) {
             try {
                 var rs = tx.executeSql("SELECT * FROM LineTypes WHERE lineType=?",[string])
             } catch(e) {
-                console.log("EXCEPTION: " + e)
+                console.log("getLineType EXCEPTION: " + e)
             }
             if (rs.rows.length > 0) {
                 return_v = rs.rows.item(0).lineTypeName
