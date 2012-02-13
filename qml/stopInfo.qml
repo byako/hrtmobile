@@ -18,7 +18,7 @@ Item {
 
 
     Config { id: config }
-    Component.onCompleted: { refreshConfig(); fillModel(); }
+    Component.onCompleted: { refreshConfig(); } // fillModel(); }
     Rectangle {              // dark background
         color: "#000000";
         anchors.fill: parent
@@ -565,25 +565,29 @@ Item {
         }
 
     states: [
+//        State {
+//            name: ""
+//            PropertyChanges { target: stopsView; visible: true }
+//            PropertyChanges { target: scheduleView; visible: false }
+//            PropertyChanges { target: linesView; visible: false }
+
+//        },
         State {
             name: "stopsSelected"
             PropertyChanges { target: stopsView; visible: true }
             PropertyChanges { target: scheduleView; visible: false }
-//            PropertyChanges { target: scheduleButtons; visible: false }
             PropertyChanges { target: linesView; visible: false }
         },
         State {
             name: "scheduleSelected"
             PropertyChanges { target: stopsView; visible: false }
             PropertyChanges { target: scheduleView; visible: true}
-//            PropertyChanges { target: scheduleButtons; visible: true }
             PropertyChanges { target: linesView; visible: false }
         },
         State {
             name: "linesSelected"
             PropertyChanges { target: stopsView; visible: false }
             PropertyChanges { target: scheduleView; visible: false }
-//            PropertyChanges { target: scheduleButtons; visible: false }
             PropertyChanges { target: linesView; visible: true }
         }
     ]
@@ -613,6 +617,7 @@ Item {
     }
 
     function fillModel() {      // checkout recent stops from database
+        var stopReSelected = 0
         recentModel.clear();
         JS.__db().transaction(
             function(tx) {
@@ -623,10 +628,18 @@ Item {
                         if (rs.rows.item(i).stopIdLong == searchString) {
                             selectedStopIndex = i
                             stopsView.currentIndex = i
+                            stopReSelected = 1
                     }
                 }
             }
         )
+        if (searchString && !stopReSelected) {
+            selectedStopIndex = -1
+            stopsView.currentIndex = -1
+            trafficModel.clear()
+            linesModel.clear()
+            dataRect.visible = false
+        }
 
     }
     function fillLinesModel() {  // checkout stop info from database

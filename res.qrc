@@ -23,5 +23,7 @@
         <file>qml/lineSearch.js</file>
         <file>qml/stopName.js</file>
         <file>qml/About.qml</file>
+        <file>qml/resetDatabase.js</file>
+        <file>qml/lineInfoLoadStops.js</file>
     </qresource>
 </RCC>

@@ -15,6 +15,17 @@ Item {
     Component.onCompleted: { refreshConfig(); }
     Config { id: config }
 
+    WorkerScript {           // database clean finished
+        id: resetDatabase
+        source: "resetDatabase.js"
+        onMessage: {
+            if (messageObject.clean == "done") {
+                settingsPage.dbclean()
+                showError("Database cleaned")
+            }
+        }
+    }
+
     InfoBanner {// info banner
         id: infoBanner
         text: "info description here"
@@ -49,9 +60,7 @@ Item {
             id: resetButton
             text: "Reset database"
             onClicked: {
-                JS.resetDatabase()
-                settingsPage.dbclean()
-                showError("Database cleaned")
+                resetDatabase.sendMessage("")
             }
         }
 
@@ -70,9 +79,9 @@ Item {
                 checked: config.linesShowAll
                 onCheckedChanged: {
                     if (checked == true) {
-                        JS.setCurrent("linesShowAll", "true")
+                        JS.setConfigValue("linesShowAll", "true")
                     } else {
-                        JS.setCurrent("linesShowAll", "false")
+                        JS.setConfigValue("linesShowAll", "false")
                     }
                     settingsPage.updateConfig()
                 }
@@ -93,9 +102,9 @@ Item {
                 checked: config.stopsShowAll
                 onCheckedChanged: {
                     if (checked == true) {
-                        JS.setCurrent("stopsShowAll", "true")
+                        JS.setConfigValue("stopsShowAll", "true")
                     } else {
-                        JS.setCurrent("stopsShowAll", "false")
+                        JS.setConfigValue("stopsShowAll", "false")
                     }
                     settingsPage.updateConfig()
                 }

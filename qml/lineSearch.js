@@ -7,6 +7,7 @@ WorkerScript.onMessage = function (message) {
 
     var doc = new XMLHttpRequest()
     var resp
+    var search_done = 0
     var save = 0
     var db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
 
@@ -120,11 +121,20 @@ WorkerScript.onMessage = function (message) {
                                              "state" : "offline"
                                             });
                    }
+                   console.log("lineSearch.js: checking for direct hit: " + rs.rows.length + " :" + message.searchString + ":" + rs.rows.item(0).lineIdLong)
+                   if (rs.rows.length == 1 && message.searchString == rs.rows.item(0).lineIdLong) { // if we got a direct hit - do not make network search
+                       console.log("lineSearch.js: sending direct hit")
+                       WorkerScript.sendMessage({"lineIdLong":"DIRECT_HIT"})
+                       search_done = 1
+                   }
                }
                console.log("lineSearch.js: offline done")
             }
         )
     }
+
+    if (search_done) return;
+
     console.log("lineSearch.js: network search " + (save ? "with save" : "without save") )
     doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&epsg_out=wgs84&query="+message.searchString + (save ? "" : "&p=111111000"));
     doc.send();

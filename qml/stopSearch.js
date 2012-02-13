@@ -45,7 +45,8 @@ WorkerScript.onMessage = function(message) {
                         } else if (save) {  // save basic data
                             console.log("stopSearch.js: saving stop: " + a.childNodes[ii].childNodes[7].childNodes[1].firstChild.nodeValue)
                             lonlat = a.childNodes[ii].childNodes[6].firstChild.nodeValue.split(",")
-                            try { rs = tx.executeSql('INSERT INTO Stops VALUES(?,?,?,?,?,?,?,?)', [a.childNodes[ii].childNodes[7].childNodes[1].firstChild.nodeValue,
+// some shit happenes here
+                            try { rs = tx.executeSql('INSERT OR REPLACE INTO Stops VALUES(?,?,?,?,?,?,?,?)', [a.childNodes[ii].childNodes[7].childNodes[1].firstChild.nodeValue,
                                                                                                    a.childNodes[ii].childNodes[7].childNodes[2].firstChild.nodeValue,
                                                                                                    a.childNodes[ii].childNodes[2].firstChild.nodeValue,
                                                                                                    a.childNodes[ii].childNodes[7].childNodes[0].firstChild.nodeValue,
@@ -56,7 +57,7 @@ WorkerScript.onMessage = function(message) {
                             for (var g=0; g < a.childNodes[ii].childNodes[7].childNodes[4].childNodes.length; ++g) { // lines passing save
                                 try {
                                     lonlat = a.childNodes[ii].childNodes[7].childNodes[4].childNodes[g].firstChild.nodeValue.split(":");
-                                    tx.executeSql("INSERT INTO stopLines VALUES(?,?,?)", [a.childNodes[ii].childNodes[7].childNodes[1].firstChild.nodeValue,
+                                    tx.executeSql("INSERT OR REPLACE INTO stopLines VALUES(?,?,?)", [a.childNodes[ii].childNodes[7].childNodes[1].firstChild.nodeValue,
                                                                                           lonlat[0],lonlat[1]])
                                 } catch (e) { console.log("StopSearch worker exception 3: " + e) }
                             } // lines passing save end

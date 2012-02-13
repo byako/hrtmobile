@@ -27,8 +27,8 @@ Item {
     Config { id: config }
     Component.onCompleted: { // load and recent lines
         refreshConfig();
-        checkLineLoadRequest()
-        lineInfoLoadLines.sendMessage("")
+//        checkLineLoadRequest()
+//        fillModel()
     }
 
     InfoBanner {    // info banner
@@ -46,24 +46,56 @@ Item {
         anchors.right: parent.right
         z: 8
     }
+
+    WorkerScript {  // lineSearch
+        id: lineInfoLoadStops
+        source: "lineInfoLoadStops.js"
+        onMessage: {
+            if (messageObject.state == "offline") {
+                stopReachModel.append(messageObject)
+            } else {
+                stopReachLoader.sendMessage({"stopIdLong":messageObject.stopIdLong, "lineReachNumber" : messageObject.lineReachNumber})
+            }
+        }
+    }
+
     WorkerScript {  // lineSearch
         id: lineSearchWorker
         source: "lineSearch.js"
 
         onMessage: {
-            if (messageObject.lineIdLong == "FINISH") {
+            if (messageObject.lineIdLong == "DIRECT_HIT") {
+                console.log("lineInfo.qml: worker got direct hit: opening line")
+                for (var bb=0; bb < lineInfoModel.count; ++bb) { // check if line is already in model - then show and leave from here
+                    if (lineInfoModel.get(bb).lineIdLong == searchResultLineInfoModel.get(0).lineIdLong) {
+                        selectedLineIndex = bb
+                        linesView.currentIndex = bb
+                        showLineInfo()
+                        loading.visible = false
+                        return
+                    }
+                } // else - add to the model from searchResultLineInfoModel and open it
+
+                lineInfoModel.append(searchResultLineInfoModel.get(0))
+                selectedLineIndex = lineInfoModel.count - 1
+                linesView.currentIndex = lineInfoModel.count - 1
+                showLineInfo()
+                loading.visible = false
+            } else if (messageObject.lineIdLong == "FINISH") {
                 console.log("lineInfo.qml: worker finished")
-                if (searchResultLineInfoModel.count > 2) {
+                if (searchResultLineInfoModel.count > 2) {  // big search response
                     linesView.model = searchResultLineInfoModel
                     console.log("lineInfo.qml: RECENTBUTTON: FILTERED SIGN")
                     recentText.text = "Filtered"
                     recentButtonAnimation.running = "true"
                     loading.visible = false
-                } else {
+                } else {                                    // one line found or even one direction
                     linesToSave = searchResultLineInfoModel.count
                     for (var ii=0; ii<searchResultLineInfoModel.count; ++ii) {
-                        console.log("lineInfo.qml: sending save request " + searchResultLineInfoModel.get(ii).lineIdLong)
-                        lineSearchWorker.sendMessage({"searchString":searchResultLineInfoModel.get(ii).lineIdLong,"save":"true"})
+                        if (searchResultLineInfoModel.get(ii).state != "offline") {
+                            console.log("lineInfo.qml: sending save request " + searchResultLineInfoModel.get(ii).lineIdLong)
+                            lineSearchWorker.sendMessage({"searchString":searchResultLineInfoModel.get(ii).lineIdLong,"save":"true"})
+                        }
                     }
 /*                    infoRect.visible = true;
                     infoRect.state = "stopsSelected"
@@ -147,8 +179,7 @@ Item {
                         if (lineInfoModel.get(linesView.currentIndex).favorite == "true") {
                             lineInfoPageItem.refreshFavorites()
                         }
-                        lineInfoModel.clear()
-                        lineInfoLoadLines.sendMessage("")
+                        fillModel()
                     }
                     showLineInfo()
                 }
@@ -162,8 +193,7 @@ Item {
                             JS.deleteLine(lineInfoModel.get(i).lineIdLong)
                         }
                     }
-                    lineInfoModel.clear()
-                    lineInfoLoadLines.sendMessage("")
+                    fillModel()
                     loading.visible = false
                     scheduleClear()
                     stopReachModel.clear()
@@ -330,8 +360,7 @@ Item {
                             }
                         }
                     } else {
-                        lineInfoModel.clear()
-                        lineInfoLoadLines.sendMessage("")
+                        fillModel()
                     }
                 }
             }
@@ -665,38 +694,8 @@ Item {
         }
     }
     function getStops() {             // load stops from LineStops database table
-        var temp_name
-        JS.__db().transaction(
-            function(tx) {
-                try { var rs = tx.executeSql('SELECT * FROM LineStops WHERE lineIdLong=?', [searchString]); }
-                catch (e) { console.log ("lineInfo.qml: getStops exception 1: " + e) }
-                for (var ii=0; ii<rs.rows.length; ++ii) {
-                    try {
-                        var rs2 = tx.executeSql('SELECT * FROM Stops WHERE stopIdLong=?', [rs.rows.item(ii).stopIdLong]);
-                    }
-                    catch (e) { console.log ("lineInfo.qml: getStops exception 2: " + e) }
-//                    temp_name = JS.getStopName(rs.rows.item(ii).stopIdLong)
-                    if (rs2.rows.length == 0) {
-                        stopReachLoader.sendMessage({"stopIdLong":rs.rows.item(ii).stopIdLong, "lineReachNumber" : ii})
-                        stopReachModel.append({"stopIdLong" : rs.rows.item(ii).stopIdLong,
-                                                  "stopName" : "",
-                                                  "stopIdShort" : "",
-                                                  "stopLongitude" : "",
-                                                  "stopLatitude" : "",
-                                                  "stopCity" : "",
-                                                  "reachTime" : rs.rows.item(ii).stopReachTime });
-                    } else {
-                        stopReachModel.append({"stopIdLong" : rs.rows.item(ii).stopIdLong,
-                                  "stopName" : rs2.rows.item(0).stopName,
-                                  "stopIdShort" : rs2.rows.item(0).stopIdShort,
-                                  "stopLongitude" : rs2.rows.item(0).stopLongitude,
-                                  "stopLatitude" : rs2.rows.item(0).stopLatitude,
-                                  "stopCity" : rs2.rows.item(0).stopCity,
-                                  "reachTime" : rs.rows.item(ii).stopReachTime });
-                    }
-                }
-            }
-        )
+        console.log("lineInfo.qml: get stops request sending")
+        lineInfoLoadStops.sendMessage({"searchString":searchString})
     }
     function showLineInfo() {        // triggered when one of saved line selected by user
         if (linesView.currentIndex >= 0) {
@@ -731,7 +730,7 @@ Item {
     }
     function fillModel() {
         lineInfoModel.clear()
-        lineInfoLoadLines.sendMessage("")
+        lineInfoLoadLines.sendMessage({"linesShowAll":config.linesShowAll})
     }
     function refreshConfig() {        // reload config from database - same function on every page
         JS.loadConfig(config)
