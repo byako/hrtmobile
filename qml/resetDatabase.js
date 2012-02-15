@@ -11,17 +11,17 @@ WorkerScript.onMessage = function (message) {
                     console.log("0")
 //                    tx.executeSql(' PRAGMA writable_schema = 1; delete from sqlite_master where type = 'table'; PRAGMA writable_schema = 0;");
                     console.log("-1")
-/*                    tx.executeSql('DELETE FROM Config;');
+                    tx.executeSql('DELETE FROM Config;');
                     tx.executeSql('DELETE FROM Lines;');
                     tx.executeSql('DELETE FROM Stops;');
                     tx.executeSql('DELETE FROM StopSchedule;');
                     tx.executeSql('DELETE FROM LineStops;');
-                    tx.executeSql('DELETE FROM Current;');
+//                    tx.executeSql('DELETE FROM Current IF EXISTS;');
                     tx.executeSql('DELETE FROM LineTypes;');
                     tx.executeSql('DELETE FROM StopLines;');
                     tx.executeSql('DELETE FROM StopInfo;');
-                    tx.executeSql('DELETE FROM LineSchedule;');*/
-
+                    tx.executeSql('DELETE FROM LineSchedule;');
+/*
                     tx.executeSql('DROP TABLE IF EXISTS Config;');
                     console.log("-11")
                     tx.executeSql('DROP TABLE IF EXISTS Stops;');
@@ -37,7 +37,7 @@ WorkerScript.onMessage = function (message) {
                     tx.executeSql('DROP TABLE IF EXISTS LineTypes;');
                     tx.executeSql('DROP TABLE IF EXISTS StopLines;');
                     tx.executeSql('DROP TABLE IF EXISTS StopInfo;');
-                    tx.executeSql('DROP TABLE IF EXISTS LineSchedule;');
+                    tx.executeSql('DROP TABLE IF EXISTS LineSchedule;'); */
                     console.log("-2")
                     tx.executeSql('CREATE TABLE IF NOT EXISTS Config(option TEXT, value TEXT, PRIMARY KEY(option) );');
                     console.log("-3")

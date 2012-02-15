@@ -21,6 +21,7 @@ Item {
         onMessage: {
             if (messageObject.clean == "done") {
                 settingsPage.dbclean()
+                refreshConfig()
                 showError("Database cleaned")
             }
         }

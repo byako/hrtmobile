@@ -117,10 +117,10 @@ function deleteStop(string) {
                     tx.executeSql('DELETE from StopLines;');
                     tx.executeSql('DELETE from Stops;');
                 } else {
-                    tx.executeSql('DELETE from StopSchedule WHERE stopIdLong=?',[string]);
-                    tx.executeSql('DELETE from StopInfo WHERE stopIdLong=?',[string]);
-                    tx.executeSql('DELETE from StopLines WHERE stopIdLong=?',[string]);
-                    tx.executeSql('DELETE from Stops WHERE stopIdLong=?', [string]);
+                    tx.executeSql('DELETE from StopSchedule WHERE stopIdLong=?;',[string]);
+                    tx.executeSql('DELETE from StopInfo WHERE stopIdLong=?;',[string]);
+                    tx.executeSql('DELETE from StopLines WHERE stopIdLong=?;',[string]);
+                    tx.executeSql('DELETE from Stops WHERE stopIdLong=?;', [string]);
                 }
             }
             catch(e) {
@@ -142,9 +142,9 @@ function deleteLine(string) {
                     tx.executeSql('DELETE from LineStops;');
                     tx.executeSql('DELETE from Lines;');
                 } else {
-                    tx.executeSql('DELETE from LineSchedule WHERE lineIdLong=?',[string]);
-                    tx.executeSql('DELETE from LineStops WHERE lineIdLong=?',[string]);
-                    tx.executeSql('DELETE from Lines WHERE lineIdLong=?', [string]);
+                    tx.executeSql('DELETE from LineSchedule WHERE lineIdLong=?;',[string]);
+                    tx.executeSql('DELETE from LineStops WHERE lineIdLong=?;',[string]);
+                    tx.executeSql('DELETE from Lines WHERE lineIdLong=?;', [string]);
                 }
             }
             catch(e) {
@@ -161,7 +161,7 @@ function getConfigValue(string) {
     __db().transaction(
         function(tx) {
             try {
-                var rs = tx.executeSql('SELECT option,value FROM Config WHERE option=?', [string])
+                var rs = tx.executeSql('SELECT option,value FROM Config WHERE option=?;', [string])
             } catch(e) {
                 console.log('getConfigValue EXCEPTION: ' + e)
             }
@@ -178,7 +178,7 @@ function setConfigValue(option_,value_) {
     __db().transaction(
         function(tx) {
             try {
-                tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)',[option_, value_])
+                tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?);',[option_, value_])
             } catch(e) {
                 console.log('setConfigValue EXCEPTION: ' + e)
                 return_v = 1
@@ -192,7 +192,7 @@ function getLineType(string) {
     __db().transaction(
         function(tx) {
             try {
-                var rs = tx.executeSql('SELECT * FROM LineTypes WHERE lineType=?',[string])
+                var rs = tx.executeSql('SELECT * FROM LineTypes WHERE lineType=?;',[string])
             } catch(e) {
                 console.log('getLineType EXCEPTION: ' + e)
             }

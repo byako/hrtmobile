@@ -23,12 +23,13 @@ Item {
     signal cleanMapAndPushStops()
     width: 480
     height: 745
+//    width: parent.width
+//    height: parent.height
 
     Config { id: config }
     Component.onCompleted: { // load and recent lines
         refreshConfig();
-//        checkLineLoadRequest()
-//        fillModel()
+        fillModel()
     }
 
     InfoBanner {    // info banner
@@ -64,7 +65,13 @@ Item {
         source: "lineSearch.js"
 
         onMessage: {
-            if (messageObject.lineIdLong == "DIRECT_HIT") {
+            if (message.lineIdLong == "lineSaveFailed") {
+                loading.linesToSave--
+            } else if (messageObject.lineIdLong == "stopsToSave") {
+                loading.stopsToSave += messageObject.value
+            }else if (messageObject.lineIdLong == "stop") {
+                loading.stopsToSave--
+            } else if (messageObject.lineIdLong == "DIRECT_HIT") {
                 console.log("lineInfo.qml: worker got direct hit: opening line")
                 for (var bb=0; bb < lineInfoModel.count; ++bb) { // check if line is already in model - then show and leave from here
                     if (lineInfoModel.get(bb).lineIdLong == searchResultLineInfoModel.get(0).lineIdLong) {
@@ -85,12 +92,14 @@ Item {
                 console.log("lineInfo.qml: worker finished")
                 if (searchResultLineInfoModel.count > 2) {  // big search response
                     linesView.model = searchResultLineInfoModel
-                    console.log("lineInfo.qml: RECENTBUTTON: FILTERED SIGN")
-                    recentText.text = "Filtered"
+                    console.log("lineInfo.qml: RECENT BUTTON: Found SIGN")
+                    recentText.text = "Found"
                     recentButtonAnimation.running = "true"
                     loading.visible = false
                 } else {                                    // one line found or even one direction
-                    linesToSave = searchResultLineInfoModel.count
+                    console.log("linesInfo.qml: setting loading.linesToSave " + searchResultLineInfoModel.count)
+                    loading.linesToSave = searchResultLineInfoModel.count
+                    linesToSave += searchResultLineInfoModel.count
                     for (var ii=0; ii<searchResultLineInfoModel.count; ++ii) {
                         if (searchResultLineInfoModel.get(ii).state != "offline") {
                             console.log("lineInfo.qml: sending save request " + searchResultLineInfoModel.get(ii).lineIdLong)
@@ -118,8 +127,9 @@ Item {
                     }
                     searchResultLineInfoModel.append(messageObject);
                 } else {
+                    loading.linesToSave--
                     --linesToSave;
-                    if (!linesToSave) loading.visible = false
+                    if (!linesToSave) { loading.visible = false; }
                     for (var bb=0; bb < searchResultLineInfoModel.count; ++bb) {
                         if (searchResultLineInfoModel.get(bb).lineIdLong == messageObject.lineIdLong){
                             searchResultLineInfoModel.set(bb,{"state":"offline"})
@@ -685,12 +695,6 @@ Item {
             showLineMapStop(searchString, stopReachModel.get(stopsView.currentIndex).stopIdLong)
         } else {
             showLineMap(searchString)
-        }
-    }
-    function checkLineLoadRequest() {
-        if (loadLine != "") {
-            searchString = loadLine
-            buttonClicked()
         }
     }
     function getStops() {             // load stops from LineStops database table

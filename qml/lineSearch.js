@@ -7,6 +7,7 @@ WorkerScript.onMessage = function (message) {
 
     var doc = new XMLHttpRequest()
     var resp
+    var err = 0
     var search_done = 0
     var save = 0
     var db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
@@ -26,10 +27,12 @@ WorkerScript.onMessage = function (message) {
                 resp=doc.responseXML.documentElement
                 console.log("lineSearch.js: OK, got " + doc.responseXML.documentElement.childNodes.length+ " lines" + (save ? " : for saving" : " : for search"))
                 if (save) {  // push lines to the database with all the data from server
+                    WorkerScript.sendMessage({"lineIdLong":"linesToSave","value":resp.childNodes.length})
                     var lonlat = new Array
                     db.transaction(  // save line stops
                         function(tx) {
                             for (var ii = 0; ii < resp.childNodes.length; ++ii) {
+                                err = 0
                                 console.log("lineSearch.js: saving procedure: " + resp.childNodes[ii].childNodes[0].firstChild.nodeValue)
                                 try {
                                     rs = tx.executeSql('INSERT INTO Lines VALUES(?,?,?,?,?,?,?,?,?)',
@@ -45,14 +48,20 @@ WorkerScript.onMessage = function (message) {
                                 }
                                 catch (e) {
                                     console.log("lineSearch.js: save exception " + e);
-                                    return;
+                                    err++;
+                                }
+                                if (err) {
+                                    WorkerScript.sendMessage({"lineIdLong":"failed"})
+                                    continue;
                                 }
                                 console.log("Saving stops: " + resp.childNodes[ii].childNodes[8].childNodes.length)
+                                WorkerScript.sendMessage({"lineIdLong":"stopsToSave","value":resp.childNodes[ii].childNodes[8].childNodes.length})
                                 for (var cc = 0; cc < resp.childNodes[ii].childNodes[8].childNodes.length; ++cc) {
+                                    err = 0;
                                     try { tx.executeSql('INSERT INTO LineStops VALUES(?,?,?)', [resp.childNodes[ii].childNodes[0].firstChild.nodeValue,
                                          resp.childNodes[ii].childNodes[8].childNodes[cc].firstChild.firstChild.nodeValue,
                                          resp.childNodes[ii].childNodes[8].childNodes[cc].childNodes[2].firstChild.nodeValue]); }
-                                    catch(e) { console.log("EXCEPTION: " + e); return; }
+                                    catch(e) { console.log("EXCEPTION: " + e); err++; }
                                     console.log("lineSearch: saving stop: " + resp.childNodes[ii].childNodes[8].childNodes[cc].childNodes[0].firstChild.nodeValue)
                                     try { lonlat = resp.childNodes[ii].childNodes[8].childNodes[cc].childNodes[5].firstChild.nodeValue.split(",");
                                         tx.executeSql('INSERT INTO Stops VALUES(?,?,?,?,?,?,?,?)', [resp.childNodes[ii].childNodes[8].childNodes[cc].childNodes[0].firstChild.nodeValue,
@@ -62,7 +71,8 @@ WorkerScript.onMessage = function (message) {
                                          resp.childNodes[ii].childNodes[8].childNodes[cc].childNodes[6].firstChild.nodeValue,
                                         lonlat[0], lonlat[1], "false" ]);
                                     }
-                                    catch(e) { console.log("STOP SAVE EXCEPTION: " + e); }
+                                    catch(e) { console.log("STOP SAVE EXCEPTION: " + e); err++;}
+                                    WorkerScript.sendMessage({"lineIdLong":"stop"})
                                 }
                                 WorkerScript.sendMessage({"lineIdLong":resp.childNodes[ii].childNodes[0].firstChild.nodeValue,
                                                      "state" : "saved"
@@ -71,7 +81,7 @@ WorkerScript.onMessage = function (message) {
                         }
                     )
                     return
-                } else { // save line end. here quick search starts
+                } else { // save line ends here. quick search starts
                     for (var ii = 0; ii < resp.childNodes.length; ++ii) {   // just push info to the page for user-review
                         if (resp.childNodes[ii].childNodes[2].firstChild.nodeValue != "21" &&
                             resp.childNodes[ii].childNodes[2].firstChild.nodeValue != "23" &&

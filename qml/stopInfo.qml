@@ -18,7 +18,7 @@ Item {
 
 
     Config { id: config }
-    Component.onCompleted: { refreshConfig(); } // fillModel(); }
+    Component.onCompleted: { refreshConfig(); fillModel(); }
     Rectangle {              // dark background
         color: "#000000";
         anchors.fill: parent
@@ -54,12 +54,12 @@ Item {
 //                if (searchResultStopInfoModel.count > 1 || searchResultStopInfoModel.get(0).state != "offline") {
                     searchString = ""
                     stopsView.model = searchResultStopInfoModel
-                    recentButton.text = "Filtered"
+                    recentButton.text = "Found"
                 if (searchResultStopInfoModel.count == 1 || searchResultStopInfoModel.get(0).state == "offline")  { // if only one stop has been found - show it immediately without showing a list of found stops, it should have been saved already
                     // searchString = searchResultStopInfoModel.get(0).stopIdLong
                     // searchResultStopInfoModel.clear()
                     // buttonClicked()
-                    openStop(0)
+                    openStop(0,"")
                 }
             }
         }
@@ -140,7 +140,7 @@ Item {
                                 JS.deleteStop(recentModel.get(i1).stopIdLong)
                             }
                         }
-                    } else { // filtered search results are shown : delete only those
+                    } else { // Found search results are shown : delete only those
                         for (var i2=0; i2 < searchResultStopInfoModel.count; ++i2) {
                             if (searchResultStopInfoModel.get(i2).favorite != "true") {
                                 JS.deleteStop(searchResultStopInfoModel.get(i2).stopIdLong)
@@ -321,7 +321,7 @@ Item {
                     dataRect.visible = false
                 } else if (searchResultStopInfoModel.count > 0){
                     stopsView.model = searchResultStopInfoModel
-                    text="Filtered"
+                    text="Found"
                 } else {
                     fillModel()
                 }
@@ -404,8 +404,8 @@ Item {
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
-                    if (state == "offline") {
-                        openStop(index)
+                    if (stopsView.model == recentModel || state == "offline") {
+                        openStop(index,stopName)
                     } else {
                         // FIX ME HERE! FINISH ME BASTARD!
                     }
@@ -536,6 +536,7 @@ Item {
             delegate:  recentDelegate
             model: recentModel
             highlight: Rectangle { color:"#666666"; radius:  5 }
+            highlightMoveDuration: 1200
             currentIndex: -1
             clip: true
         }
@@ -560,6 +561,7 @@ Item {
             model: linesModel
             header: linesHeader
             highlight: Rectangle { color:"#666666"; radius:  5 }
+            highlightMoveDuration: 2
             currentIndex: -1
             clip: true
         }
@@ -598,7 +600,7 @@ Item {
         infoBanner.text = errorText
         infoBanner.show()
     }
-    function openStop(index) {
+    function openStop(index,stopName) {
         if (selectedStopIndex != index || stopNameValue != stopName ) {
             selectedStopIndex = index
             stopsView.currentIndex = index
@@ -671,7 +673,7 @@ Item {
     function buttonClicked() {  // SearchBox action, or transfer from lineInfo page with request to show info
         if (searchString != "") {
             for (var j=0; j<recentModel.count; ++j) {
-                if (stopsView.model.get(j).stopIdLong == searchString) {  // this check should work only if stopIdLong supplied
+                if (recentModel.get(j).stopIdLong == searchString) {  // this check should work only if stopIdLong supplied
                     if (selectedStopIndex != j) {
                         infoRect.state = "scheduleSelected"
                         stopsView.model = recentModel
