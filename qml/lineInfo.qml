@@ -67,6 +67,7 @@ Item {
         onMessage: {
             if (message.lineIdLong == "lineSaveFailed") {
                 loading.linesToSave--
+                if (!loading.linesToSave) { loading.visible = false; }
             } else if (messageObject.lineIdLong == "stopsToSave") {
                 loading.stopsToSave += messageObject.value
             }else if (messageObject.lineIdLong == "stop") {
@@ -129,7 +130,7 @@ Item {
                 } else {
                     loading.linesToSave--
                     --linesToSave;
-                    if (!linesToSave) { loading.visible = false; }
+                    if (!loading.linesToSave) { loading.visible = false; }
                     for (var bb=0; bb < searchResultLineInfoModel.count; ++bb) {
                         if (searchResultLineInfoModel.get(bb).lineIdLong == messageObject.lineIdLong){
                             searchResultLineInfoModel.set(bb,{"state":"offline"})
@@ -440,10 +441,12 @@ Item {
                     stopsView.currentIndex = index;
                 }
                 onDoubleClicked: {
+                    console.log("lineInfo.qml: double clicked stop")
                     stopsView.currentIndex = index;
                     showStopInfo(stopIdLong)
                 }
                 onPressAndHold: {
+                    console.log("lineInfo.qml: press and hold stop")
                     stopsView.currentIndex = index;
                     stopContextMenu.open()
                 }
@@ -496,6 +499,8 @@ Item {
                         scheduleClear()
                         console.log("lineInfo: selected line " + lineIdLong + " : " + linesView.model.get(index).state)
                         if (linesView.model.get(index).state == "online") {
+                            loading.visible = true
+                            loading.linesToSave++
                             lineSearchWorker.sendMessage({"searchString": "" + lineIdLong, "save":"true"})
                         } else {
                             showLineInfo()

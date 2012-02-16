@@ -27,7 +27,7 @@ WorkerScript.onMessage = function (message) {
                 resp=doc.responseXML.documentElement
                 console.log("lineSearch.js: OK, got " + doc.responseXML.documentElement.childNodes.length+ " lines" + (save ? " : for saving" : " : for search"))
                 if (save) {  // push lines to the database with all the data from server
-                    WorkerScript.sendMessage({"lineIdLong":"linesToSave","value":resp.childNodes.length})
+//                    WorkerScript.sendMessage({"lineIdLong":"linesToSave","value":resp.childNodes.length})
                     var lonlat = new Array
                     db.transaction(  // save line stops
                         function(tx) {
