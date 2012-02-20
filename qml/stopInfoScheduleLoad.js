@@ -27,7 +27,7 @@ WorkerScript.onMessage = function (message) {
                         catch (e) { console.log("stopInfoSchedueLoad exception while saving stopAddress: " + e); return; }
                     }
                 )
-                WorkerScript.sendMessage({"departName" : "STOPNAME", "stopName" : lines[1], "stopAddress" : lines[2], "stopCity" : lines[3]})
+//                WorkerScript.sendMessage({"departName" : "STOPNAME", "stopName" : lines[1], "stopAddress" : lines[2], "stopCity" : lines[3]})
                 for (var ii = 1; ii < schedule.length-1; ii++) {
                     lines = schedule[ii].split("|")
                     time_[0] = lines[0].slice(0,lines[0].length -2)

@@ -19,8 +19,8 @@ WorkerScript.onMessage = function (message) {
                                           "stopName" : a.firstChild.childNodes[2].firstChild.nodeValue,
                                           "stopCity" : a.firstChild.childNodes[3].firstChild.nodeValue,
                                           "stopLongitude" : lonlat[0],
-                                          "stopLatitude" : lonlat[1],
-                                          "lineReachNumber" : message.lineReachNumber
+                                          "stopLatitude" : lonlat[1]
+//                                          "lineReachNumber" : message.lineReachNumber
                 })
             }
         } else if (doc.readyState == XMLHttpRequest.ERROR) {

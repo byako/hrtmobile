@@ -30,32 +30,26 @@ Item {
         id: stopsLookup
         source: "stopSearch.js"
         onMessage: {
-            if (messageObject.stopIdShort != "FINISHED") {
-//                console.log("WORKER SENT stopIdLong: " + messageObject.stopIdLong + "; stopIdShort: " + messageObject.stopIdShort + "; state: " + messageObject.state)
-/*                if (messageObject.state == "") { // load stop short info from recentModel to searchResultStopInfoModel
-                    for (var i=0;i<searchResultStopInfoModel.count;++i) {
-                        if (searchResultStopInfoModel.get(i).stopIdLong == messageObject.stopIdLong)
-                            return
+            if (messageObject.stopState == "saved" ) { // response for save request
+                console.log("stopInfo.qml: stopSearch saved stop " + messageObject.stopIdLong + "; checking " + stopsView.model.count)
+                for (var zz=0; zz < stopsView.model.count; ++zz) {
+                    console.log("stopInfo.qml: " + zz + "; " + stopsView.model.get(zz).stopIdLong + ":" + messageObject.stopIdLong)
+                    if (stopsView.model.get(zz).stopIdLong == messageObject.stopIdLong) {
+                        console.log("stopInfo.qml: opening stop " + zz)
+                        openStop(zz, messageObject.stopName)
                     }
-                    for (var i=0;i<recentModel.count;++i) { // just put saved already stop from recent model to searchResultStopInfoModel
-                        if (recentModel.get(i).stopIdLong == messageObject.stopIdLong) {
-                            searchResultStopInfoModel.append(recentModel.get(i))
-                            break
-                        }
-                    }
-                } else if (messageObject.state == "online") { */
-                console.log("stopInfo.qml: received from stopSearch.js: " + messageObject.stopIdLong + "; state: " + messageObject.state)
+                }
+            } else if (messageObject.stopIdLong != "FINISHED") { // add everything to searchResultStopInfoModel
+                console.log("stopInfo.qml: received from stopSearch.js: " + messageObject.stopIdLong + "; stopState: " + messageObject.stopState)
                 searchResultStopInfoModel.append(messageObject)
-//                    recentModel.append(messageObject)
-//                }
             } else {
                 console.log("stopInfo geocode API FINISHED request " + searchString);
                 loading.visible = false
-//                if (searchResultStopInfoModel.count > 1 || searchResultStopInfoModel.get(0).state != "offline") {
+//                if (searchResultStopInfoModel.count > 1 || searchResultStopInfoModel.get(0).stopState != "offline") {
                     searchString = ""
                     stopsView.model = searchResultStopInfoModel
                     recentButton.text = "Found"
-                if (searchResultStopInfoModel.count == 1 || searchResultStopInfoModel.get(0).state == "offline")  { // if only one stop has been found - show it immediately without showing a list of found stops, it should have been saved already
+                if (searchResultStopInfoModel.count == 1 && searchResultStopInfoModel.get(0).stopState == "offline")  { // if only one stop has been found - show it immediately without showing a list of found stops, it should have been saved already
                     // searchString = searchResultStopInfoModel.get(0).stopIdLong
                     // searchResultStopInfoModel.clear()
                     // buttonClicked()
@@ -71,14 +65,13 @@ Item {
             if (messageObject.departName == "ERROR") {
                 showError("Server returned ERROR")
                 loading.visible = false
-//                loadingMap.visible = false
             } else if (messageObject.departName == "FINISHED"){
                 loading.visible = false
             } else {
                 trafficModel.append({"departTime" : messageObject.departTime,
                                      "departLine" : messageObject.departLine,
                                      "departDest" : messageObject.departDest,
-                                     "departCode" : messageObject.departCode,})
+                                     "departCode" : messageObject.departCode})
             }
         }
     }
@@ -135,14 +128,10 @@ Item {
                 text: "Delete all"
                 onClicked: {
                     if (stopsView.model == recentModel) { // recent stops are shown: delete all except the favourites
-                        for (var i1=0; i1 < recentModel.count; ++i1) {
-                            if (recentModel.get(i1).favorite != "true") {
-                                JS.deleteStop(recentModel.get(i1).stopIdLong)
-                            }
-                        }
+                        JS.deleteAllStops()
                     } else { // Found search results are shown : delete only those
                         for (var i2=0; i2 < searchResultStopInfoModel.count; ++i2) {
-                            if (searchResultStopInfoModel.get(i2).favorite != "true") {
+                            if (searchResultStopInfoModel.get(i2).favorite != "true" && searchResultStopInfoModel.get(i2).stopState == "offline") {
                                 JS.deleteStop(searchResultStopInfoModel.get(i2).stopIdLong)
                             }
                         }
@@ -200,7 +189,7 @@ Item {
                 anchors.top: parent.top
                 height: 60
                 width: 60
-                Button { // showMapButton
+                Button {    // showMapButton
                     style: ButtonStyle {
                         inverted: true
                     }
@@ -348,15 +337,6 @@ Item {
     }
     ListModel {              // recent stops list
         id: recentModel
-//        ListElement {
-//            stopIdLong: ""
-//            stopIdShort: ""
-//            stopName: ""
-//            stopAddress: ""
-//            stopCity: ""
-//            stopLongitude: ""
-//            stopLatitude: ""
-//        }
     }
     Component {              // recent stops delegate
         id: recentDelegate
@@ -404,10 +384,10 @@ Item {
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
-                    if (stopsView.model == recentModel || state == "offline") {
+                    if (stopsView.model == recentModel || stopState == "offline") {
                         openStop(index,stopName)
                     } else {
-                        // FIX ME HERE! FINISH ME BASTARD!
+                        stopsLookup.sendMessage({"save":"true", "searchString":stopIdLong})
                     }
                 }
                 onPressAndHold: {

@@ -75,7 +75,7 @@ WorkerScript.onMessage = function (message) {
                                     WorkerScript.sendMessage({"lineIdLong":"stop"})
                                 }
                                 WorkerScript.sendMessage({"lineIdLong":resp.childNodes[ii].childNodes[0].firstChild.nodeValue,
-                                                     "state" : "saved"
+                                                     "lineState" : "saved"
                                                  })
                             }
                         }
@@ -97,7 +97,7 @@ WorkerScript.onMessage = function (message) {
                                                      "lineType" : resp.childNodes[ii].childNodes[2].firstChild.nodeValue,
                                                      "lineTypeName" : (rs.rows.length ? rs.rows.item(0).lineTypeName : ""),
                                                      "favorite" : "false",
-                                                     "state" : "online"
+                                                     "lineState" : "online"
                                                  })
                         } else {
                             console.log("lineSearch.js: not sending " + resp.childNodes[ii].childNodes[0].firstChild.nodeValue + " : line type " +
@@ -128,7 +128,7 @@ WorkerScript.onMessage = function (message) {
                                             "lineType" : rs.rows.item(ii).lineType,
                                             "lineTypeName" : rs.rows.item(ii).lineTypeNAme,
                                             "favorite" : rs.rows.item(ii).favorite,
-                                             "state" : "offline"
+                                             "lineState" : "offline"
                                             });
                    }
                    console.log("lineSearch.js: checking for direct hit: " + rs.rows.length + " :" + message.searchString + ":" + rs.rows.item(0).lineIdLong)

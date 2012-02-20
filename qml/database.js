@@ -113,18 +113,38 @@ function deleteStop(string) {
             try {
                 if (string == '*') {
                     tx.executeSql('DELETE from StopSchedule;');
-                    tx.executeSql('DELETE from StopInfo;');
                     tx.executeSql('DELETE from StopLines;');
                     tx.executeSql('DELETE from Stops;');
                 } else {
                     tx.executeSql('DELETE from StopSchedule WHERE stopIdLong=?;',[string]);
-                    tx.executeSql('DELETE from StopInfo WHERE stopIdLong=?;',[string]);
                     tx.executeSql('DELETE from StopLines WHERE stopIdLong=?;',[string]);
                     tx.executeSql('DELETE from Stops WHERE stopIdLong=?;', [string]);
                 }
             }
             catch(e) {
                 console.log('delete stop from table exception occured. string = '+ string)
+                retVal = 1
+            }
+        }
+    )
+    return retVal
+}
+
+function deleteAllStops() { // except the favorites
+    var retVal = 0;
+    __db().transaction(
+        function(tx) {
+            try {
+                var rs = tx.executeSql('SELECT stopIdLong from Stops WHERE favorite=\"false\";');
+
+                for (var ii=0; ii < rs.rows.length; ++ii) {
+                    tx.executeSql('DELETE from StopSchedule WHERE stopIdLong=?;',[rs.rows.item(ii).stopIdLong]);
+                    tx.executeSql('DELETE from StopLines WHERE stopIdLong=?;',[rs.rows.item(ii).stopIdLong]);
+                }
+                tx.executeSql('DELETE from Stops WHERE favorite=\"false\";');
+            }
+            catch(e) {
+                console.log('delete all stops '+ e)
                 retVal = 1
             }
         }
