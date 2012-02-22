@@ -167,8 +167,8 @@ Page {
             target: settingsLoader.item
             onDbclean: {
                 console.log("db cleaned: resetting stop and line info pages")
-//                if (lineInfoLoader.status == Loader.Ready) lineInfoLoader.item.()
-//                if (stopInfoLoader.status == Loader.Ready) stopInfoLoader.item.()
+                if (lineInfoLoader.status == Loader.Ready) lineInfoLoader.item.fillModel()
+                if (stopInfoLoader.status == Loader.Ready) stopInfoLoader.item.fillModel()
             }
             onUpdateConfig: {
                 if (lineInfoLoader.status == Loader.Ready) {
@@ -196,7 +196,7 @@ Page {
             }
             onStopsCleaned: {
                 console.log("routePage signal: stopsCleaned")
-                lineInfoLoader.item.sendStopsToMap()
+                lineInfoLoader.item.sendStopsToMap()                                                     // HERE TO FIX
             }
         }
         Connections {  // line info

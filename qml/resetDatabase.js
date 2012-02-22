@@ -8,39 +8,17 @@ WorkerScript.onMessage = function (message) {
         db_.transaction(
             function(tx) {
                 try {
-                    console.log("0")
-//                    tx.executeSql(' PRAGMA writable_schema = 1; delete from sqlite_master where type = 'table'; PRAGMA writable_schema = 0;");
-                    console.log("-1")
                     tx.executeSql('DELETE FROM Config;');
                     tx.executeSql('DELETE FROM Lines;');
                     tx.executeSql('DELETE FROM Stops;');
                     tx.executeSql('DELETE FROM StopSchedule;');
                     tx.executeSql('DELETE FROM LineStops;');
-//                    tx.executeSql('DELETE FROM Current IF EXISTS;');
                     tx.executeSql('DELETE FROM LineTypes;');
                     tx.executeSql('DELETE FROM StopLines;');
                     tx.executeSql('DELETE FROM StopInfo;');
                     tx.executeSql('DELETE FROM LineSchedule;');
-/*
-                    tx.executeSql('DROP TABLE IF EXISTS Config;');
-                    console.log("-11")
-                    tx.executeSql('DROP TABLE IF EXISTS Stops;');
-                    console.log("-12")
-                    tx.executeSql('DROP TABLE IF EXISTS Lines;');
-                    console.log("-13")
-                    tx.executeSql('DROP TABLE IF EXISTS StopSchedule;');
-                    console.log("-14")
-                    tx.executeSql('DROP TABLE IF EXISTS LineStops;');
-                    console.log("-15")
-                    tx.executeSql('DROP TABLE IF EXISTS LineCoords;');
-                    tx.executeSql('DROP TABLE IF EXISTS Current;');
-                    tx.executeSql('DROP TABLE IF EXISTS LineTypes;');
-                    tx.executeSql('DROP TABLE IF EXISTS StopLines;');
-                    tx.executeSql('DROP TABLE IF EXISTS StopInfo;');
-                    tx.executeSql('DROP TABLE IF EXISTS LineSchedule;'); */
-                    console.log("-2")
+
                     tx.executeSql('CREATE TABLE IF NOT EXISTS Config(option TEXT, value TEXT, PRIMARY KEY(option) );');
-                    console.log("-3")
                     tx.executeSql('CREATE TABLE IF NOT EXISTS LineTypes(lineType TEXT, lineTypeName TEXT, PRIMARY KEY(lineType) );');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS Lines(lineIdLong TEXT PRIMARY KEY, lineIdShort TEXT, lineName TEXT, lineType TEXT, lineStart TEXT, lineEnd TEXT, lineShape TEXT, lineSchedule TEXT, favorite TEXT, FOREIGN KEY(lineType) REFERENCES LineTypes(lineType));');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS LineStops(lineIdLong TEXT, stopIdLong TEXT, stopReachTime TEXT, FOREIGN KEY(lineIdLong) REFERENCES Lines(lineIdLong));');
@@ -50,15 +28,10 @@ WorkerScript.onMessage = function (message) {
                     tx.executeSql('CREATE TABLE IF NOT EXISTS StopLines(stopIdLong TEXT, lineIdLong TEXT, lineEnd TEXT, PRIMARY KEY(stopIdLong,lineIdLong), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong));');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS StopInfo(stopIdLong TEXT, option TEXT, value TEXT, PRIMARY KEY(stopIdLong,option), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong));');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS StopSchedule(stopIdLong, weekTime TEXT, departTime TEXT, lineId TEXT);');  // not used for now
-                    console.log("-4")
-                    rs = tx.executeSql('SELECT * FROM Config;');
-                    console.log("found " + rs.rows.count + " lines already in config tableb")
+
                     tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)',["lineGroup","true"]);
-                    console.log("1")
                     tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)', [ 'stopsShowAll', 'false']);
-                    console.log("2")
                     tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)', [ 'linesShowAll', 'false']);
-                    console.log("3")
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '1', 'Helsinki Bus']);
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '2', 'Tram']);
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '3', 'Espoo Bus']);

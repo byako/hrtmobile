@@ -45,16 +45,23 @@ Item {
             } else {
                 console.log("stopInfo geocode API FINISHED request " + searchString);
                 loading.visible = false
-//                if (searchResultStopInfoModel.count > 1 || searchResultStopInfoModel.get(0).stopState != "offline") {
                     searchString = ""
                     stopsView.model = searchResultStopInfoModel
                     recentButton.text = "Found"
                 if (searchResultStopInfoModel.count == 1 && searchResultStopInfoModel.get(0).stopState == "offline")  { // if only one stop has been found - show it immediately without showing a list of found stops, it should have been saved already
-                    // searchString = searchResultStopInfoModel.get(0).stopIdLong
-                    // searchResultStopInfoModel.clear()
-                    // buttonClicked()
                     openStop(0,"")
                 }
+            }
+        }
+    }
+    WorkerScript {           // lines loader
+        id: linesLoader
+        source: "stopInfoLoadLines.js"
+        onMessage: {
+            if (messageObject.departName == "ERROR") {
+                showError("Server returned ERROR")
+            } else {
+                linesModel.append(messageObject)
             }
         }
     }
@@ -100,7 +107,7 @@ Item {
                 onClicked: {
                     JS.deleteStop(stopsView.model.get(stopsView.currentIndex).stopIdLong) // remove from database
                     if (stopsView.model.get(stopsView.currentIndex).favorite == "true" ) stopInfoPage.refreshFavorites() // check if favorites page needs to be refreshed
-                    if (selectedStopIndex >= 0) { // if some stop is selected to view and dataRect shows data - mess with indexes
+                    if (selectedStopIndex >= 0) {                          // if some stop is selected to view and dataRect shows data - mess with indexes
                         if (selectedStopIndex == stopsView.currentIndex) { // if removing selected stop - clean models, hide dataRect
                             stopsView.model.remove(stopsView.currentIndex)
                             if (stopsView.model == searchResultStopInfoModel) fillModel()
@@ -129,7 +136,7 @@ Item {
                 onClicked: {
                     if (stopsView.model == recentModel) { // recent stops are shown: delete all except the favourites
                         JS.deleteAllStops()
-                    } else { // Found search results are shown : delete only those
+                    } else {        // Found search results are shown : delete only those
                         for (var i2=0; i2 < searchResultStopInfoModel.count; ++i2) {
                             if (searchResultStopInfoModel.get(i2).favorite != "true" && searchResultStopInfoModel.get(i2).stopState == "offline") {
                                 JS.deleteStop(searchResultStopInfoModel.get(i2).stopIdLong)
@@ -137,7 +144,7 @@ Item {
                         }
                         searchResultStopInfoModel.clear()
                     }
-                    fillModel()  // reload recent stops model
+                    fillModel()     // reload recent stops model
                     stopsView.model = recentModel
                     recentButton.text = "Recent"
                     stopsView.currentIndex = -1
@@ -385,8 +392,10 @@ Item {
                 anchors.fill:  parent
                 onClicked: {
                     if (stopsView.model == recentModel || stopState == "offline") {
+                        console.log("stopInfo.qml: opening " + stopIdLong)
                         openStop(index,stopName)
                     } else {
+                        console.log("stopInfo.qml: downloading  " + stopIdLong)
                         stopsLookup.sendMessage({"save":"true", "searchString":stopIdLong})
                     }
                 }
@@ -625,20 +634,8 @@ Item {
 
     }
     function fillLinesModel() {  // checkout stop info from database
-        JS.__db().transaction(
-            function(tx) {  // TODO
-                try { var rs = tx.executeSql("SELECT StopLines.lineIdLong, StopLines.lineEnd, Lines.lineType FROM StopLines LEFT OUTER JOIN Lines ON StopLines.lineIdLong=Lines.lineIdLong WHERE stopIdLong=?",[searchString]); }
-                catch(e) { console.log("FillLinesModel EXCEPTION: " + e); return }
-                linesModel.clear();
-                for (var i=0; i<rs.rows.length; ++i) {
-                    linesModel.append({"lineNumber" : rs.rows.item(i).lineIdLong,
-                                      "lineDest" : rs.rows.item(i).lineEnd})
-                    if (rs.rows.item(i).lineType) {
-                        console.log("Adding lineType for the stop:"+rs.rows.item(i).lineType)
-                    }
-                }
-            }
-        )
+        linesModel.clear()
+        linesLoader.sendMessage({"searchString":searchString})
     }
     function fillSchedule() {
         trafficModel.clear()

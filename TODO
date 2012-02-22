@@ -20,6 +20,7 @@ lineInfo:
 
 stopInfo:
  - To fix
+	* make stopSearch use Stops API instead of geochace - more stops are found: search is done in address field also
 	* when stop is selected from list: error shown on console about Schedule buttong icon
  - To implement
 	* realtime schedule button can be implemented via pop-up menu on schedule button

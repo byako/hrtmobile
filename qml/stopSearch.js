@@ -33,7 +33,7 @@ WorkerScript.onMessage = function(message) {
                         for (var g=0; g < a.firstChild.childNodes[7].childNodes[4].childNodes.length; ++g) {
                             try {
                                 lonlat = a.firstChild.childNodes[7].childNodes[4].childNodes[g].firstChild.nodeValue.split(":");
-                                tx.executeSql("INSERT OR REPLACE INTO stopLines VALUES(?,?,?)", [a.firstChild.childNodes[7].childNodes[1].firstChild.nodeValue,
+                                tx.executeSql("INSERT OR REPLACE INTO StopLines VALUES(?,?,?)", [a.firstChild.childNodes[7].childNodes[1].firstChild.nodeValue,
                                                                                       lonlat[0],lonlat[1]])
                             } catch (e) { console.log("StopSearch worker exception 2: " + e) }
                         }

@@ -7,16 +7,11 @@ var response
 function __db(){
     return openDatabaseSync('hrtmobile', '1.0', 'hrtmobile config database', 1000000);
 }
-function resetDatabase() {
-    console.log('Cleaning database')
-    cleanAll()
-    initDB()
-}
 
 function initDB() {
     console.log('initializing Database ')
-    __db().transaction(
-        function(tx) {
+        __db().transaction(
+            function(tx) {
             try {
                 tx.executeSql('CREATE TABLE IF NOT EXISTS Config(option TEXT UNIQUE, value TEXT, PRIMARY KEY(option) );')
 
@@ -37,27 +32,7 @@ function initDB() {
     )
     createDefaultConfig()
 }
-function cleanAll() {
-    console.log('clean all initiated')
-    __db().transaction(
-        function(tx) {
-            try {
-                tx.executeSql('DROP TABLE IF EXISTS Config;');
-                tx.executeSql('DROP TABLE IF EXISTS Stops;');
-                tx.executeSql('DROP TABLE IF EXISTS Lines;');
-                tx.executeSql('DROP TABLE IF EXISTS StopSchedule;');
-                tx.executeSql('DROP TABLE IF EXISTS LineStops;');
-                tx.executeSql('DROP TABLE IF EXISTS LineCoords;');
-                tx.executeSql('DROP TABLE IF EXISTS Current;');
-                tx.executeSql('DROP TABLE IF EXISTS LineTypes;');
-                tx.executeSql('DROP TABLE IF EXISTS StopLines;');
-                tx.executeSql('DROP TABLE IF EXISTS StopInfo;');
-                tx.executeSql('DROP TABLE IF EXISTS LineSchedule;');
-            }
-            catch(e) { console.log('cleanAll EXCEPTION: ' + e) }
-        }
-    )
-}
+
 function createDefaultConfig() {
     console.log('Creating default Config table content')
     var db = openDatabaseSync('hrtmobile', '1.0', 'hrtmobile config database', 1000000);
@@ -97,8 +72,8 @@ function loadConfig(config2) {
     catch (e) { console.log("ooposie") }
     __db().transaction(
         function(tx) {
-            try { var rs = tx.executeSql('SELECT * FROM CONFIG;') }
-            catch(e) { console.log('DB is not initialized. Creating all data from scratch.'); cleanAll(); initDB(); }
+            try { var rs = tx.executeSql('SELECT * FROM Config;') }
+            catch(e) { console.log('DB is not initialized. Creating all data from scratch.'); initDB(); }
         }
     )
     config2.lineGroup = getConfigValue('lineGroup')

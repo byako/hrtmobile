@@ -18,9 +18,8 @@ Item {
     signal showLineMapStop(string lineIdLong, string stopIdLong)
     signal showStopMap(string stopIdLong)
     signal showStopInfo(string stopIdLong)
-    signal pushStopToMap(string stopIdLong_, string stopIdShort_, string stopName_, string stopLongitude_, string stopLatitude_)
     signal refreshFavorites()
-    signal cleanMapAndPushStops()
+    signal cleanMap()
     width: 480
     height: 745
 //    width: parent.width
@@ -52,9 +51,11 @@ Item {
         source: "stopName.js"
 
         onMessage: {
-            for (var ii=0; ii < stopReachModel.count; ++ii) {
-                if (stopReachModel.get(ii).stopIdLong == messageObject)
-                stopReachModel.set(ii, {"stopName" : messageObject.stopName})
+            if (messageObject.stopName != "Error") {
+                for (var ii=0; ii < stopReachModel.count; ++ii) {
+                    if (stopReachModel.get(ii).stopIdLong == messageObject.stopIdLong)
+                    stopReachModel.set(ii, {"stopName" : messageObject.stopName})
+                }
             }
         }
     }
@@ -62,9 +63,9 @@ Item {
         id: lineInfoLoadStops
         source: "lineInfoLoadStops.js"
         onMessage: {
-            console.log("lineInfo.qml: loaded stop " + messageObject.stopIdLong + ":" + messageObject.stopState)
             stopReachModel.append({"stopIdLong":messageObject.stopIdLong, "stopName":messageObject.stopName, "reachTime":messageObject.reachTime})
             if (messageObject.stopState != "offline") {
+                console.log("lineInfo.qml: loading stop " + messageObject.stopIdLong)
                 stopReachLoader.sendMessage({"searchString":messageObject.stopIdLong})
             }
         }
@@ -225,7 +226,7 @@ Item {
                 text: "Map"
                 onClicked : {
                     // send stopIdLong and lineIdLong to map page to show both
-                    lineInfoPageItem.cleanMapAndPushStops()
+                    lineInfoPageItem.cleanMap()
                     showLineMapStop(searchString, stopReachModel.get(stopsView.currentIndex).stopIdLong)
                 }
             }
@@ -680,20 +681,8 @@ Item {
         loading.visible = true
         lineSearchWorker.sendMessage({"searchString":searchString})
     }
-    function sendStopsToMap() {
-        console.log("lineInfo: STOP DOING THIS!! ROUTE SHOULD TAKE STOPS FROM DATABASE!")
-//        for (var ii=0; ii < stopReachModel.count; ++ii) {
-//            if (stopReachModel.get(ii).stopName != "") {
-//                pushStopToMap(stopReachModel.get(ii).stopIdLong,
-//                              stopReachModel.get(ii).stopIdShort,
-//                              stopReachModel.get(ii).stopName,
-//                              stopReachModel.get(ii).stopLongitude,
-//                              stopReachModel.get(ii).stopLatitude)
-//            }
-//        }
-    }
-    function showMap() {            // push lineIdLong and stops to map page
-        lineInfoPageItem.cleanMapAndPushStops()
+    function showMap() {            // push lineIdLong [ && stopIdLong ] to map page
+        lineInfoPageItem.cleanMap()
         if (stopsView.currentIndex >= 0) {
             showLineMapStop(searchString, stopReachModel.get(stopsView.currentIndex).stopIdLong)
         } else {
