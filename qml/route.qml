@@ -9,8 +9,8 @@ Item {
     property bool firstRun: true
     property bool searchNearbyStops: false
     property bool findStops: false
-    property string loadStop: ""
-    property string loadLine: ""
+    property string loadStopIdLong: ""
+    property string loadLineIdLong: ""
     property int loadedLine: -1
     property int loadedStop: -1
     signal stopInfo(string stopIdLong_)
@@ -18,7 +18,7 @@ Item {
     state: "hideStops"
     width: 480
     height: 745
-//    Component.onCompleted: { checkLoadStop(); checkLoadLine(); }
+//    Component.onCompleted: { loadStop(); loadLine(); }
 
     InfoBanner {             // info banner
         id: infoBanner
@@ -27,23 +27,25 @@ Item {
         opacity: 1.0
     }
     WorkerScript {  // line shape loader
-        id: loader
+        id: lineLoader
         source: "route.js"
 
         onMessage: {
             if (messageObject.longitude == "finish") {
-                if (loadedStop == -1) {
+                if (loadedStop == -1) { // center map on the line's last stop
                     map.center.longitude = messageObject.longit
                     map.center.latitude = messageObject.latit
                     positionCircle.center.longitude = messageObject.longit
                     positionCircle.center.latitude = messageObject.latit
                 }
-                lineLabel.text = messageObject.lineIdShort + " -> " + messageObject.lineEnd
             } else if (messageObject.longitude == "error"){
                 lines.get(ii).lineShape.destroy()
                 lines.remove(lines.count-1)
                 lineLabel.text = ""
-            } else {
+            } else if (messageObject.longitude == "stop") {
+                loadStopIdLong = messageObject.latitude
+                loadStop()
+            }else {
                 temp.longitude = messageObject.longitude
                 temp.latitude = messageObject.latitude
                 lines.get(lines.count-1).lineShape.addCoordinate(temp)
@@ -108,7 +110,7 @@ Item {
     PositionSource {// gps data receiver
         id: positionSource
         updateInterval: 10000
-        active: false //(loadStop == loadLine) ? true : false
+        active: false
         onPositionChanged: {
             console.log("route.qml: position chhanged. distance from previous: " + position.coordinate.distanceTo(positionCircle.center) );
             if (position.coordinate.distanceTo(positionCircle.prev) > 100 || firstRun == true) {
@@ -340,18 +342,7 @@ Item {
         infoBanner.text = stringToShow
         infoBanner.show()
     }
-    function setCurrentStop(stopIdLong_) {                  // sets normal color to highlighted stop and sets loadedStop to newly highlighted index from stopsModel
-        if (loadedStop != -1) {
-            stops.get(loadedStop).mapCircle.color = "#80ff0000"
-        }
-        for (var ii=0; ii < stops.count; ++ii) {
-            if (stops.get(ii).stopIdLong == stopIdLong_) {       // search in model for a loaded stop
-                        loadedStop = ii
-                        stopsColumn.selectedIndex = ii
-            }
-        }
 
-    }
     function cleanStops() {
         for (var i=0; i<stops.count; ++i) {
             map.removeMapObject(stops.get(i).mapCircle)
@@ -359,60 +350,49 @@ Item {
         stops.clear()
         routePage.stopsCleaned()
     }
-    function checkAddStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_) {
-        for (var ii=0; ii < stops.count; ++ii) {            // check if stop is already loaded in stopsModel before adding
-            if (stops.get(ii).stopIdLong == stopIdLong_) {
-                stops.get(ii).mapCircle.color = "#500f0f000"
-                map.center = stops.get(ii).mapCircle.center
-                setCurrentStop(stopIdLong_)
-                loadStop = ""
-                return
+
+    function loadStop() {                                   // this is called to load/highlight stop on map from outside of route page
+        if (loadStopIdLong != "") {                               // got request to show stop
+            if (loadedStop != -1) {                         // unhighlight current stop
+                stops.get(loadedStop).mapCircle.color = "#80ff0000"
             }
-        }
-        addStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_);
-
-    }
-
-    function checkLoadStop() {
-        if (loadStop != "") {                               // got request to show stop
-            if (loadedStop == -1 || loadStop != stops.get(loadedStop).stopIdLong) {                   // it's not current stop
-                for (var ii=0; ii < stops.count; ++ii) {    // check if stop is already loaded in stopsModel
-                    if (stops.get(ii).stopIdLong == loadStop) {
+            for (var ii=0; ii < stops.count; ++ii) {    // check if stop is already loaded in stopsModel
+                if (stops.get(ii).stopIdLong == loadStopIdLong) {  // if it's loaded - just highlight it and center map on it
+                    if (loadedStop != ii) {
                         stops.get(ii).mapCircle.color = "#500f0f000"
                         map.center = stops.get(ii).mapCircle.center
-                        setCurrentStop(loadStop)
-                        loadStop = ""
+                        loadedStop = ii
+                        stopsColumn.selectedIndex = ii
+                        loadStopIdLong = ""
                         return
                     }
                 }
-                JS.__db().transaction(                      // if need to show not loaded into model stop - look in DB first
-                    function(tx) {
-                        try {var rs = tx.executeSql("SELECT * FROM Stops WHERE stopIdLong=?", [loadStop]) }
-                        catch (e) { console.log("route: checkLoadStop EXCEPTION: "+ e) }
-                        if (rs.rows.length > 0) {
-                            console.log("route: found " + rs.rows.count + "stops for load stop request: " + loadStop)
-                            addStop(rs.rows.item(0).stopIdLong, rs.rows.item(0).stopIdShort, rs.rows.item(0).stopName, rs.rows.item(0).stopLongitude, rs.rows.item(0).stopLatitude)
-                            map.center = stops.get(stops.count-1).mapCircle.center
-                            stops.get(stops.count-1).mapCircle.color = "#500f0f000"
-                            setCurrentStop(loadStop)
-                            loadedStop = stops.count-1
-                        } else {
-                            console.log("didn't find in DB")
-                // TODO: here in case we didn't find stop in DB - load data from geocode API - fast and with coords.
-                        }
-                    }
-                )
-                loadStop = ""
-            } else {
-                loadStop = ""
             }
-        }  // do nothing if loadStop empty
+            JS.__db().transaction(
+                function(tx) {
+                    try {var rs = tx.executeSql("SELECT stopIdLong, stopName, stopIdShort, stopLongitude, stopLatitude, stopAddress FROM Stops WHERE stopIdLong=?", [loadStopIdLong]) }
+                    catch (e) { console.log("route: loadStop EXCEPTION: "+ e) }
+                    if (rs.rows.length > 0) {
+                        console.log("route.qml: adding stop to the map")
+                        addStop(rs.rows.item(0).stopIdLong, rs.rows.item(0).stopIdShort, rs.rows.item(0).stopName, rs.rows.item(0).stopLongitude, rs.rows.item(0).stopLatitude, rs.rows.item(0).stopAddress)
+                        map.center = stops.get(stops.count-1).mapCircle.center
+                        stops.get(stops.count-1).mapCircle.color = "#500f0f000"
+                        stopsColumn.selectedIndex = stops.count-1
+                        loadStopIdLong = ""
+                        loadedStop = stops.count-1
+                    } else {
+                        stopSearch.sendMessage({"searchString":loadStopIdLong})
+                    }
+                }
+            )
+            loadStopIdLong = ""
+        }
     }
 
-    function checkLoadLine() {
-        if (loadLine != "") {
-            if (loadedLine != -1) {       // some line shape is loaded
-                if (loadLine == lines.get(loadedLine).lineIdLong) {     // requested line already loaded
+    function loadLine() {
+        if (loadLineIdLong != "") {
+            if (loadedLine != -1) {                                     // some line shape is loaded
+                if (loadLineIdLong == lines.get(loadedLine).lineIdLong) {     // requested line already loaded
                     return
                 }
                 else {
@@ -427,32 +407,32 @@ Item {
 //                map.removeMapObject(stops.get(stops.count-1).mapCircle)
 //            }
             for (var ii=0; ii < lines.count; ++ii) {              // check if line is already in lines model
-                if (lines.get(ii).lineIdLong == loadLine) {
+                if (lines.get(ii).lineIdLong == loadLineIdLong) {
                     map.addMapObject(lines.get(ii).lineShape)
-                    loadLine = ""
+                    loadLineIdLong = ""
                     loadedLine = ii
                     return
                 }
             }
-            try { lines.append({ "lineIdLong": loadLine, "lineShape" : Qt.createQmlObject('import Qt 4.7; import QtMobility.location 1.2;' +
+            try { lines.append({ "lineIdLong": loadLineIdLong, "lineShape" : Qt.createQmlObject('import Qt 4.7; import QtMobility.location 1.2;' +
                                                             'MapPolyline { id: "lineShape' + lines.count +
                                                             '"; border { color: "#ff0000"; width: 4 }' +
                                                             '}', map)
                              }) }
             catch (e) {
-                console.log("route.qml: checkLoadLine exception " + e)
-                loadLine = ""
+                console.log("route.qml: loadLine exception " + e)
+                loadLineIdLong = ""
                 return
-            }
-            console.log("route.qml: checkLoadLine: added one more line: " + lines.count)
-            loader.sendMessage({"lineIdLong" : loadLine});
+            }       // I WAS FIXING THIS
+            console.log("route.qml: loadLine: added one more line: " + lines.count)
+            lineLoader.sendMessage({"lineIdLong" : loadLineIdLong});
             loadedLine = lines.count-1
-            loadLine = ""
+            lineLabel.text = messageObject.lineIdShort + " -> " + messageObject.lineEnd
             map.addMapObject(lines.get(lines.count-1).lineShape)
+            loadLineIdLong = ""
         }
     }
-    function addStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_) {
-//        console.log("route: adding stop to map: " + stopName_)
+    function addStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_, stopAddress_) {
         try { stops.append({ "stopIdLong": stopIdLong_, "mapCircle" : Qt.createQmlObject('import Qt 4.7; import QtMobility.location 1.2;' +
                                                         'MapCircle{ id: "lineStop' + stopIdLong_ +
                                                         '"; center : Coordinate { longitude : ' + stopLongitude_ +
@@ -461,9 +441,10 @@ Item {
                                                         '; property string stopIdShort : "' + stopIdShort_ +
                                                         '"; property string stopIdLong : "' + stopIdLong_ +
                                                         '"; property string stopName : "' + stopName_ +
+                                                        '"; property string stopAddress : "' + stopAddress_ +
                                                         '"; MapMouseArea { anchors.fill: parent; onClicked: {' +
                                                         ' if (loadedStop == -1 || stops.get(loadedStop).stopIdLong != stopIdLong) {' +
-                                                        ' routePage.setCurrentStop(stopIdLong); color="#500F0F000"; }'+
+                                                        ' routePage.loadStop(stopIdLong); color="#500F0F000"; }'+
                                                         ' if (routePage.state == "hideStops") routePage.showError("" + stopIdShort + ": " + stopName) }' +
                                                         'onDoubleClicked: { routePage.stopInfo(stopIdLong) } ' +
                                                         '} }', map),

@@ -33,7 +33,9 @@ WorkerScript.onMessage = function (message) {
                     )
 
                 WorkerScript.sendMessage({"stopIdLong" : a.firstChild.childNodes[0].firstChild.nodeValue,
-                                          "stopName" : a.firstChild.childNodes[2].firstChild.nodeValue
+                                          "stopName" : a.firstChild.childNodes[2].firstChild.nodeValue,
+                                          "stopIdShort" : a.firstChild.childNodes[1].firstChild.nodeValue,
+                                          "stopAddress" : a.firstChild.childNodes[5].firstChild.nodeValue
 
                 })
             }
