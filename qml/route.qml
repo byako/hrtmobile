@@ -10,7 +10,7 @@ Item {
     property bool searchNearbyStops: false
     property bool findStops: false
     property string loadStopIdLong: ""
-    property string loadLineIdLong: ""
+    property string tempLineIdLong: ""
     property int loadedLine: -1
     property int loadedStop: -1
     signal stopInfo(string stopIdLong_)
@@ -26,6 +26,36 @@ Item {
         z: 10
         opacity: 1.0
     }
+    WorkerScript {  // stop name loader
+        id: stopReachLoader
+        source: "stopName.js"
+
+        onMessage: {
+            if (messageObject.stopName != "Error") {
+                for (var ii=0; ii < stopReachModel.count; ++ii) {
+                    if (stopReachModel.get(ii).stopIdLong == messageObject.stopIdLong)
+                    stopReachModel.set(ii, {"stopName" : messageObject.stopName})
+                }
+            }
+        }
+    }
+    WorkerScript {  // load line stops, send a request to find the name if needed
+        id: lineStopsLoader
+        source: "lineInfoLoadStops.js"
+        onMessage: {
+            if (messageObject.stopIdLong == "finish") {
+                if (loadStopIdLong != "") { // if some stop needs to be highlighted
+                    loadStop();
+                }
+                return
+            }
+            stopReachModel.append({"stopIdLong":messageObject.stopIdLong, "stopName":messageObject.stopName, "reachTime":messageObject.reachTime})
+            if (messageObject.stopState != "offline") {
+                console.log("lineInfo.qml: loading stop " + messageObject.stopIdLong)
+                stopReachLoader.sendMessage({"searchString":messageObject.stopIdLong})
+            }
+        }
+    }
     WorkerScript {  // line shape loader
         id: lineLoader
         source: "route.js"
@@ -33,18 +63,16 @@ Item {
         onMessage: {
             if (messageObject.longitude == "finish") {
                 if (loadedStop == -1) { // center map on the line's last stop
-                    map.center.longitude = messageObject.longit
-                    map.center.latitude = messageObject.latit
-                    positionCircle.center.longitude = messageObject.longit
-                    positionCircle.center.latitude = messageObject.latit
+                        map.center.longitude = messageObject.longit
+                        map.center.latitude = messageObject.latit
+                        positionCircle.center.longitude = messageObject.longit
+                        positionCircle.center.latitude = messageObject.latit
                 }
+                lineLabel.text = messageObject.lineIdShort + " -> " + messageObject.lineEnd
             } else if (messageObject.longitude == "error"){
                 lines.get(ii).lineShape.destroy()
                 lines.remove(lines.count-1)
                 lineLabel.text = ""
-            } else if (messageObject.longitude == "stop") {
-                loadStopIdLong = messageObject.latitude
-                loadStop()
             }else {
                 temp.longitude = messageObject.longitude
                 temp.latitude = messageObject.latitude
@@ -351,26 +379,31 @@ Item {
         routePage.stopsCleaned()
     }
 
-    function loadStop() {                                   // this is called to load/highlight stop on map from outside of route page
-        if (loadStopIdLong != "") {                               // got request to show stop
-            if (loadedStop != -1) {                         // unhighlight current stop
+    function loadStop(loadStopIdLong_) {                                   // this is called to load/highlight stop on map from outside of route page
+    if (loadStopIdLong_) {
+        stopIdLong_ = loadStopIdLong_
+    } else {
+        stopIdLong_ = loadStopIdLong
+        loadStopIdLong = ""
+    }
+        if (stopIdLong_ != "") {                                // got request to show stop
+            if (loadedStop != -1) {                             // unhighlight current stop
                 stops.get(loadedStop).mapCircle.color = "#80ff0000"
             }
             for (var ii=0; ii < stops.count; ++ii) {    // check if stop is already loaded in stopsModel
-                if (stops.get(ii).stopIdLong == loadStopIdLong) {  // if it's loaded - just highlight it and center map on it
+                if (stops.get(ii).stopIdLong == stopIdLong_) {  // if it's loaded - just highlight it and center map on it
                     if (loadedStop != ii) {
                         stops.get(ii).mapCircle.color = "#500f0f000"
                         map.center = stops.get(ii).mapCircle.center
                         loadedStop = ii
                         stopsColumn.selectedIndex = ii
-                        loadStopIdLong = ""
                         return
                     }
                 }
             }
             JS.__db().transaction(
                 function(tx) {
-                    try {var rs = tx.executeSql("SELECT stopIdLong, stopName, stopIdShort, stopLongitude, stopLatitude, stopAddress FROM Stops WHERE stopIdLong=?", [loadStopIdLong]) }
+                    try {var rs = tx.executeSql("SELECT stopIdLong, stopName, stopIdShort, stopLongitude, stopLatitude, stopAddress FROM Stops WHERE stopIdLong=?", [stopIdLong_]) }
                     catch (e) { console.log("route: loadStop EXCEPTION: "+ e) }
                     if (rs.rows.length > 0) {
                         console.log("route.qml: adding stop to the map")
@@ -378,21 +411,29 @@ Item {
                         map.center = stops.get(stops.count-1).mapCircle.center
                         stops.get(stops.count-1).mapCircle.color = "#500f0f000"
                         stopsColumn.selectedIndex = stops.count-1
-                        loadStopIdLong = ""
                         loadedStop = stops.count-1
                     } else {
-                        stopSearch.sendMessage({"searchString":loadStopIdLong})
+                        stopReachLoader.sendMessage({"searchString":stopIdLong_})
                     }
                 }
             )
-            loadStopIdLong = ""
         }
     }
 
-    function loadLine() {
-        if (loadLineIdLong != "") {
-            if (loadedLine != -1) {                                     // some line shape is loaded
-                if (loadLineIdLong == lines.get(loadedLine).lineIdLong) {     // requested line already loaded
+    function loadLine(loadLineIdLong_) {
+
+        var lineIdLong_
+
+        if (loadLineIdLong_) {
+            lineIdLong = loadLineIdLong_;
+        } else {
+            lineIdLong = loadLineIdLong
+            loadLineIdLong = ""
+        }
+
+        if (lineIdLong_ != "") {
+            if (loadedLine != -1) {                                             // some line shape is loaded
+                if (lineIdLong_ == lines.get(loadedLine).lineIdLong) {       // requested line already loaded
                     return
                 }
                 else {
@@ -400,6 +441,7 @@ Item {
                     loadedLine = -1
                 }
             }
+            lineStopsLoader.sendMessage({"searchString":lineIdLong_})
 //            while (lineShape.path.length > 1) lineShape.removeCoordinate(lineShape.path[0])
 
 //            lineShape.removeCoordinate(lineShape.path[0])
@@ -407,29 +449,26 @@ Item {
 //                map.removeMapObject(stops.get(stops.count-1).mapCircle)
 //            }
             for (var ii=0; ii < lines.count; ++ii) {              // check if line is already in lines model
-                if (lines.get(ii).lineIdLong == loadLineIdLong) {
+                if (lines.get(ii).lineIdLong == lineIdLong_) {
                     map.addMapObject(lines.get(ii).lineShape)
-                    loadLineIdLong = ""
                     loadedLine = ii
                     return
                 }
             }
-            try { lines.append({ "lineIdLong": loadLineIdLong, "lineShape" : Qt.createQmlObject('import Qt 4.7; import QtMobility.location 1.2;' +
+            try { lines.append({ "lineIdLong": lineIdLong_, "lineShape" : Qt.createQmlObject('import Qt 4.7; import QtMobility.location 1.2;' +
                                                             'MapPolyline { id: "lineShape' + lines.count +
                                                             '"; border { color: "#ff0000"; width: 4 }' +
                                                             '}', map)
                              }) }
             catch (e) {
                 console.log("route.qml: loadLine exception " + e)
-                loadLineIdLong = ""
+                lineIdLong_ = ""
                 return
-            }       // I WAS FIXING THIS
+            }
             console.log("route.qml: loadLine: added one more line: " + lines.count)
-            lineLoader.sendMessage({"lineIdLong" : loadLineIdLong});
+            lineLoader.sendMessage({"lineIdLong" : lineIdLong_});
             loadedLine = lines.count-1
-            lineLabel.text = messageObject.lineIdShort + " -> " + messageObject.lineEnd
             map.addMapObject(lines.get(lines.count-1).lineShape)
-            loadLineIdLong = ""
         }
     }
     function addStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_, stopAddress_) {

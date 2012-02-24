@@ -7,7 +7,7 @@ WorkerScript.onMessage = function (message) {
         __db.transaction(
             function(tx) {
                 try { var rs = tx.executeSql("SELECT lineShape,lineIdShort,lineEnd FROM Lines WHERE lineIdLong=?", [message.lineIdLong]) }
-                catch(e) {  }
+                catch(e) { console.log("route.js: EXCEPTION: " + e) }
                 if (rs.rows.length > 0) {  // found offline line shape
                     var coords = new Array
                     var lonlat = new Array

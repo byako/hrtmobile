@@ -224,19 +224,13 @@ Page {
                 stopInfoLoader.item.searchString = stopIdLong
                 stopInfoLoader.item.buttonClicked()
             }
-            onCleanMapAndPushStops: {
+            onCleanMap: {
                 console.log("lineInfo signal: cleanMapAndPushStops")
                 if(mapLoader.status == Loader.Ready) {
                     mapLoader.item.cleanStops()
                 } else {
                     mapLoader.source = "route.qml"
-                    lineInfoLoader.item.sendStopsToMap()
-                }
-            }
-            onPushStopToMap: {
-                if (tabGroup.currentTab != mapTabButton) initMap("","")
-                if (mapLoader.status == Loader.Ready) {
-                    mapLoader.item.checkAddStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_)
+//                    lineInfoLoader.item.sendLineToMap()
                 }
             }
             onRefreshFavorites: {
@@ -281,9 +275,9 @@ Page {
         mainTabBar.checkedButton = mapTabButton
         tabGroup.currentTab = routePageContainer
 
-        mapLoader.item.loadLine = lineIdLong_
-        mapLoader.item.loadStop = stopIdLong_
-        mapLoader.item.checkLoadStop()
-        mapLoader.item.checkLoadLine()
+//        mapLoader.item.loadLineIdLong = lineIdLong_
+        mapLoader.item.loadStopIdLong = tenoStopIdLong_
+//        mapLoader.item.loadStop()
+        mapLoader.item.loadLine(lineIdLong_)
     }
 }
