@@ -36,6 +36,8 @@ WorkerScript.onMessage = function (message) {
                                           "stopName" : a.firstChild.childNodes[2].firstChild.nodeValue,
                                           "stopIdShort" : a.firstChild.childNodes[1].firstChild.nodeValue,
                                           "stopAddress" : a.firstChild.childNodes[5].firstChild.nodeValue
+//                                          "stopLongitude" : lonlat[0],
+//                                          "stopLatitude" : lonlat[1]
 
                 })
             }

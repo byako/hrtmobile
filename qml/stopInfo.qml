@@ -30,7 +30,11 @@ Item {
         id: stopsLookup
         source: "stopSearch.js"
         onMessage: {
-            if (messageObject.stopState == "saved" ) { // response for save request
+            if (messageObject.stopState == "SERVER_ERROR") {
+                loading.visible = false
+                searchString = ""
+                showError("Could not find anything")
+            } else if (messageObject.stopState == "saved" ) { // response for save request
                 console.log("stopInfo.qml: stopSearch saved stop " + messageObject.stopIdLong + "; checking " + stopsView.model.count)
                 for (var zz=0; zz < stopsView.model.count; ++zz) {
                     console.log("stopInfo.qml: " + zz + "; " + stopsView.model.get(zz).stopIdLong + ":" + messageObject.stopIdLong)
@@ -45,9 +49,9 @@ Item {
             } else {
                 console.log("stopInfo geocode API FINISHED request " + searchString);
                 loading.visible = false
-                    searchString = ""
-                    stopsView.model = searchResultStopInfoModel
-                    recentButton.text = "Found"
+                searchString = ""
+                stopsView.model = searchResultStopInfoModel
+                recentButton.text = "Found"
                 if (searchResultStopInfoModel.count == 1 && searchResultStopInfoModel.get(0).stopState == "offline")  { // if only one stop has been found - show it immediately without showing a list of found stops, it should have been saved already
                     openStop(0,"")
                 }
@@ -174,11 +178,11 @@ Item {
         MenuLayout {
             MenuItem {
                 text: "Line Info"
-                onClicked : stopInfoPage.showLineInfo(linesModel.get(linesView.currentIndex).lineNumber);
+                onClicked : stopInfoPage.showLineInfo(linesModel.get(linesView.currentIndex).lineIdLong);
             }
             MenuItem {
                 text: "Line Map"
-                onClicked : stopInfoPage.showStopMapLine(searchString, linesModel.get(linesView.currentIndex).lineNumber);
+                onClicked : stopInfoPage.showStopMapLine(searchString, linesModel.get(linesView.currentIndex).lineIdLong);
             }
         }
     }
@@ -481,7 +485,7 @@ Item {
                 anchors.fill: parent
                 onPressAndHold: { linesView.currentIndex = index; linesPassingContext.open() }
                 onClicked: { linesView.currentIndex = index }
-                onDoubleClicked: { stopInfoPage.showLineInfo(lineNumber) }
+                onDoubleClicked: { stopInfoPage.showLineInfo(lineIdLong) }
             }
         }
     }
@@ -594,12 +598,12 @@ Item {
             selectedStopIndex = index
             stopsView.currentIndex = index
             searchString = "" + stopsView.model.get(index).stopIdLong
-            showMapButton.visible = true
-            fillLinesModel()
             stopNameValue.text = stopsView.model.get(index).stopName
             stopAddressValue.text = stopsView.model.get(index).stopAddress
             stopCityValue.text = stopsView.model.get(index).stopCity
+            dataRect.visible = true
             showMapButton.visible = true
+            fillLinesModel()
             fillSchedule()
         } else if (stopsView.currentIndex != selectedStopIndex){
             stopsView.currentIndex = index
@@ -652,31 +656,20 @@ Item {
             for (var j=0; j<recentModel.count; ++j) {
                 if (recentModel.get(j).stopIdLong == searchString) {  // this check should work only if stopIdLong supplied
                     if (selectedStopIndex != j) {
-                        infoRect.state = "scheduleSelected"
                         stopsView.model = recentModel
-                        selectedStopIndex = j
-                        stopsView.currentIndex = j
-                        searchString = "" + recentModel.get(j).stopIdLong
-                        showMapButton.visible = true
-                        fillLinesModel()
-                        stopNameValue.text = recentModel.get(selectedStopIndex).stopName
-                        stopAddressValue.text = recentModel.get(selectedStopIndex).stopAddress
-                        stopCityValue.text = recentModel.get(selectedStopIndex).stopCity
-                        dataRect.visible = true
-                        showMapButton.visible = true
-                        fillSchedule()
-                        console.log("stopInfo: buttonClicked: found stop via stopIdLong already in model: " + searchString + ": " + j);
+                        openStop(j,recentModel.get(j).stopName)
+                        console.log("stopInfo: buttonClicked: found stop via stopIdLong already in recentModel: " + searchString + ": " + j);
                         return
                     }
                 }
-            }
+            } // if we don't have requested stop in recentModel  we go further to real search using network
             loading.visible = true
             searchResultStopInfoModel.clear()
+            trafficModel.clear()
+            linesModel.clear()
             selectedStopIndex = -1
             stopsView.currentIndex = -1
             dataRect.visible = false
-            trafficModel.clear()
-            linesModel.clear()
             stopsLookup.sendMessage({"searchString" : searchString})
         }
     }

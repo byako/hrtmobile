@@ -62,7 +62,7 @@ WorkerScript.onMessage = function (message) {
                                          resp.childNodes[ii].childNodes[8].childNodes[cc].firstChild.firstChild.nodeValue,
                                          resp.childNodes[ii].childNodes[8].childNodes[cc].childNodes[2].firstChild.nodeValue]); }
                                     catch(e) { console.log("EXCEPTION: " + e); err++; }
-                                    console.log("lineSearch: saving stop: " + resp.childNodes[ii].childNodes[8].childNodes[cc].childNodes[0].firstChild.nodeValue)
+//                                    console.log("lineSearch: saving stop: " + resp.childNodes[ii].childNodes[8].childNodes[cc].childNodes[0].firstChild.nodeValue)
                                     try { lonlat = resp.childNodes[ii].childNodes[8].childNodes[cc].childNodes[5].firstChild.nodeValue.split(",");
                                         tx.executeSql('INSERT INTO Stops VALUES(?,?,?,?,?,?,?,?)', [resp.childNodes[ii].childNodes[8].childNodes[cc].childNodes[0].firstChild.nodeValue,
                                          resp.childNodes[ii].childNodes[8].childNodes[cc].childNodes[1].firstChild.nodeValue,
@@ -74,6 +74,7 @@ WorkerScript.onMessage = function (message) {
                                     catch(e) { console.log("STOP SAVE EXCEPTION: " + e); err++;}
                                     WorkerScript.sendMessage({"lineIdLong":"stop"})
                                 }
+                                console.log("lineSearch: saved all stops")
                                 WorkerScript.sendMessage({"lineIdLong":resp.childNodes[ii].childNodes[0].firstChild.nodeValue,
                                                      "lineState" : "saved"
                                                  })

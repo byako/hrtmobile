@@ -4,7 +4,7 @@
 //-------------------------------------- ** --------------------------------------------
 
 WorkerScript.onMessage = function (message) {
-    db_ = openDatabaseSync('hrtmobile', '1.0', 'hrtmobile config database', 1000000)
+    var db_ = openDatabaseSync('hrtmobile', '1.0', 'hrtmobile config database', 1000000)
     db_.transaction(
         function(tx) {
             try { var rs = tx.executeSql("SELECT StopLines.lineIdLong, StopLines.lineEnd, Lines.lineType FROM StopLines LEFT OUTER JOIN Lines ON StopLines.lineIdLong=Lines.lineIdLong WHERE stopIdLong=?",[message.searchString]); }
@@ -22,16 +22,19 @@ WorkerScript.onMessage = function (message) {
                     if (doc.readyState == XMLHttpRequest.DONE) {
                         var a = doc.responseXML.documentElement
                         var lonlat = new Array
-
-                        for (var g=0; g < a.firstChild.childNodes[1].childNodes.length; ++g) {
-                            try {
-                                lonlat = a.firstChild.childNodes[1].childNodes[g].firstChild.nodeValue.split(":");
-                                tx.executeSql("INSERT OR REPLACE INTO StopLines VALUES(?,?,?)", [a.firstChild.childNodes[0].firstChild.nodeValue,
-                                    lonlat[0],lonlat[1]])
-                                WorkerScript.sendMessage({"lineNumber" : lonlat[0].substr(1,5),
-                                                             "lineDest" : lonlat[1]})
-                            } catch (e) { console.log("StopSearch worker exception 2: " + e) }
-                        }
+                        db_.transaction(
+                            function(tx) {
+                                        for (var g=0; g < a.firstChild.childNodes[1].childNodes.length; ++g) {
+                                            try {
+                                                lonlat = a.firstChild.childNodes[1].childNodes[g].firstChild.nodeValue.split(":");
+                                                tx.executeSql("INSERT OR REPLACE INTO StopLines VALUES(?,?,?)", [a.firstChild.childNodes[0].firstChild.nodeValue,
+                                                    lonlat[0],lonlat[1]])
+                                                WorkerScript.sendMessage({"lineIdLong":lonlat[0] ,"lineNumber" : lonlat[0].substr(1,5),
+                                                                             "lineDest" : lonlat[1]})
+                                            } catch (e) { console.log("StopSearch worker exception 2: " + e) }
+                                        }
+                                    }
+                                    )
 
                         console.log("stopSearch.js: finished search result processing");
                     } else if (doc.readyState == XMLHttpRequest.ERROR) {

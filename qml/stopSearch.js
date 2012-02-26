@@ -8,9 +8,14 @@ WorkerScript.onMessage = function(message) {
     var save = 0
     var state_ = "online"
 
+    var __db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
+
     doc.onreadystatechange = function() {
         if (doc.readyState == XMLHttpRequest.DONE) {
-            __db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
+            if (!doc.responseXML) {
+                 WorkerScript.sendMessage({"stopState": "SERVER_ERROR"})
+                return
+            }
 
             var a = doc.responseXML.documentElement
             var lonlat = new Array
@@ -31,11 +36,10 @@ WorkerScript.onMessage = function(message) {
                         // save passing lines
                         console.log("stopSearch.js: saving passing lines for" + a.firstChild.childNodes[7].childNodes[1].firstChild.nodeValue);
                         for (var g=0; g < a.firstChild.childNodes[7].childNodes[4].childNodes.length; ++g) {
-                            try {
-                                lonlat = a.firstChild.childNodes[7].childNodes[4].childNodes[g].firstChild.nodeValue.split(":");
-                                tx.executeSql("INSERT OR REPLACE INTO StopLines VALUES(?,?,?)", [a.firstChild.childNodes[7].childNodes[1].firstChild.nodeValue,
-                                                                                      lonlat[0],lonlat[1]])
-                            } catch (e) { console.log("StopSearch worker exception 2: " + e) }
+                            lonlat = a.firstChild.childNodes[7].childNodes[4].childNodes[g].firstChild.nodeValue.split(":");
+                            try { var rs2 = tx.executeSql("INSERT OR REPLACE INTO StopLines VALUES(?,?,?)",
+                                    [a.firstChild.childNodes[7].childNodes[1].firstChild.nodeValue,lonlat[0],lonlat[1]]) }
+                            catch (e) { console.log("StopSearch worker exception 2: " + e) }
                         }
                     }
                 )

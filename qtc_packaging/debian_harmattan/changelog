@@ -1,3 +1,10 @@
+hrtmobile (0.7.0) unstable; urgency=low
+
+  * Nearby stops search on map
+  * Refactored lineInfo & stopInfo network logic
+
+ -- Alexey Fomenko <alexey.fomenko@gmail.com>  Sun, 26 Feb 2012 17:18:36 +0200
+
 hrtmobile (0.6.7) unstable; urgency=low
 
   * Optimized API calls. Great improved speed of response

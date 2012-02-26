@@ -10,11 +10,11 @@ Item {
     property bool searchNearbyStops: false
     property bool findStops: false
     property string loadStopIdLong: ""
-    property string tempLineIdLong: ""
+    property string loadLineIdLong: ""
     property int loadedLine: -1
     property int loadedStop: -1
     signal stopInfo(string stopIdLong_)
-    signal stopsCleaned()
+
     state: "hideStops"
     width: 480
     height: 745
@@ -27,14 +27,17 @@ Item {
         opacity: 1.0
     }
     WorkerScript {  // stop name loader
-        id: stopReachLoader
+        id: stopNameLoader
         source: "stopName.js"
 
         onMessage: {
             if (messageObject.stopName != "Error") {
-                for (var ii=0; ii < stopReachModel.count; ++ii) {
-                    if (stopReachModel.get(ii).stopIdLong == messageObject.stopIdLong)
-                    stopReachModel.set(ii, {"stopName" : messageObject.stopName})
+                for (var ii=0; ii < stops.count; ++ii) {
+                    if (stops.get(ii).stopIdLong == messageObject.stopIdLong) {
+                        stops.get(ii).mapCircle.stopName = messageObject.stopName
+                        stops.get(ii).mapCircle.stopAddress = messageObject.stopAddress
+                        stops.get(ii).mapCircle.stopIdShort = messageObject.stopIdShort
+                    }
                 }
             }
         }
@@ -49,10 +52,15 @@ Item {
                 }
                 return
             }
-            stopReachModel.append({"stopIdLong":messageObject.stopIdLong, "stopName":messageObject.stopName, "reachTime":messageObject.reachTime})
             if (messageObject.stopState != "offline") {
-                console.log("lineInfo.qml: loading stop " + messageObject.stopIdLong)
-                stopReachLoader.sendMessage({"searchString":messageObject.stopIdLong})
+//                stopNameLoader.sendMessage({"searchString":messageObject.stopIdLong})
+            } else {
+                addStop(messageObject.stopIdLong,
+                        messageObject.stopIdShort,
+                        messageObject.stopName,
+                        messageObject.stopLongitude,
+                        messageObject.stopLatitude,
+                        messageObject.stopAddress)
             }
         }
     }
@@ -84,51 +92,15 @@ Item {
         id: stopsNearbySearch
         source: "mapStopsSearch.js"
         onMessage: {                  // check if stop is already on the map before adding; leave if found
-            for (var ii=0; ii < stopsLoaded.count; ++ii) {
-                if (stopsLoaded.get(ii).stopIdLong == "" + messageObject.stopIdLong) {
+            for (var ii=0; ii < stops.count; ++ii) {
+                if (stops.get(ii).stopIdLong == "" + messageObject.stopIdLong) {
                     console.log("Stop " + messageObject.stopIdLong + " is already on map. Skipping")
                     return
                 }
             }
-            stopsLoaded.append({"stopIdLong" : messageObject.stopIdLong,
-                                "longitude" : messageObject.longitude,
-                                "latitude" : messageObject.latitude,
-                                "status" : 0 })
-            console.log("MAP: CREATING STOP " + messageObject.stopIdLong + "; Coords: " + messageObject.longitude + ":" + messageObject.latitude + " ; Distance: " + messageObject.distance);
-            stopInfoLoad.sendMessage({"stopIdLong" : messageObject.stopIdLong})
-            map.addMapObject(Qt.createQmlObject('import Qt 4.7; import QtMobility.location 1.2;' +
-                                                'MapCircle{ id: mapStop' + messageObject.stopIdLong +
-                                                '; center : Coordinate { longitude : ' + messageObject.longitude +
-                                                '; latitude : ' + messageObject.latitude +
-                                                '} color : "#80FF0000"; radius: 30.0' +
-                                                '' +
-                                                '; property string stopIdLong : "" +' + messageObject.stopIdLong +
-                                                '; property string distance : "" + ' + messageObject.distance +
-                                                '; MapMouseArea { anchors.fill: parent; onClicked: { routePage.popUp(stopIdLong) } }' +
-                                                '}', map))
-
-        }
-    }
-    WorkerScript {  // stop name fetching
-        id: stopInfoLoad
-        source: "stopName.js"
-        onMessage: {
-            for (var ii=0; ii < stopsLoaded.count; ++ii) {
-                if (stopsLoaded.get(ii).stopIdLong == "" + messageObject.stopIdLong) {
-                    console.log("received info about " + messageObject.stopIdLong)
-                    if (messageObject.stopName == "Error") { // in case if server returned an error, don't repeat queries
-                        stopsLoaded.set(ii, {"status" : "-1"})
-                        return
-                    }
-                    stopsLoaded.set(ii,{"stopName" : messageObject.stopName})
-                    if (stopsLoaded.get(ii).status == "2") {
-                        stopsLoaded.set(ii, {"status" : "1"})
-                        infoBanner.text = "Name: " + messageObject.stopName
-                        infoBanner.show()
-                    }
-                    break
-                }
-            }
+            console.log("MAP: NEARBY STOP " + messageObject.stopIdLong + "; Coords: " + messageObject.longitude + ":" + messageObject.latitude + " ; Distance: " + messageObject.distance);
+            addStop(messageObject.stopIdLong, "", "", messageObject.longitude, messageObject.latitude, "")
+            stopNameLoader.sendMessage({"searchString":messageObject.stopIdLong})
         }
     }
 
@@ -288,7 +260,7 @@ Item {
                 }
             }
         }
-        Button {
+        Button {  // info button
             id: statesChangeButton
             width: 100
             anchors.horizontalCenter: map.horizontalCenter
@@ -303,14 +275,14 @@ Item {
                 routePage.state = (map.height == routePage.height) ? "showStops" : "hideStops"
             }
         }
-        Button {
+        Button {  // showCurrentLocation button
             id: showCurrentLocation
             anchors.right: map.right
             anchors.top: map.top
             width: 60
             height: 60
             checkable: true
-            iconSource:  "image://theme/icon-s-location-picker"
+            iconSource:  "image://theme/icon-s-location-picker-inverse"
             opacity: 0.7
             style: ButtonStyle {
                 inverted: true
@@ -331,6 +303,23 @@ Item {
                 }
             }
         }
+        Button {  // showCurrentLocation button
+            id: searchStops
+            anchors.left: map.left
+            anchors.top: map.top
+            width: 60
+            height: 60
+            checkable: false
+            iconSource:  ":/images/radar.png"
+            opacity: 0.7
+            style: ButtonStyle {
+                inverted: true
+            }
+            onClicked: {
+                    showError("Searching for stops nearby")
+                    stopsNearbySearch.sendMessage({"longitude":map.center.longitude,"latitude":map.center.latitude})
+            }
+        }
     }
 
     states: [
@@ -349,23 +338,6 @@ Item {
     }
 
 //----------------------------------------------------------------------------//
-    function pupUp(stopIdLong_) {
-        for (var ii=0; ii < stopsLoaded.count; ++ii) {
-            if (stopsLoaded.get(ii).stopIdLong == "" + stopIdLong_) {
-                if (stopsLoaded.get(ii).status == 0 || stopsLoaded.get(ii).status == 2) { // [2] : waiting status: if still in waiting status - repeat request
-                    stopsLoaded.set(ii,{"status" : 2})
-                    console.log("STATUS WAS 2")
-                    stopInfoLoad.sendMessage({"stopIdLong" : stopIdLong_})
-                } else if (stopsLoaded.get(ii).status == -1) {  // [-1] : invalid stop ID, no info on server, got an error from it
-                    infoBanner.text = "Error: no info on server"
-                    infoBanner.show()
-                } else  { // print current ifo
-                    infoBanner.text = "Name: " + stopsLoaded.get(ii).stopName
-                    infoBanner.show()
-                }
-            }
-        }
-    }
     function showError(stringToShow) {
         infoBanner.text = stringToShow
         infoBanner.show()
@@ -376,16 +348,19 @@ Item {
             map.removeMapObject(stops.get(i).mapCircle)
         }
         stops.clear()
-        routePage.stopsCleaned()
     }
 
     function loadStop(loadStopIdLong_) {                                   // this is called to load/highlight stop on map from outside of route page
-    if (loadStopIdLong_) {
-        stopIdLong_ = loadStopIdLong_
-    } else {
-        stopIdLong_ = loadStopIdLong
-        loadStopIdLong = ""
-    }
+
+        var stopIdLong_
+
+        if (loadStopIdLong_) {
+            stopIdLong_ = loadStopIdLong_
+        } else {
+            stopIdLong_ = loadStopIdLong
+            loadStopIdLong = ""
+        }
+
         if (stopIdLong_ != "") {                                // got request to show stop
             if (loadedStop != -1) {                             // unhighlight current stop
                 stops.get(loadedStop).mapCircle.color = "#80ff0000"
@@ -413,6 +388,7 @@ Item {
                         stopsColumn.selectedIndex = stops.count-1
                         loadedStop = stops.count-1
                     } else {
+                        addStop(stopIdLong_, rs.rows.item(0).stopIdShort, rs.rows.item(0).stopName, rs.rows.item(0).stopLongitude, rs.rows.item(0).stopLatitude, rs.rows.item(0).stopAddress)
                         stopReachLoader.sendMessage({"searchString":stopIdLong_})
                     }
                 }
@@ -425,9 +401,9 @@ Item {
         var lineIdLong_
 
         if (loadLineIdLong_) {
-            lineIdLong = loadLineIdLong_;
+            lineIdLong_ = loadLineIdLong_;
         } else {
-            lineIdLong = loadLineIdLong
+            lineIdLong_ = loadLineIdLong
             loadLineIdLong = ""
         }
 
@@ -438,20 +414,19 @@ Item {
                 }
                 else {
                     map.removeMapObject(lines.get(loadedLine).lineShape)
-                    loadedLine = -1
                 }
             }
-            lineStopsLoader.sendMessage({"searchString":lineIdLong_})
-//            while (lineShape.path.length > 1) lineShape.removeCoordinate(lineShape.path[0])
+            console.log("LOADED LINE: " + loadedLine)
+            if (loadedLine != -1 || loadedStop != -1) {
+                cleanStops()
+                loadedLine = -1
+            }
 
-//            lineShape.removeCoordinate(lineShape.path[0])
-//            while (stops.count) {
-//                map.removeMapObject(stops.get(stops.count-1).mapCircle)
-//            }
             for (var ii=0; ii < lines.count; ++ii) {              // check if line is already in lines model
                 if (lines.get(ii).lineIdLong == lineIdLong_) {
                     map.addMapObject(lines.get(ii).lineShape)
                     loadedLine = ii
+                    lineStopsLoader.sendMessage({"searchString":lineIdLong_})
                     return
                 }
             }
@@ -467,8 +442,9 @@ Item {
             }
             console.log("route.qml: loadLine: added one more line: " + lines.count)
             lineLoader.sendMessage({"lineIdLong" : lineIdLong_});
-            loadedLine = lines.count-1
+            loadedLine = lines.count - 1
             map.addMapObject(lines.get(lines.count-1).lineShape)
+            lineStopsLoader.sendMessage({"searchString":lineIdLong_})
         }
     }
     function addStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_, stopAddress_) {

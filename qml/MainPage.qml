@@ -194,10 +194,6 @@ Page {
                 stopInfoLoader.item.searchString = stopIdLong_
                 stopInfoLoader.item.buttonClicked()
             }
-            onStopsCleaned: {
-                console.log("routePage signal: stopsCleaned")
-                lineInfoLoader.item.sendStopsToMap()                                                     // HERE TO FIX
-            }
         }
         Connections {  // line info
             target: lineInfoLoader.item
@@ -275,9 +271,11 @@ Page {
         mainTabBar.checkedButton = mapTabButton
         tabGroup.currentTab = routePageContainer
 
-//        mapLoader.item.loadLineIdLong = lineIdLong_
-        mapLoader.item.loadStopIdLong = tenoStopIdLong_
-//        mapLoader.item.loadStop()
-        mapLoader.item.loadLine(lineIdLong_)
+        if (lineIdLong_ != "") {
+            mapLoader.item.loadStopIdLong = stopIdLong_
+            mapLoader.item.loadLine(lineIdLong_)
+        } else if (stopIdLong_ != ""){
+            mapLoader.item.loadStop(stopIdLong_)
+        }
     }
 }

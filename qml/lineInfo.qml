@@ -19,7 +19,7 @@ Item {
     signal showStopMap(string stopIdLong)
     signal showStopInfo(string stopIdLong)
     signal refreshFavorites()
-    signal cleanMap()
+
     width: 480
     height: 745
 //    width: parent.width
@@ -81,7 +81,7 @@ Item {
                 if (!loading.linesToSave) { loading.visible = false; }
             } else if (messageObject.lineIdLong == "stopsToSave") {
                 loading.stopsToSave += messageObject.value
-            }else if (messageObject.lineIdLong == "stop") {
+            } else if (messageObject.lineIdLong == "stop") {
                 loading.stopsToSave--
             } else if (messageObject.lineIdLong == "DIRECT_HIT") {
                 console.log("lineInfo.qml: worker got direct hit: opening line")
@@ -117,11 +117,6 @@ Item {
                             lineSearchWorker.sendMessage({"searchString":searchResultLineInfoModel.get(ii).lineIdLong,"save":"true"})
                         }
                     }
-/*                    infoRect.visible = true;
-                    infoRect.state = "stopsSelected"
-                    dataRect.visible = true
-                    linesView.currentIndex = 0
-                    showLineInfo()*/
                 }
             } else if (messageObject.lineIdLong == "NONE") {
                 loading.visible = false
@@ -146,6 +141,14 @@ Item {
                             searchResultLineInfoModel.set(bb,{"lineState":"offline"})
                             lineInfoModel.append(searchResultLineInfoModel.get(bb));
                         }
+                    }
+                    if (searchResultLineInfoModel.count == 1) { // this means we got lineIdLong request from outside of page: open found line
+                        linesView.model = lineInfoModel
+                        linesView.currentIndex = linesView.model.count -1
+                        selectedLineIndex = linesView.model.count -1
+                        recentText.text = "Recent"
+                        recentText.color = "white"
+                        recentButtonAnimation.running = "false"
                     }
                     showLineInfo()
                 }
@@ -226,7 +229,6 @@ Item {
                 text: "Map"
                 onClicked : {
                     // send stopIdLong and lineIdLong to map page to show both
-                    lineInfoPageItem.cleanMap()
                     showLineMapStop(searchString, stopReachModel.get(stopsView.currentIndex).stopIdLong)
                 }
             }
@@ -682,7 +684,6 @@ Item {
         lineSearchWorker.sendMessage({"searchString":searchString})
     }
     function showMap() {            // push lineIdLong [ && stopIdLong ] to map page
-        lineInfoPageItem.cleanMap()
         if (stopsView.currentIndex >= 0) {
             showLineMapStop(searchString, stopReachModel.get(stopsView.currentIndex).stopIdLong)
         } else {
@@ -697,6 +698,7 @@ Item {
         if (linesView.currentIndex >= 0) {
             console.log("ShowLineInfo:  current index is " + selectedLineIndex)
             infoRect.state = "stopsSelected"
+            searchString = linesView.model.get(selectedLineIndex).lineIdLong
             tabRect.checkedButton = stopsButton
             dataRect.visible = true
             showMapButtonButton.visible = true

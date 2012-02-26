@@ -19,7 +19,7 @@ Column {
     anchors.horizontalCenter: parent.horizontalCenter
     Label {
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "HRTMobile version 0.6.7 (20120122)"
+        text: "HRTMobile version 0.7.0 (20120226)"
         color: "#cdd9ff"
     }
     Label {
@@ -39,7 +39,7 @@ Column {
     }
     Label {
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "Sources: git://[git-address].git"
+        text: "Sources: https://projects.developer.nokia.com/\nbgit/hrtmobile.git"
         color: "#cdd9ff"
     }
     Button {
