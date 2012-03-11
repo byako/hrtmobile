@@ -35,10 +35,11 @@ stopInfo:
 settings:
  - To fix
  - To implement
+	* GPS update interval is 10, let people choose it
 
 realtime:
  - To fix
-	* put is somewhere in app, currently no access from tabs version
+	* put it somewhere in app, currently no access from tabs version
 	* schedule countdown timer visualize
 	* when moving to stopInfo search - push also search flag to open search dialog
  - To implement
@@ -47,16 +48,17 @@ realtime:
 
 route
  - To fix
-	* finish stops and line name show
+	* scale map objects according to zoom level
  - To implement
 	* use landmarks from Location API on route page
 	* when loading line from stopInfo - load also line stops from network
-	* when stop is selected eneque button "show stop info", or double-tap to go to info
 
 Done:
 * stopInfo: if only one stop has been found - open it
 * add possibility to search online even when offline data found
 * after search fill data in search result model so main model is untouched and can be shown again. Allow switch between models
+* finish stops and line name show
+* when stop is selected eneque button "show stop info", or double-tap to go to info
 
 2011 12 15
 * version increase

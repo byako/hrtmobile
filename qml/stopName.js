@@ -14,6 +14,7 @@ WorkerScript.onMessage = function (message) {
             } else {
                 var a = doc.responseXML.documentElement
                 var lonlat = new Array
+                var lines = new String
                 lonlat = a.firstChild.childNodes[4].firstChild.nodeValue.split(",")
 
                     db_ = openDatabaseSync('hrtmobile', '1.0', 'hrtmobile config database', 1000000)

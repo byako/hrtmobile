@@ -18,6 +18,7 @@ Item {
     state: "hideStops"
     width: 480
     height: 745
+
 //    Component.onCompleted: { loadStop(); loadLine(); }
 
     InfoBanner {             // info banner
@@ -32,11 +33,20 @@ Item {
 
         onMessage: {
             if (messageObject.stopName != "Error") {
+                console.log("route.qml: " + messageObject.stopIdLong + " : " + messageObject.stopIdShort)
                 for (var ii=0; ii < stops.count; ++ii) {
                     if (stops.get(ii).stopIdLong == messageObject.stopIdLong) {
                         stops.get(ii).mapCircle.stopName = messageObject.stopName
                         stops.get(ii).mapCircle.stopAddress = messageObject.stopAddress
                         stops.get(ii).mapCircle.stopIdShort = messageObject.stopIdShort
+                        stops.set(ii, { "stopIdShortName" : messageObject.stopIdShort + " - " + messageObject.stopName})
+                    }
+                }
+            } else {
+                console.log("route: got Error for stop: " + messageObject.stopIdLong + "; removing from map")
+                for (var ii=0; ii < stops.count; ++ii) {
+                    if (stops.get(ii).stopIdLong == messageObject.stopIdLong) {
+                        map.removeMapObject(stops.get(ii).mapCircle)
                     }
                 }
             }
@@ -105,6 +115,36 @@ Item {
     }
 
     ListModel { id: stops }
+    Component {
+        id:stopsDelegate
+        Item {
+            width: stopsView.width;
+            height: 40
+            Text{
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.left: parent.left
+                text: stopIdShortName;
+                font.pixelSize: 28;
+                color: "#cdd9ff"
+            }
+            MouseArea {
+                anchors.fill:  parent
+                onClicked: {
+                    mapCircle.color="#500F0F000"
+                    if (loadedStop >= 0) {
+                        stops.get(loadedStop).mapCircle.color = "#80ff0000"
+                    }
+                    loadedStop = index
+                    stopsView.currentIndex = index
+                    map.center = mapCircle.center
+                }
+                onDoubleClicked: {
+                     routePage.stopInfo(stopIdLong)
+                }
+            }
+        }
+    }
+
     ListModel { id: lines }
 
     PositionSource {// gps data receiver
@@ -145,16 +185,15 @@ Item {
         anchors.topMargin: 10
         width: parent.width
         height: 160
-        Tumbler {
-            columns: [stopsColumn]
-            onChanged: {
-                stops.get(stopsColumn.selectedIndex).mapCircle.color="#500F0F000"
-                if (loadedStop >= 0) {
-                    stops.get(loadedStop).mapCircle.color = "#80ff0000"
-                }
-                loadedStop = stopsColumn.selectedIndex
-                map.center = stops.get(loadedStop).mapCircle.center
-            }
+        ListView {
+            id: stopsView
+            anchors.fill: parent
+            model: stops
+            delegate: stopsDelegate
+            spacing: 5
+            highlight: Rectangle { color: "#666666"; radius:  5 }
+            currentIndex: -1
+            clip: true
         }
     }
 
@@ -197,9 +236,7 @@ Item {
                 onClicked: {
                     console.log("Me touched!");
                 }
-/*                onPositionChanged: {
-                    positionCircle.center = mouse.coordinate
-                }*/
+//                onPositionChanged: { positionCircle.center = mouse.coordinate }
             }
         }
         MapMouseArea {
@@ -232,7 +269,7 @@ Item {
             }
         }
 
-        ButtonColumn {
+        Column {
             id: mapButtons
             z: 5
             width: 60
@@ -240,23 +277,30 @@ Item {
             opacity: 0.7
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            style: ButtonStyle {
-                inverted: true
-            }
             Button {
                 id: zoomIn
+                style: ButtonStyle {
+                    inverted: true
+                }
+                width: parent.width
                 checkable: false
                 text: "+"
                 onClicked: {
                     map.zoomLevel += 1
+                    scaleStops()
                 }
             }
             Button {
                 id: zoomOut
+                style: ButtonStyle {
+                    inverted: true
+                }
+                width: parent.width
                 checkable: false
                 text: "-"
                 onClicked: {
                     map.zoomLevel -= 1
+                    scaleStops()
                 }
             }
         }
@@ -265,7 +309,7 @@ Item {
             width: 100
             anchors.horizontalCenter: map.horizontalCenter
             anchors.top: map.top
-            checkable: false
+            checkable: true
             text: "Info"
             opacity: 0.7
             style: ButtonStyle {
@@ -310,7 +354,7 @@ Item {
             width: 60
             height: 60
             checkable: false
-            iconSource:  ":/images/radar.png"
+            iconSource: "image://theme/icon-m-toolbar-search-white" //":/images/radar.png"
             opacity: 0.7
             style: ButtonStyle {
                 inverted: true
@@ -332,10 +376,6 @@ Item {
             PropertyChanges { target: map; height: routePage.height; y: 0 }
         }
     ]
-    TumblerColumn {
-        id: stopsColumn
-        items: stops
-    }
 
 //----------------------------------------------------------------------------//
     function showError(stringToShow) {
@@ -371,7 +411,7 @@ Item {
                         stops.get(ii).mapCircle.color = "#500f0f000"
                         map.center = stops.get(ii).mapCircle.center
                         loadedStop = ii
-                        stopsColumn.selectedIndex = ii
+                        stopsView.currentIndex = ii
                         return
                     }
                 }
@@ -385,7 +425,7 @@ Item {
                         addStop(rs.rows.item(0).stopIdLong, rs.rows.item(0).stopIdShort, rs.rows.item(0).stopName, rs.rows.item(0).stopLongitude, rs.rows.item(0).stopLatitude, rs.rows.item(0).stopAddress)
                         map.center = stops.get(stops.count-1).mapCircle.center
                         stops.get(stops.count-1).mapCircle.color = "#500f0f000"
-                        stopsColumn.selectedIndex = stops.count-1
+                        stopsView.currentIndex = stops.count-1
                         loadedStop = stops.count-1
                     } else {
                         addStop(stopIdLong_, rs.rows.item(0).stopIdShort, rs.rows.item(0).stopName, rs.rows.item(0).stopLongitude, rs.rows.item(0).stopLatitude, rs.rows.item(0).stopAddress)
@@ -452,7 +492,7 @@ Item {
                                                         'MapCircle{ id: "lineStop' + stopIdLong_ +
                                                         '"; center : Coordinate { longitude : ' + stopLongitude_ +
                                                         '; latitude : ' + stopLatitude_ +
-                                                        '} color : "#80FF0000"; radius: 30.0' +
+                                                        '} color : "#80FF0000"; radius: 32.0' +
                                                         '; property string stopIdShort : "' + stopIdShort_ +
                                                         '"; property string stopIdLong : "' + stopIdLong_ +
                                                         '"; property string stopName : "' + stopName_ +
@@ -461,14 +501,31 @@ Item {
                                                         ' if (loadedStop == -1 || stops.get(loadedStop).stopIdLong != stopIdLong) {' +
                                                         ' routePage.loadStop(stopIdLong); color="#500F0F000"; }'+
                                                         ' if (routePage.state == "hideStops") routePage.showError("" + stopIdShort + ": " + stopName) }' +
-                                                        'onDoubleClicked: { routePage.stopInfo(stopIdLong) } ' +
+                                                        'onDoubleClicked: { routePage.stopInfo(stopIdLong) } onPositionChanged: { positionCircle.center = mouse.coordinate } ' +
                                                         '} }', map),
-                               "value" : "" + stopIdShort_ + "-" + stopName_
+                               "stopIdShortName" : "" + stopIdShort_ + "-" + stopName_
                          }) }
         catch (e) {
             console.log("route.qml: addStop exception " + e)
         }
-
         map.addMapObject(stops.get(stops.count-1).mapCircle)
+    }
+
+    function scaleStops() {
+        var radius_ = 30;
+        switch(map.zoomLevel) {
+            case 20 : radius_ = 4; break;
+            case 19 : radius_ = 8; break;
+            case 18 : radius_ = 16; break;
+            case 17 : radius_ = 24; break;
+            case 15 || 16 : radius_ = 32; break;
+            case 14 : radius_ = 64; break;
+            case 13 : radius_ = 96; break;
+            case 12 : radius_ = 128; break;
+            default: radius_ = 32;
+        }
+        for (var ii=0; ii < stops.count; ++ii) {
+            stops.get(ii).mapCircle.radius = radius_
+        };
     }
 }

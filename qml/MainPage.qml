@@ -35,7 +35,7 @@ Page {
                 id: linesTabButton
                 tab: lineInfoPageContainer;
                 text: (checked) ? "" : "line";
-                iconSource: (checked) ? "image://theme/icon-m-toolbar-search" : ""
+                iconSource: (checked) ? "image://theme/icon-m-toolbar-search-white" : ""
                 onClicked: {
                      if (tabGroup.lastTab == 0 && lineInfoLoader.status == Loader.Ready) {
                          searchDialog.page = lineInfoLoader.item
@@ -50,7 +50,7 @@ Page {
                 id: stopsTabButton
                 tab: stopInfoPageContainer;
                 text: (checked) ? "" : "stop";
-                iconSource: (checked) ? "image://theme/icon-m-toolbar-search" : ""
+                iconSource: (checked) ? "image://theme/icon-m-toolbar-search-white" : ""
                 onClicked: {
                     if (tabGroup.lastTab == 1 && stopInfoLoader.status == Loader.Ready) {
                         searchDialog.page = stopInfoLoader.item
@@ -65,7 +65,7 @@ Page {
                 id: mapTabButton
                 tab: routePageContainer
                 text: (checked) ? "" : "map";
-                iconSource: (checked) ? "image://theme/icon-m-toolbar-search" : ""
+                iconSource: (checked) ? "image://theme/icon-m-toolbar-search-white" : ""
                 onClicked: {
                     if (tabGroup.lastTab == 2 && mapLoader.status == Loader.Ready) {
                         searchDialog.page = mapLoader.item

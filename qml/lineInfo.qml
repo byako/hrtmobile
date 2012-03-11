@@ -12,7 +12,6 @@ Item {
     property string searchString: ""
     property int selectedLineIndex : -1
     property bool offlineResult : false
-    property int linesToSave : 0
 
     signal showLineMap(string lineIdLong)
     signal showLineMapStop(string lineIdLong, string stopIdLong)
@@ -101,15 +100,8 @@ Item {
                 showLineInfo()
                 loading.visible = false
             } else if (messageObject.lineIdLong == "FINISH") {
-                console.log("lineInfo.qml: worker finished")
-                if (searchResultLineInfoModel.count > 2) {  // big search response
-                    linesView.model = searchResultLineInfoModel
-                    console.log("lineInfo.qml: RECENT BUTTON: Found SIGN")
-                    recentText.text = "Found"
-                    recentButtonAnimation.running = "true"
-                    loading.visible = false
-                } else {                                    // one line found or even one direction
-                    linesToSave += searchResultLineInfoModel.count
+                console.log("lineInfo.qml: worker finished: linesToSave : " + loading.linesToSave)
+                if (searchResultLineInfoModel.count <= 2) {
                     for (var ii=0; ii<searchResultLineInfoModel.count; ++ii) {
                         if (searchResultLineInfoModel.get(ii).lineState != "offline") {
                             loading.linesToSave++
@@ -117,6 +109,13 @@ Item {
                             lineSearchWorker.sendMessage({"searchString":searchResultLineInfoModel.get(ii).lineIdLong,"save":"true"})
                         }
                     }
+                }
+                if (loading.linesToSave < 1 && searchResultLineInfoModel.count > 1) { // show searchResultLineInfoModel
+                    linesView.model = searchResultLineInfoModel
+                    console.log("lineInfo.qml: RECENT BUTTON: Found SIGN")
+                    recentText.text = "Found"
+                    recentButtonAnimation.running = "true"
+                    loading.visible = false
                 }
             } else if (messageObject.lineIdLong == "NONE") {
                 loading.visible = false
@@ -134,12 +133,17 @@ Item {
                     searchResultLineInfoModel.append(messageObject);
                 } else {
                     loading.linesToSave--
-                    --linesToSave;
-                    if (!loading.linesToSave) { loading.visible = false; }
+                    if (!loading.linesToSave) {
+                        loading.visible = false;
+                        linesView.model = searchResultLineInfoModel
+                        recentText.text = "Found"
+                        recentButtonAnimation.running = "true"
+                        loading.visible = false
+                    }
                     for (var bb=0; bb < searchResultLineInfoModel.count; ++bb) {
                         if (searchResultLineInfoModel.get(bb).lineIdLong == messageObject.lineIdLong){
                             searchResultLineInfoModel.set(bb,{"lineState":"offline"})
-                            lineInfoModel.append(searchResultLineInfoModel.get(bb));
+//                            lineInfoModel.append(searchResultLineInfoModel.get(bb));
                         }
                     }
                     if (searchResultLineInfoModel.count == 1) { // this means we got lineIdLong request from outside of page: open found line
@@ -149,8 +153,8 @@ Item {
                         recentText.text = "Recent"
                         recentText.color = "white"
                         recentButtonAnimation.running = "false"
+                        showLineInfo()
                     }
-                    showLineInfo()
                 }
             }
         }
@@ -542,7 +546,7 @@ Item {
         }
     }
 //--                        --------------------------------------------------//
-    Item{           // stopsView rect
+    Item{           // infoRect
         id: infoRect
         anchors.top: tabRect.bottom
         anchors.topMargin: 10
