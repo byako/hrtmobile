@@ -127,7 +127,7 @@ WorkerScript.onMessage = function (message) {
                                             "lineStart" : rs.rows.item(ii).lineStart,
                                             "lineEnd" : rs.rows.item(ii).lineEnd,
                                             "lineType" : rs.rows.item(ii).lineType,
-                                            "lineTypeName" : rs.rows.item(ii).lineTypeNAme,
+                                            "lineTypeName" : rs.rows.item(ii).lineTypeName,
                                             "favorite" : rs.rows.item(ii).favorite,
                                              "lineState" : "offline"
                                             });

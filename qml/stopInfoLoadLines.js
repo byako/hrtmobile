@@ -11,8 +11,9 @@ WorkerScript.onMessage = function (message) {
             catch(e) { console.log("FillLinesModel EXCEPTION: " + e) }
             if (rs.rows.length) {
                 for (var i=0; i<rs.rows.length; ++i) {
-                    WorkerScript.sendMessage({"lineNumber" : rs.rows.item(i).lineIdLong.substr(1,5),
-                                      "lineDest" : rs.rows.item(i).lineEnd})
+                    WorkerScript.sendMessage({"lineIdLong" : rs.rows.item(i).lineIdLong,
+                                              "lineNumber" : rs.rows.item(i).lineIdLong.substr(1,5),
+                                              "lineDest" : rs.rows.item(i).lineEnd})
                 }
             } else { // load and save passing lines
 

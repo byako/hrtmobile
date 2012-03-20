@@ -76,11 +76,14 @@ Item {
 
         onMessage: {
             if (message.lineIdLong == "lineSaveFailed") {
+                console.log("lineInfo.qml: worker lineSaveFailed")
                 loading.linesToSave--
                 if (!loading.linesToSave) { loading.visible = false; }
             } else if (messageObject.lineIdLong == "stopsToSave") {
+                console.log("lineInfo.qml: stopsToSave:" + messageObject.value);
                 loading.stopsToSave += messageObject.value
             } else if (messageObject.lineIdLong == "stop") {
+                console.log("lineInfo.qml: stop");
                 loading.stopsToSave--
             } else if (messageObject.lineIdLong == "DIRECT_HIT") {
                 console.log("lineInfo.qml: worker got direct hit: opening line")
@@ -93,7 +96,7 @@ Item {
                         return
                     }
                 } // else - add to the model from searchResultLineInfoModel and open it
-
+                linesView.model = lineInfoModel
                 lineInfoModel.append(searchResultLineInfoModel.get(0))
                 selectedLineIndex = lineInfoModel.count - 1
                 linesView.currentIndex = lineInfoModel.count - 1
@@ -118,12 +121,15 @@ Item {
                     loading.visible = false
                 }
             } else if (messageObject.lineIdLong == "NONE") {
+                console.log("lineInfo.qml: worker got none");
                 loading.visible = false
                 showError("No lines found")
             } else if (messageObject.lineIdLong == "ERROR") {
+                console.log("lineInfo.qml: worker got error");
                 loading.visible = false
                 showError("Server returned ERROR")
             } else {
+                console.log("lineInfo.qml: worker got else");
                 if (messageObject.lineState != "saved") {  // offline || online
                     for (var bb=0; bb < searchResultLineInfoModel.count; ++bb) {
                         if (searchResultLineInfoModel.get(bb).lineIdLong == messageObject.lineIdLong){
@@ -147,12 +153,13 @@ Item {
                         }
                     }
                     if (searchResultLineInfoModel.count == 1) { // this means we got lineIdLong request from outside of page: open found line
-                        linesView.model = lineInfoModel
-                        linesView.currentIndex = linesView.model.count -1
-                        selectedLineIndex = linesView.model.count -1
-                        recentText.text = "Recent"
+                        console.log("lineInfo.qml: count is one - request from stops");
+                        linesView.model = searchResultLineInfoModel
+                        linesView.currentIndex = 0
+                        selectedLineIndex = 0
+                        recentText.text = "Found"
                         recentText.color = "white"
-                        recentButtonAnimation.running = "false"
+                        recentButtonAnimation.running = "true"
                         showLineInfo()
                     }
                 }
@@ -700,7 +707,7 @@ Item {
     }
     function showLineInfo() {        // triggered when one of saved line selected by user
         if (linesView.currentIndex >= 0) {
-            console.log("ShowLineInfo:  current index is " + selectedLineIndex)
+            console.log("ShowLineInfo:  current index is " + selectedLineIndex + "; lineTypeName is " + linesView.model.get(selectedLineIndex).lineTypeName)
             infoRect.state = "stopsSelected"
             searchString = linesView.model.get(selectedLineIndex).lineIdLong
             tabRect.checkedButton = stopsButton
