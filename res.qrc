@@ -27,5 +27,6 @@
         <file>qml/lineInfoLoadStops.js</file>
         <file>qml/stopInfoLoadLines.js</file>
         <file>images/radar.png</file>
+        <file>qml/updateDatabase.js</file>
     </qresource>
 </RCC>

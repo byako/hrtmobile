@@ -59,7 +59,8 @@ OTHER_FILES += \
     qml/About.qml \
     qml/resetDatabase.js \
     qml/lineInfoLoadStops.js \
-    qml/stopInfoLoadLines.js
+    qml/stopInfoLoadLines.js \
+    qml/updateDatabase.js
 
 RESOURCES += \
     res.qrc
@@ -85,6 +86,7 @@ contains(MEEGO_EDITION,harmattan) {
     target.path = /opt/hrtmobile/bin
     INSTALLS += target
 }
+
 
 
 
