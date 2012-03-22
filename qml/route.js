@@ -32,7 +32,8 @@ WorkerScript.onMessage = function (message) {
                                         lonlat = coords[ii].split(",")
                                         WorkerScript.sendMessage({"longitude" : lonlat[0], "latitude" : lonlat[1]})
                                     }
-                                    WorkerScript.sendMessage({"longitude" : "finish", "latitude" : message.lineIdLong, "lineIdShort" : doc.responseXML.documentElement.firstChild.childNodes[0].firstChild.nodeValue, "lineEnd" : doc.responseXML.documentElement.firstChild.childNodes[1].firstChild.nodeValue})
+                                    WorkerScript.sendMessage({"longitude" : "finish", "latitude" : message.lineIdLong, "lineIdShort" : doc.responseXML.documentElement.firstChild.childNodes[0].firstChild.nodeValue, "lineEnd" : doc.responseXML.documentElement.firstChild.childNodes[1].firstChild.nodeValue,
+                                                                 "longit":lonlat[0], "latit":lonlat[1]})
                                 }
                             } else if (doc.readyState == XMLHttpRequest.ERROR) {
                             }

@@ -4,7 +4,6 @@
 // -------------------------------------- ** --------------------------------------------
 
 WorkerScript.onMessage = function (message) {
-    console.log("lineInfoLoadLines.js : " + message.linesShowAll)
     __db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
     __db.transaction(
         function(tx) {

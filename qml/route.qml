@@ -310,7 +310,7 @@ Item {
             anchors.horizontalCenter: map.horizontalCenter
             anchors.top: map.top
             checkable: true
-            text: "Info"
+            text: "Info \u2195"
             opacity: 0.7
             style: ButtonStyle {
                 inverted: true

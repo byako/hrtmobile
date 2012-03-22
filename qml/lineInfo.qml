@@ -83,7 +83,6 @@ Item {
                 console.log("lineInfo.qml: stopsToSave:" + messageObject.value);
                 loading.stopsToSave += messageObject.value
             } else if (messageObject.lineIdLong == "stop") {
-                console.log("lineInfo.qml: stop");
                 loading.stopsToSave--
             } else if (messageObject.lineIdLong == "DIRECT_HIT") {
                 console.log("lineInfo.qml: worker got direct hit: opening line")
@@ -115,8 +114,8 @@ Item {
                 }
                 if (loading.linesToSave < 1 && searchResultLineInfoModel.count > 1) { // show searchResultLineInfoModel
                     linesView.model = searchResultLineInfoModel
-                    console.log("lineInfo.qml: RECENT BUTTON: Found SIGN")
-                    recentText.text = "Found"
+                    console.log("lineInfo.qml: RECENT BUTTON: text= Found")
+                    recentText.text = "Found \u21E9"
                     recentButtonAnimation.running = "true"
                     loading.visible = false
                 }
@@ -142,9 +141,10 @@ Item {
                     if (!loading.linesToSave) {
                         loading.visible = false;
                         linesView.model = searchResultLineInfoModel
-                        recentText.text = "Found"
+                        recentText.text = "Found \u21E9"
                         recentButtonAnimation.running = "true"
                         loading.visible = false
+                        if (config.linesShowAll) { fillModel() }
                     }
                     for (var bb=0; bb < searchResultLineInfoModel.count; ++bb) {
                         if (searchResultLineInfoModel.get(bb).lineIdLong == messageObject.lineIdLong){
@@ -157,7 +157,8 @@ Item {
                         linesView.model = searchResultLineInfoModel
                         linesView.currentIndex = 0
                         selectedLineIndex = 0
-                        recentText.text = "Found"
+                        searchString = searchResultLineInfoModel.get(0).lineIdLong
+                        recentText.text = "Found \u21E9"
                         recentText.color = "white"
                         recentButtonAnimation.running = "true"
                         showLineInfo()
@@ -187,6 +188,10 @@ Item {
         onMessage: {
             if (messageObject.lineIdLong != "FINISH") {
                 lineInfoModel.append(messageObject)
+                if (messageObject.lineIdLong == searchString) {
+                    selectedLineIndex = lineInfoModel.count-1
+                    linesView.currentIndex = lineInfoModel.count-1
+                }
             } else {
                 linesView.currentIndex = selectedLineIndex
             }
@@ -244,6 +249,7 @@ Item {
                 }
             }
         }
+        onStatusChanged: { console.log("lineInfo.qml: stopContext menu status: ") }
     }
     Rectangle{      // dark background
         color: "#000000"
@@ -369,7 +375,7 @@ Item {
                     if (linesView.currentIndex != selectedLineIndex) { linesView.currentIndex = selectedLineIndex }
                     if ( infoRect.state != "linesSelected" ) {
                          infoRect.state = "linesSelected";
-                    } else if (linesView.model != lineInfoModel) {
+                    } else if (linesView.model != lineInfoModel) {  // switch back to recent lines
                         linesView.model = lineInfoModel
                         searchResultLineInfoModel.clear()
                         recentText.text = "Recent"
@@ -377,10 +383,15 @@ Item {
                         recentButtonAnimation.running = "false"
                         for (var ii=0; ii < lineInfoModel.count; ++ii) {
                             if (lineInfoModel.get(ii).lineIdLong == searchString) {
+                                console.log("lineInfo.qml: fixed selectedLineIndex on linesView")
                                 selectedLineIndex = ii
                                 linesView.currentIndex = ii
+                                return
                             }
                         }
+                        // if we're here -> selectedLineIndex is not fixed, most probably config.linesShowAll=false & opened line is not in favorites
+                        selectedLineIndex = -1
+                        linesView.currentIndex = -1
                     } else {
                         fillModel()
                     }
@@ -455,6 +466,7 @@ Item {
                     console.log("lineInfo.qml: double clicked stop")
                     stopsView.currentIndex = index;
                     showStopInfo(stopIdLong)
+                    return
                 }
                 onPressAndHold: {
                     console.log("lineInfo.qml: press and hold stop")
@@ -504,11 +516,12 @@ Item {
                 anchors.fill:  parent
                 onClicked: {
                     if (linesView.model != lineInfoModel && index != selectedLineIndex) {
-                        console.log("lineInfo.qml: open line from search result:" + lineIdLong + ": saving")
                         searchString = lineIdLong
+                        selectedLineIndex = index
+                        linesView.currentIndex = index
                         stopReachModel.clear()
                         scheduleClear()
-                        console.log("lineInfo: selected line " + lineIdLong + " : " + linesView.model.get(index).lineState)
+                        console.log("lineInfo.qml: selected line index " + index + ":" + lineIdLong + " : " + linesView.model.get(index).lineState)
                         if (linesView.model.get(index).lineState == "online") {
                             loading.visible = true
                             loading.linesToSave++
@@ -516,9 +529,7 @@ Item {
                         } else {
                             showLineInfo()
                         }
-                        selectedLineIndex = index
-                        linesView.currentIndex = index
-                        showLineInfo()
+//                        showLineInfo()
                     } else if (selectedLineIndex != index) {
                         searchString = lineIdLong
                         selectedLineIndex = index
@@ -553,7 +564,7 @@ Item {
         }
     }
 //--                        --------------------------------------------------//
-    Item{           // infoRect
+    Item {           // infoRect
         id: infoRect
         anchors.top: tabRect.bottom
         anchors.topMargin: 10
@@ -702,12 +713,10 @@ Item {
         }
     }
     function getStops() {             // load stops from LineStops database table
-        console.log("lineInfo.qml: getStops(): sending to lineInfoLoadStops worker the message: " + searchString)
         lineInfoLoadStops.sendMessage({"searchString":searchString})
     }
     function showLineInfo() {        // triggered when one of saved line selected by user
         if (linesView.currentIndex >= 0) {
-            console.log("ShowLineInfo:  current index is " + selectedLineIndex + "; lineTypeName is " + linesView.model.get(selectedLineIndex).lineTypeName)
             infoRect.state = "stopsSelected"
             searchString = linesView.model.get(selectedLineIndex).lineIdLong
             tabRect.checkedButton = stopsButton

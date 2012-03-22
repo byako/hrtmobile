@@ -15,15 +15,21 @@ WorkerScript.onMessage = function (message) {
                 var a = doc.responseXML.documentElement
                 var lonlat = new Array
                 var lines = new String
-                lonlat = a.firstChild.childNodes[4].firstChild.nodeValue.split(",")
+                var stopIdShort_ = new String
 
+                lonlat = a.firstChild.childNodes[4].firstChild.nodeValue.split(",")
+                if (!a.firstChild.childNodes[1].firstChild.nodeValue) {
+                    stopIdShort_ = "    "
+                } else {
+                    stopIdShort_ = a.firstChild.childNodes[1].firstChild.nodeValue
+                }
                     db_ = openDatabaseSync('hrtmobile', '1.0', 'hrtmobile config database', 1000000)
                     db_.transaction(
                         function(tx) {
                             try {
                                 tx.executeSql('INSERT INTO Stops VALUES(?,?,?,?,?,?,?,?)', [
                                     a.firstChild.childNodes[0].firstChild.nodeValue,
-                                    a.firstChild.childNodes[1].firstChild.nodeValue,
+                                    stopIdShort_,
                                     a.firstChild.childNodes[2].firstChild.nodeValue,
                                     a.firstChild.childNodes[5].firstChild.nodeValue,
                                     a.firstChild.childNodes[3].firstChild.nodeValue,
@@ -35,7 +41,7 @@ WorkerScript.onMessage = function (message) {
 
                 WorkerScript.sendMessage({"stopIdLong" : a.firstChild.childNodes[0].firstChild.nodeValue,
                                           "stopName" : a.firstChild.childNodes[2].firstChild.nodeValue,
-                                          "stopIdShort" : a.firstChild.childNodes[1].firstChild.nodeValue,
+                                          "stopIdShort" : stopIdShort_,
                                           "stopAddress" : a.firstChild.childNodes[5].firstChild.nodeValue
 //                                          "stopLongitude" : lonlat[0],
 //                                          "stopLatitude" : lonlat[1]

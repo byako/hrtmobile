@@ -1,3 +1,4 @@
+Make your own Button Row & dropDownButton
 general:
  - To fix
 	* use WorkerScript to provide threading in lineInfo, settings, realtimeSchedule,  mainPage (route - loading done, stopInfo - done)
@@ -20,7 +21,7 @@ lineInfo:
 
 stopInfo:
  - To fix
-	* make stopSearch use Stops API instead of geochace - more stops are found: search is done in address field also
+	* make stopSearch use Stops API instead of geochace - more stops are found: search is done in address field also, but no transport type info
 	* when stop is selected from list: error shown on console about Schedule buttong icon
  - To implement
 	* realtime schedule button can be implemented via pop-up menu on schedule button
@@ -36,6 +37,7 @@ settings:
  - To fix
  - To implement
 	* GPS update interval is 10, let people choose it
+	* show\hide lines passing info on stop info popup
 
 realtime:
  - To fix
@@ -48,12 +50,15 @@ realtime:
 
 route
  - To fix
-	* scale map objects according to zoom level
+	* highlighted stop load from lineInfo page
  - To implement
 	* use landmarks from Location API on route page
 	* when loading line from stopInfo - load also line stops from network
+	* onPressAndHold GPS button - show timeout selection dialog
+	* popup lines passing list
 
 Done:
+* scale map objects according to zoom level
 * stopInfo: if only one stop has been found - open it
 * add possibility to search online even when offline data found
 * after search fill data in search result model so main model is untouched and can be shown again. Allow switch between models
