@@ -23,7 +23,7 @@ Item {
 
     InfoBanner {             // info banner
         id: infoBanner
-        text: "info description here"
+        text: ""
         z: 10
         opacity: 1.0
     }
