@@ -5,6 +5,7 @@
 
 WorkerScript.onMessage = function (message) {
         var db_ = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
+        var err = 0;
         db_.transaction(
             function(tx) {
                 try {
@@ -50,7 +51,14 @@ WorkerScript.onMessage = function (message) {
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '23', 'Espoo service line']);
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '24', 'Vantaa service line']);
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '25', 'Regional night traffic']);
-                } catch (e) { console.log ( "resetDatabase.js: exception " + e); return }
+                } catch (e) { console.log ( "resetDatabase.js: exception " + e); err=1;}
+                if (err) {
+                    try { tx.executeSql('CREATE TABLE IF NOT EXISTS Reset(option TEXT, value TEXT, PRIMARY KEY(option) );');
+                    tx.executeSql('INSERT OR REPLACE INTO Reset VALUES(?, ?)',["reset","true"]); }
+                    catch (e) { console.log ("resetDatabase.js: exception " + e);}
+                    WorkerScript.sendMessage({"clean":"error"})
+                    return
+                }
                 WorkerScript.sendMessage({"clean":"done"})
             }
         )

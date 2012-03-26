@@ -23,6 +23,8 @@ Item {
                 settingsPage.dbclean()
                 refreshConfig()
                 showError("Database cleaned")
+            } else if (messageObject.clean == "err") {
+                showError("Cleanup will be done on next startup")
             }
         }
     }
