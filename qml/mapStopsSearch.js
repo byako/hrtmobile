@@ -15,6 +15,7 @@ WorkerScript.onMessage = function (message) {
                                                  "longitude" : xml.childNodes[1].childNodes[ii].attributes[1].nodeValue, "latitude" : xml.childNodes[1].childNodes[ii].attributes[2].nodeValue});
                 }
             }
+            WorkerScript.sendMessage({"stopIdLong":"FINISH"})
         } else if (doc.readyState == XMLHttpRequest.ERROR) {
             console.log("mapStopsSearch: server returned ERROR")
         }

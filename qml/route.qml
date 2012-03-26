@@ -13,6 +13,14 @@ Item {
     property string loadLineIdLong: ""
     property int loadedLine: -1
     property int loadedStop: -1
+
+    property string passiveBusStopColor: "#806060BB"
+    property string activeBusStopColor: "#5050FF"
+
+    property string busLineColor: "#800000AA"
+    property string tramLineColor: "#8000AA00"
+    property string metroLineColor: "#80FF5090"
+
     signal stopInfo(string stopIdLong_)
 
     state: "hideStops"
@@ -65,12 +73,19 @@ Item {
             if (messageObject.stopState != "offline") {
 //                stopNameLoader.sendMessage({"searchString":messageObject.stopIdLong})
             } else {
+                for (var aa=0;aa<stops.count;++aa) {
+                    if (stops.get(aa).stopIdLong == messageObject.stopIdLong) {
+                        stops.set(aa,{"stopObjectType":"line"})
+                        return
+                    }
+                }
                 addStop(messageObject.stopIdLong,
                         messageObject.stopIdShort,
                         messageObject.stopName,
                         messageObject.stopLongitude,
                         messageObject.stopLatitude,
-                        messageObject.stopAddress)
+                        messageObject.stopAddress,
+                        "line")
             }
         }
     }
@@ -102,6 +117,11 @@ Item {
         id: stopsNearbySearch
         source: "mapStopsSearch.js"
         onMessage: {                  // check if stop is already on the map before adding; leave if found
+            if (messageObject.stopIdLong == "FINISH") {
+                searchStopsButton.iconSource = "image://theme/icon-m-toolbar-search-white"
+                return
+            }
+
             for (var ii=0; ii < stops.count; ++ii) {
                 if (stops.get(ii).stopIdLong == "" + messageObject.stopIdLong) {
                     console.log("Stop " + messageObject.stopIdLong + " is already on map. Skipping")
@@ -109,7 +129,7 @@ Item {
                 }
             }
             console.log("MAP: NEARBY STOP " + messageObject.stopIdLong + "; Coords: " + messageObject.longitude + ":" + messageObject.latitude + " ; Distance: " + messageObject.distance);
-            addStop(messageObject.stopIdLong, "", "", messageObject.longitude, messageObject.latitude, "")
+            addStop(messageObject.stopIdLong, "", "", messageObject.longitude, messageObject.latitude, "","nearby")
             stopNameLoader.sendMessage({"searchString":messageObject.stopIdLong})
         }
     }
@@ -130,9 +150,9 @@ Item {
             MouseArea {
                 anchors.fill:  parent
                 onClicked: {
-                    mapCircle.color="#500F0F000"
+                    mapCircle.color=activeBusStopColor
                     if (loadedStop >= 0) {
-                        stops.get(loadedStop).mapCircle.color = "#80ff0000"
+                        stops.get(loadedStop).mapCircle.color=passiveBusStopColor
                     }
                     loadedStop = index
                     stopsView.currentIndex = index
@@ -168,7 +188,7 @@ Item {
 
     MapPolyline {
         id: lineShape
-        border { color: "#ff0000"; width: 4; }
+        border { color: "#00FF00"; width: 4; }
     }
     Coordinate { id: temp }
 
@@ -232,12 +252,6 @@ Item {
             color : "#80FF00"
             radius : 30.0
             visible: false
-            MapMouseArea {
-                onClicked: {
-                    console.log("Me touched!");
-                }
-//                onPositionChanged: { positionCircle.center = mouse.coordinate }
-            }
         }
         MapMouseArea {
             property int lastX : -1
@@ -348,20 +362,33 @@ Item {
             }
         }
         Button {  // showCurrentLocation button
-            id: searchStops
+            id: searchStopsButton
             anchors.left: map.left
             anchors.top: map.top
             width: 60
             height: 60
-            checkable: false
+            checkable: true
             iconSource: "image://theme/icon-m-toolbar-search-white" //":/images/radar.png"
             opacity: 0.7
             style: ButtonStyle {
                 inverted: true
             }
             onClicked: {
+                if (!checked) { // remove found stops from map
+                    var aa=0;
+                    while (aa<stops.count) {
+                        if (stops.get(aa).stopObjectType=="nearby") {
+                            map.removeMapObject(stops.get(aa).mapCircle)
+                            stops.remove(aa)
+                        } else {
+                            aa++
+                        }
+                    }
+                } else {
                     showError("Searching for stops nearby")
+                    iconSource=":/images/radar.png"
                     stopsNearbySearch.sendMessage({"longitude":map.center.longitude,"latitude":map.center.latitude})
+                }
             }
         }
     }
@@ -390,7 +417,7 @@ Item {
         stops.clear()
     }
 
-    function loadStop(loadStopIdLong_) {                                   // this is called to load/highlight stop on map from outside of route page
+    function loadStop(loadStopIdLong_) {                        // this is called to load/highlight stop on map from outside of route page
 
         var stopIdLong_
 
@@ -403,12 +430,12 @@ Item {
 
         if (stopIdLong_ != "") {                                // got request to show stop
             if (loadedStop != -1) {                             // unhighlight current stop
-                stops.get(loadedStop).mapCircle.color = "#80ff0000"
+                stops.get(loadedStop).mapCircle.color=passiveBusStopColor
             }
             for (var ii=0; ii < stops.count; ++ii) {    // check if stop is already loaded in stopsModel
                 if (stops.get(ii).stopIdLong == stopIdLong_) {  // if it's loaded - just highlight it and center map on it
                     if (loadedStop != ii) {
-                        stops.get(ii).mapCircle.color = "#500f0f000"
+                        stops.get(ii).mapCircle.color=activeBusStopColor
                         map.center = stops.get(ii).mapCircle.center
                         loadedStop = ii
                         stopsView.currentIndex = ii
@@ -422,13 +449,13 @@ Item {
                     catch (e) { console.log("route: loadStop EXCEPTION: "+ e) }
                     if (rs.rows.length > 0) {
                         console.log("route.qml: adding stop to the map")
-                        addStop(rs.rows.item(0).stopIdLong, rs.rows.item(0).stopIdShort, rs.rows.item(0).stopName, rs.rows.item(0).stopLongitude, rs.rows.item(0).stopLatitude, rs.rows.item(0).stopAddress)
+                        addStop(rs.rows.item(0).stopIdLong, rs.rows.item(0).stopIdShort, rs.rows.item(0).stopName, rs.rows.item(0).stopLongitude, rs.rows.item(0).stopLatitude, rs.rows.item(0).stopAddress,"line")
                         map.center = stops.get(stops.count-1).mapCircle.center
-                        stops.get(stops.count-1).mapCircle.color = "#500f0f000"
+                        stops.get(stops.count-1).mapCircle.color=activeBusStopColor
                         stopsView.currentIndex = stops.count-1
                         loadedStop = stops.count-1
                     } else {
-                        addStop(stopIdLong_, rs.rows.item(0).stopIdShort, rs.rows.item(0).stopName, rs.rows.item(0).stopLongitude, rs.rows.item(0).stopLatitude, rs.rows.item(0).stopAddress)
+                        addStop(stopIdLong_, rs.rows.item(0).stopIdShort, rs.rows.item(0).stopName, rs.rows.item(0).stopLongitude, rs.rows.item(0).stopLatitude, rs.rows.item(0).stopAddress,"line")
                         stopReachLoader.sendMessage({"searchString":stopIdLong_})
                     }
                 }
@@ -472,7 +499,7 @@ Item {
             }
             try { lines.append({ "lineIdLong": lineIdLong_, "lineShape" : Qt.createQmlObject('import Qt 4.7; import QtMobility.location 1.2;' +
                                                             'MapPolyline { id: "lineShape' + lines.count +
-                                                            '"; border { color: "#ff0000"; width: 4 }' +
+                                                            '"; border { color: "'+busLineColor+'"; width: 4 }' +
                                                             '}', map)
                              }) }
             catch (e) {
@@ -487,23 +514,24 @@ Item {
             lineStopsLoader.sendMessage({"searchString":lineIdLong_})
         }
     }
-    function addStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_, stopAddress_) {
+function addStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_, stopAddress_, stopObjectType_) {
         try { stops.append({ "stopIdLong": stopIdLong_, "mapCircle" : Qt.createQmlObject('import Qt 4.7; import QtMobility.location 1.2;' +
                                                         'MapCircle{ id: "lineStop' + stopIdLong_ +
                                                         '"; center : Coordinate { longitude : ' + stopLongitude_ +
                                                         '; latitude : ' + stopLatitude_ +
-                                                        '} color : "#80FF0000"; radius: 32.0' +
+                                                        '} color : "'+ passiveBusStopColor + '"; radius: 32.0' +
                                                         '; property string stopIdShort : "' + stopIdShort_ +
                                                         '"; property string stopIdLong : "' + stopIdLong_ +
                                                         '"; property string stopName : "' + stopName_ +
                                                         '"; property string stopAddress : "' + stopAddress_ +
                                                         '"; MapMouseArea { anchors.fill: parent; onClicked: {' +
                                                         ' if (loadedStop == -1 || stops.get(loadedStop).stopIdLong != stopIdLong) {' +
-                                                        ' routePage.loadStop(stopIdLong); color="#500F0F000"; }'+
+                                                        ' routePage.loadStop(stopIdLong); color="'+activeBusStopColor+'"; }'+
                                                         ' if (routePage.state == "hideStops") routePage.showError("" + stopIdShort + ": " + stopName) }' +
-                                                        'onDoubleClicked: { routePage.stopInfo(stopIdLong) } onPositionChanged: { positionCircle.center = mouse.coordinate } ' +
+                                                        'onDoubleClicked: { routePage.stopInfo(stopIdLong) }' +
                                                         '} }', map),
-                               "stopIdShortName" : "" + stopIdShort_ + "-" + stopName_
+                               "stopIdShortName" : "" + stopIdShort_ + "-" + stopName_,
+                               "stopObjectType" : stopObjectType_
                          }) }
         catch (e) {
             console.log("route.qml: addStop exception " + e)
@@ -527,5 +555,6 @@ Item {
         for (var ii=0; ii < stops.count; ++ii) {
             stops.get(ii).mapCircle.radius = radius_
         };
+        positionCircle.radius = radius_
     }
 }

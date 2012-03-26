@@ -9,6 +9,8 @@ Page {
     width: 480
     height: 745
     anchors.fill: parent
+    lockInPortrait: true
+    property string release_: "0.8.0 (20120322)"
 
     Rectangle {
         anchors.fill: parent
@@ -19,7 +21,7 @@ Column {
     anchors.horizontalCenter: parent.horizontalCenter
     Label {
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "HRTMobile version 0.7.0 (20120226)"
+        text: "HRT Routes & Schedules\nversion " + release_
         color: "#cdd9ff"
     }
     Label {

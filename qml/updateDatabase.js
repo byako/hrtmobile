@@ -3,6 +3,7 @@ function __db(){
 }
 
 function check_if_update_needed(dbTimeStamp) {
+    console.log("updateDatabase.js: checking if update needed")
     __db().transaction(
         function(tx) {
             var ok=1;
@@ -15,13 +16,14 @@ function check_if_update_needed(dbTimeStamp) {
                 return
             }
             if (!ok || !rs.rows.count) { // put a timestamp
-                try { tx.executeSql('INSERT INTO OR REPLACE Config VALUES(?, ?)', ['dbTimeStamp',dbTimeStamp]) }
+                console.log("updateDatabse.js: placing a timestamp")
+                try { tx.executeSql('INSERT INTO Config VALUES(?, ?)', ['dbTimeStamp',dbTimeStamp]) }
                 catch(e) {
                     console.log("updateDatabase.js: exception setting dbTimeStamp: " + e)
                     return
                 }
             }
-            console.log("updateDatabase.js: current timeStamp is " + rs.rows.item(0).value)
+            console.log("updateDatabase.js: finished")
         }
     )
 }

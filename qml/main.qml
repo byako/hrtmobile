@@ -13,7 +13,7 @@ PageStackWindow {
     }
     Component.onCompleted: {
         console.log("starting databaseUpdater")
-        Updater.check_if_update_needed(dbTimeStamp)
+//        Updater.check_if_update_needed(dbTimeStamp)
     }
 
     MainPage {id: mainPage}

@@ -11,6 +11,7 @@ WorkerScript.onMessage = function(message) {
     var __db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
 
     doc.onreadystatechange = function() {
+        console.log("stopSearch.js: got a reply")
         if (doc.readyState == XMLHttpRequest.DONE) {
             if (!doc.responseXML) {
                  WorkerScript.sendMessage({"stopState": "SERVER_ERROR"})
@@ -87,7 +88,7 @@ WorkerScript.onMessage = function(message) {
             WorkerScript.sendMessage({"stopIdLong": "FINISHED"});
         } else if (doc.readyState == XMLHttpRequest.ERROR) {
             WorkerScript.sendMessage({"stopIdShort": "SERVER_ERROR"});
-            showError("Request error. Is Network available? trying to do offline search")
+            console.log("Request error. Is Network available? trying to do offline search")
         }
     }  // doc.onReady function end
 
