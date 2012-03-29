@@ -10,6 +10,7 @@ WorkerScript.onMessage = function (message) {
     var err = 0
     var search_done = 0
     var save = 0
+    var preSave = 0
     var db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
 
     console.log("lineSearch.js: working")
@@ -26,7 +27,13 @@ WorkerScript.onMessage = function (message) {
             } else {
                 resp=doc.responseXML.documentElement
                 console.log("lineSearch.js: OK, got " + doc.responseXML.documentElement.childNodes.length+ " lines" + (save ? " : for saving" : " : for search"))
-                if (save) {  // push lines to the database with all the data from server
+                if (resp.childNodes.length == 1) {
+                    preSave = 1; console.log("lineSearch.js: found 1 line, presaving");WorkerScript.sendMessage({"lineIdLong":"preSave"});
+                    doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&epsg_out=wgs84&query="+message.searchString);
+                    doc.send();
+                    return;
+                }
+                if (save || preSave) {  // push lines to the database with all the data from server
 //                    WorkerScript.sendMessage({"lineIdLong":"linesToSave","value":resp.childNodes.length})
                     var lonlat = new Array
                     db.transaction(  // save line stops
@@ -132,10 +139,10 @@ WorkerScript.onMessage = function (message) {
                                              "lineState" : "offline"
                                             });
                    }
-                   console.log("lineSearch.js: checking for direct hit: " + rs.rows.length + " :" + message.searchString + ":" + rs.rows.item(0).lineIdLong)
+//                   console.log("lineSearch.js: checking for direct hit: " + rs.rows.length + " :" + message.searchString + ":" + rs.rows.item(0).lineIdLong)
                    if (rs.rows.length == 1 && message.searchString == rs.rows.item(0).lineIdLong) { // if we got a direct hit - do not make network search
-                       console.log("lineSearch.js: sending direct hit")
-                       WorkerScript.sendMessage({"lineIdLong":"DIRECT_HIT"})
+//                       console.log("lineSearch.js: sending direct hit")
+//                       WorkerScript.sendMessage({"lineIdLong":"DIRECT_HIT"})
                        search_done = 1
                    }
                }

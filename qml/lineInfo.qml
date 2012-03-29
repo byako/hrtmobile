@@ -75,49 +75,25 @@ Item {
         source: "lineSearch.js"
 
         onMessage: {
-            if (message.lineIdLong == "lineSaveFailed") {
+            var showLineInfo_ =0;
+
+            linesView.model = searchResultLineInfoModel
+
+            if (message.lineIdLong == "failed") {
                 console.log("lineInfo.qml: worker lineSaveFailed")
                 loading.linesToSave--
-                if (!loading.linesToSave) { loading.visible = false; }
+            } else if (messageObject.lineIdLong == "preSave") {
+                loading.linesToSave++
             } else if (messageObject.lineIdLong == "stopsToSave") {
-                console.log("lineInfo.qml: stopsToSave:" + messageObject.value);
                 loading.stopsToSave += messageObject.value
             } else if (messageObject.lineIdLong == "stop") {
                 loading.stopsToSave--
-            } else if (messageObject.lineIdLong == "DIRECT_HIT") {
-                console.log("lineInfo.qml: worker got direct hit: opening line")
-                for (var bb=0; bb < lineInfoModel.count; ++bb) { // check if line is already in model - then show and leave from here
-                    if (lineInfoModel.get(bb).lineIdLong == searchResultLineInfoModel.get(0).lineIdLong) {
-                        selectedLineIndex = bb
-                        linesView.currentIndex = bb
-                        showLineInfo()
-                        loading.visible = false
-                        return
-                    }
-                } // else - add to the model from searchResultLineInfoModel and open it
-                linesView.model = lineInfoModel
-                lineInfoModel.append(searchResultLineInfoModel.get(0))
-                selectedLineIndex = lineInfoModel.count - 1
-                linesView.currentIndex = lineInfoModel.count - 1
-                showLineInfo()
-                loading.visible = false
             } else if (messageObject.lineIdLong == "FINISH") {
                 console.log("lineInfo.qml: worker finished: linesToSave : " + loading.linesToSave)
-                if (searchResultLineInfoModel.count <= 2) {
-                    for (var ii=0; ii<searchResultLineInfoModel.count; ++ii) {
-                        if (searchResultLineInfoModel.get(ii).lineState != "offline") {
-                            loading.linesToSave++
-                            console.log("lineInfo.qml: sending save request " + searchResultLineInfoModel.get(ii).lineIdLong)
-                            lineSearchWorker.sendMessage({"searchString":searchResultLineInfoModel.get(ii).lineIdLong,"save":"true"})
-                        }
-                    }
-                }
-                if (loading.linesToSave < 1 && searchResultLineInfoModel.count > 1) { // show searchResultLineInfoModel
-                    linesView.model = searchResultLineInfoModel
-                    console.log("lineInfo.qml: RECENT BUTTON: text= Found")
-                    recentText.text = "Found \u21E9"
-                    recentButtonAnimation.running = "true"
-                    loading.visible = false
+                if (searchResultLineInfoModel.count == 1 && searchResultLineInfoModel.get(0).lineState == "offline") {
+                    linesView.currentIndex = 0
+                    selectedLineIndex = 0
+                    showLineInfo_ = 1
                 }
             } else if (messageObject.lineIdLong == "NONE") {
                 console.log("lineInfo.qml: worker got none");
@@ -129,41 +105,32 @@ Item {
                 showError("Server returned ERROR")
             } else {
                 console.log("lineInfo.qml: worker got else");
-                if (messageObject.lineState != "saved") {  // offline || online
+                if (messageObject.lineState != "saved") {  // received line from worker
                     for (var bb=0; bb < searchResultLineInfoModel.count; ++bb) {
                         if (searchResultLineInfoModel.get(bb).lineIdLong == messageObject.lineIdLong){
                             return;
                         }
                     }
+                    console.log("lineInfo.qml: found " + messageObject.lineIdLong + "; short: " + messageObject.lineIdShort + ";")
                     searchResultLineInfoModel.append(messageObject);
-                } else {
+                } else {                                   // saved line
                     loading.linesToSave--
-                    if (!loading.linesToSave) {
-                        loading.visible = false;
-                        linesView.model = searchResultLineInfoModel
-                        recentText.text = "Found \u21E9"
-                        recentButtonAnimation.running = "true"
-                        loading.visible = false
-                        if (config.linesShowAll) { fillModel() }
-                    }
                     for (var bb=0; bb < searchResultLineInfoModel.count; ++bb) {
                         if (searchResultLineInfoModel.get(bb).lineIdLong == messageObject.lineIdLong){
-                            searchResultLineInfoModel.set(bb,{"lineState":"offline"})
-//                            lineInfoModel.append(searchResultLineInfoModel.get(bb));
+                            searchResultLineInfoModel.set(bb,{"lineState":"offline"});
+                            linesView.currentIndex = bb;
+                            selectedLineIndex = bb;
+                            showLineInfo_ = 1;
                         }
                     }
-                    if (searchResultLineInfoModel.count == 1) { // this means we got lineIdLong request from outside of page: open found line
-                        console.log("lineInfo.qml: count is one - request from stops");
-                        linesView.model = searchResultLineInfoModel
-                        linesView.currentIndex = 0
-                        selectedLineIndex = 0
-                        searchString = searchResultLineInfoModel.get(0).lineIdLong
-                        recentText.text = "Found \u21E9"
-                        recentText.color = "white"
-                        recentButtonAnimation.running = "true"
-                        showLineInfo()
-                    }
                 }
+            }
+            if (!loading.linesToSave) {
+                loading.visible = false;
+                linesView.model = searchResultLineInfoModel
+                recentText.text = "Found \u21E9"
+                recentButtonAnimation.running = "true"
+                if (showLineInfo_) { showLineInfo() }
             }
         }
     }
@@ -187,6 +154,7 @@ Item {
 
         onMessage: {
             if (messageObject.lineIdLong != "FINISH") {
+                console.log("lineInfo.qml: loading " + messageObject.lineIdLong + "; short: " + messageObject.lineIdShort + ";")
                 lineInfoModel.append(messageObject)
                 if (messageObject.lineIdLong == searchString) {
                     selectedLineIndex = lineInfoModel.count-1
@@ -299,17 +267,23 @@ Item {
                 onClicked: {
                     if (linesView.model.get(selectedLineIndex).favorite == "true") {
                         setFavorite(searchString, "false")
-                        linesView.model.set(selectedLineIndex, {"favorite":"false"})
-                        for (var ii=0; ii < lineInfoModel.count; ii++) {
-                            if (lineInfoModel.get(ii).lineIdLong == searchString)
-                                lineInfoModel.set(ii, {"favorite":"false"})
+                        if (linesView.model.get(selectedLineIndex).lineIdLong == searchString) {
+                            linesView.model.set(selectedLineIndex, {"favorite":"false"})
+                        } else {
+                            for (var ii=0; ii < linesView.model.count; ii++) {
+                                if (linesView.model.get(ii).lineIdLong == searchString)
+                                    linesView.model.set(ii, {"favorite":"false"})
+                            }
                         }
                     } else {
                         setFavorite(searchString, "true")
-                        lineInfoModel.set(selectedLineIndex, {"favorite":"true"})
-                        for (var ii=0; ii < lineInfoModel.count; ii++) {
-                            if (lineInfoModel.get(ii).lineIdLong == searchString)
-                                lineInfoModel.set(ii, {"favorite":"true"})
+                        if (linesView.model.get(selectedLineIndex).lineIdLong == searchString) {
+                            linesView.model.set(selectedLineIndex, {"favorite":"true"})
+                        } else {
+                            for (var ii=0; ii < linesView.model.count; ii++) {
+                                if (linesView.model.get(ii).lineIdLong == searchString)
+                                    linesView.model.set(ii, {"favorite":"true"})
+                            }
                         }
                     }
                     lineInfoPageItem.refreshFavorites()
