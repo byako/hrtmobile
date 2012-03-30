@@ -256,7 +256,7 @@ Page {
                 mainTabBar.checkedButton = linesTabButton
                 tabGroup.currentTab = lineInfoPageContainer
                 lineInfoLoader.item.searchString = lineIdLong
-                lineInfoLoader.item.buttonClicked()
+                lineInfoLoader.item.lineIdLongSearch()
             }
             onRefreshFavorites: {
                 favoritesPageItem.loadStops()

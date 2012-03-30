@@ -4,7 +4,7 @@
 // -------------------------------------- ** --------------------------------------------
 
 WorkerScript.onMessage = function (message) {
-
+    var rs;
     var doc = new XMLHttpRequest()
     var resp
     var err = 0
@@ -27,13 +27,10 @@ WorkerScript.onMessage = function (message) {
             } else {
                 resp=doc.responseXML.documentElement
                 console.log("lineSearch.js: OK, got " + doc.responseXML.documentElement.childNodes.length+ " lines" + (save ? " : for saving" : " : for search"))
-                if (resp.childNodes.length == 1) {
-                    preSave = 1; console.log("lineSearch.js: found 1 line, presaving");WorkerScript.sendMessage({"lineIdLong":"preSave"});
-                    doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&epsg_out=wgs84&query="+message.searchString);
-                    doc.send();
-                    return;
+                if (resp.childNodes.length == 1 && save) {
+                    preSave = 1; console.log("lineSearch.js: found 1 line, presaving");
                 }
-                if (save || preSave) {  // push lines to the database with all the data from server
+                if (save) {  // push lines to the database with all the data from server
 //                    WorkerScript.sendMessage({"lineIdLong":"linesToSave","value":resp.childNodes.length})
                     var lonlat = new Array
                     db.transaction(  // save line stops
@@ -82,6 +79,20 @@ WorkerScript.onMessage = function (message) {
                                     WorkerScript.sendMessage({"lineIdLong":"stop"})
                                 }
                                 console.log("lineSearch: saved all stops")
+                                if (preSave) {
+                                    console.debug("Sending line to lineInfo.qml")
+                                    db.transaction( function(tx) { try { rs = tx.executeSql("SELECT lineTypeName FROM LineTypes WHERE lineType=?", [resp.childNodes[0].childNodes[2].firstChild.nodeValue]) }
+                                           catch(e) { console.log("lineSearch.js: lineType search exception: " + e) } } )
+                                    WorkerScript.sendMessage({"lineIdLong":resp.childNodes[0].childNodes[0].firstChild.nodeValue,
+                                                     "lineIdShort" : resp.childNodes[0].childNodes[1].firstChild.nodeValue,
+                                                     "lineStart" : resp.childNodes[0].childNodes[3].firstChild.nodeValue,
+                                                     "lineEnd" : resp.childNodes[0].childNodes[4].firstChild.nodeValue,
+                                                     "lineType" : resp.childNodes[0].childNodes[2].firstChild.nodeValue,
+                                                     "lineTypeName" : (rs.rows.length ? rs.rows.item(0).lineTypeName : resp.childNodes[0].childNodes[2].firstChild.nodeValue),
+                                                     "favorite" : "false",
+                                                     "lineState" : "online"
+                                                 })
+                                }
                                 WorkerScript.sendMessage({"lineIdLong":resp.childNodes[ii].childNodes[0].firstChild.nodeValue,
                                                      "lineState" : "saved"
                                                  })
@@ -94,7 +105,6 @@ WorkerScript.onMessage = function (message) {
                         if (resp.childNodes[ii].childNodes[2].firstChild.nodeValue != "21" &&
                             resp.childNodes[ii].childNodes[2].firstChild.nodeValue != "23" &&
                             resp.childNodes[ii].childNodes[2].firstChild.nodeValue != "24") {
-                            var rs;
                             db.transaction( function(tx) { try { rs = tx.executeSql("SELECT lineTypeName FROM LineTypes WHERE lineType=?", [resp.childNodes[ii].childNodes[2].firstChild.nodeValue]) }
                                    catch(e) { console.log("lineSearch.js: lineType search exception: " + e) } } )
 
@@ -103,7 +113,7 @@ WorkerScript.onMessage = function (message) {
                                                      "lineStart" : resp.childNodes[ii].childNodes[3].firstChild.nodeValue,
                                                      "lineEnd" : resp.childNodes[ii].childNodes[4].firstChild.nodeValue,
                                                      "lineType" : resp.childNodes[ii].childNodes[2].firstChild.nodeValue,
-                                                     "lineTypeName" : (rs.rows.length ? rs.rows.item(0).lineTypeName : ""),
+                                                     "lineTypeName" : (rs.rows.length ? rs.rows.item(0).lineTypeName : resp.childNodes[ii].childNodes[2].firstChild.nodeValue),
                                                      "favorite" : "false",
                                                      "lineState" : "online"
                                                  })
@@ -139,10 +149,7 @@ WorkerScript.onMessage = function (message) {
                                              "lineState" : "offline"
                                             });
                    }
-//                   console.log("lineSearch.js: checking for direct hit: " + rs.rows.length + " :" + message.searchString + ":" + rs.rows.item(0).lineIdLong)
                    if (rs.rows.length == 1 && message.searchString == rs.rows.item(0).lineIdLong) { // if we got a direct hit - do not make network search
-//                       console.log("lineSearch.js: sending direct hit")
-//                       WorkerScript.sendMessage({"lineIdLong":"DIRECT_HIT"})
                        search_done = 1
                    }
                }

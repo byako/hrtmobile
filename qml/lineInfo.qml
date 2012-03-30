@@ -115,7 +115,8 @@ Item {
                     searchResultLineInfoModel.append(messageObject);
                 } else {                                   // saved line
                     loading.linesToSave--
-                    for (var bb=0; bb < searchResultLineInfoModel.count; ++bb) {
+                    var bb;
+                    for (bb=0; bb < searchResultLineInfoModel.count; ++bb) {
                         if (searchResultLineInfoModel.get(bb).lineIdLong == messageObject.lineIdLong){
                             searchResultLineInfoModel.set(bb,{"lineState":"offline"});
                             linesView.currentIndex = bb;
@@ -351,6 +352,7 @@ Item {
                          infoRect.state = "linesSelected";
                     } else if (linesView.model != lineInfoModel) {  // switch back to recent lines
                         linesView.model = lineInfoModel
+                        fillModel()
                         searchResultLineInfoModel.clear()
                         recentText.text = "Recent"
                         recentText.color = "white"
@@ -366,6 +368,7 @@ Item {
                         // if we're here -> selectedLineIndex is not fixed, most probably config.linesShowAll=false & opened line is not in favorites
                         selectedLineIndex = -1
                         linesView.currentIndex = -1
+                        dataRect.visible = false
                     } else {
                         fillModel()
                     }
@@ -678,6 +681,17 @@ Item {
         searchResultLineInfoModel.clear()
         loading.visible = true
         lineSearchWorker.sendMessage({"searchString":searchString})
+    }
+    function lineIdLongSearch() {
+        console.log("Button clicked: " + searchString)
+        if (searchString == "Enter LineID" || searchString == "") {
+            showError("Enter search criteria\nline number/line code/Key place\ni.e. 156A or Tapiola")
+            return
+        }
+        searchResultLineInfoModel.clear()
+        loading.visible = true
+        loading.linesToSave++
+        lineSearchWorker.sendMessage({"searchString":searchString, "save":"true"})
     }
     function showMap() {            // push lineIdLong [ && stopIdLong ] to map page
         if (stopsView.currentIndex >= 0) {
