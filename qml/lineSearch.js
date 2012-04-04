@@ -131,7 +131,7 @@ WorkerScript.onMessage = function (message) {
         }
     }
 
-    if (! save) { // search only if no save requested
+//    if ( !save) { // search only if no save requested
         db.transaction(  // offline search
             function(tx) {
                try { var rs = tx.executeSql("SELECT Lines.lineIdLong, Lines.lineIdshort, Lines.lineName, Lines.lineType, Lines.lineStart, Lines.lineEnd, LineTypes.lineTypeName, favorite FROM Lines LEFT OUTER JOIN LineTypes ON Lines.lineType=LineTypes.lineType WHERE lineIdLong=? OR lineIdShort=? OR lineStart=? OR lineEnd=?", [message.searchString, message.searchString, message.searchString, message.searchString]) }
@@ -151,12 +151,13 @@ WorkerScript.onMessage = function (message) {
                    }
                    if (rs.rows.length == 1 && message.searchString == rs.rows.item(0).lineIdLong) { // if we got a direct hit - do not make network search
                        search_done = 1
+                       WorkerScript.sendMessage({"lineIdLong":rs.rows.item(0).lineIdLong, "lineState":"saved"})
                    }
                }
                console.log("lineSearch.js: offline done")
             }
         )
-    }
+//    }
 
     if (search_done) return;
 

@@ -6,7 +6,7 @@ WorkerScript.onMessage = function (message) {
         __db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
         __db.transaction(
             function(tx) {
-                try { var rs = tx.executeSql("SELECT lineShape,lineIdShort,lineEnd FROM Lines WHERE lineIdLong=?", [message.lineIdLong]) }
+                try { var rs = tx.executeSql("SELECT lineShape,lineIdShort,lineEnd,lineType FROM Lines WHERE lineIdLong=?", [message.lineIdLong]) }
                 catch(e) { console.log("route.js: EXCEPTION: " + e) }
                 if (rs.rows.length > 0) {  // found offline line shape
                     var coords = new Array
@@ -17,7 +17,13 @@ WorkerScript.onMessage = function (message) {
                         WorkerScript.sendMessage({"longitude" : lonlat[0], "latitude" : lonlat[1]})
                     }
                     lonlat = coords[0].split(",")
-                    WorkerScript.sendMessage({"longitude" : "finish", "latitude" : message.lineIdLong, "longit" : lonlat[0], "latit" : lonlat[1], "lineIdShort" : rs.rows.item(0).lineIdShort, "lineEnd" : rs.rows.item(0).lineEnd})
+                    WorkerScript.sendMessage({"longitude":"finish",
+                                                 "latitude":message.lineIdLong,
+                                                 "longit":lonlat[0],
+                                                 "latit":lonlat[1],
+                                                 "lineIdShort":rs.rows.item(0).lineIdShort,
+                                                 "lineEnd":rs.rows.item(0).lineEnd,
+                                                 "lineType":rs.rows.item(0).lineType})
                 } else { // load line staight from network
                     console.log("Requesting line shape " + message.lineIdLong + " from network")
                     var lonlat;
@@ -27,18 +33,23 @@ WorkerScript.onMessage = function (message) {
                                 if (doc.responseXML == null) {
                                     return
                                 } else {
-                                    var coords = doc.responseXML.documentElement.firstChild.childNodes[2].firstChild.nodeValue.split("|")
+                                    var coords = doc.responseXML.documentElement.firstChild.childNodes[3].firstChild.nodeValue.split("|")
                                     for (var ii=0;ii<coords.length;++ii) {
                                         lonlat = coords[ii].split(",")
                                         WorkerScript.sendMessage({"longitude" : lonlat[0], "latitude" : lonlat[1]})
                                     }
-                                    WorkerScript.sendMessage({"longitude" : "finish", "latitude" : message.lineIdLong, "lineIdShort" : doc.responseXML.documentElement.firstChild.childNodes[0].firstChild.nodeValue, "lineEnd" : doc.responseXML.documentElement.firstChild.childNodes[1].firstChild.nodeValue,
-                                                                 "longit":lonlat[0], "latit":lonlat[1]})
+                                    WorkerScript.sendMessage({"longitude" : "finish",
+                                                                 "latitude" : message.lineIdLong,
+                                                                 "lineIdShort" : doc.responseXML.documentElement.firstChild.childNodes[0].firstChild.nodeValue,
+                                                                 "lineEnd" : doc.responseXML.documentElement.firstChild.childNodes[2].firstChild.nodeValue,
+                                                                 "lineType" : doc.responseXML.documentElement.firstChild.childNodes[1].firstChild.nodeValue,
+                                                                 "longit":lonlat[0],
+                                                                 "latit":lonlat[1]})
                                 }
                             } else if (doc.readyState == XMLHttpRequest.ERROR) {
                             }
                         }
-                    doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&epsg_out=wgs84&p=010010010&query="+message.lineIdLong); // for line info request
+                    doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=lines&user=byako&pass=gfccdjhl&format=xml&epsg_out=wgs84&p=011010010&query="+message.lineIdLong); // for line info request
                     doc.send();
                 }
             }

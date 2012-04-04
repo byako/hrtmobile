@@ -28,5 +28,6 @@
         <file>qml/stopInfoLoadLines.js</file>
         <file>images/radar.png</file>
         <file>qml/updateDatabase.js</file>
+        <file>qml/UpdatePage.qml</file>
     </qresource>
 </RCC>

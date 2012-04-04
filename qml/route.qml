@@ -17,9 +17,9 @@ Item {
     property string passiveBusStopColor: "#806060BB"
     property string activeBusStopColor: "#5050FF"
 
-    property string busLineColor: "#800000AA"
-    property string tramLineColor: "#8000AA00"
-    property string metroLineColor: "#80FF5090"
+    property string busLineColor: "#BB093a81"
+    property string tramLineColor: "#BB3e8a00"
+    property string metroLineColor: "#BBFF6600"
 
     signal stopInfo(string stopIdLong_)
 
@@ -96,20 +96,26 @@ Item {
         onMessage: {
             if (messageObject.longitude == "finish") {
                 if (loadedStop == -1) { // center map on the line's last stop
-                        map.center.longitude = messageObject.longit
-                        map.center.latitude = messageObject.latit
-                        positionCircle.center.longitude = messageObject.longit
-                        positionCircle.center.latitude = messageObject.latit
+                    map.center.longitude = messageObject.longit
+                    map.center.latitude = messageObject.latit
                 }
                 lineLabel.text = messageObject.lineIdShort + " -> " + messageObject.lineEnd
+                console.debug("the lineType is " + messageObject.lineType)
+                switch (messageObject.lineType) {
+                case "1"||"3"||"4"||"5"||"10" : lines.get(loadedLine).lineShape.border.color=busLineColor; console.debug("busLineColor"); break;
+                case "2" : lines.get(loadedLine).lineShape.border.color=tramLineColor; console.debug("tramLineColor"); break;
+                case "6"||"8" : lines.get(loadedLine).lineShape.border.color=metroLineColor; console.debug("metroLineColor"); break;
+                    default: lines.get(loadedLine).lineShape.border.color=busLineColor ; console.debug("busLineColor"); break;
+                }
             } else if (messageObject.longitude == "error"){
-                lines.get(ii).lineShape.destroy()
-                lines.remove(lines.count-1)
+                map.removeMapObject(lines.get(loadedLine).lineShape)
+                lines.get(loadedLine).lineShape.destroy()
+                lines.remove(loadedLine)
                 lineLabel.text = ""
-            }else {
+            } else {
                 temp.longitude = messageObject.longitude
                 temp.latitude = messageObject.latitude
-                lines.get(lines.count-1).lineShape.addCoordinate(temp)
+                lines.get(loadedLine).lineShape.addCoordinate(temp)
             }
         }
     }
@@ -222,12 +228,10 @@ Item {
         z : 1
         plugin : Plugin {
             name : "nokia"
-//            parameters: PluginParameter {
-//                name: "mapping.app_id"
-//                value: WrBja0-QSlb_Ei59BA6s
-//                mapping.token: kAwbj6b1hMhgcPfFR148lQ%3D%3D
-//                mapping.secret: MosYa80xjv5tZQmoAN6N
-//            }
+            parameters: [
+                PluginParameter { name: "mapping.app_id";  value: "WrBja0-QSlb_Ei59BA6s"},
+                PluginParameter { name: "mapping.token"; value: "kAwbj6b1hMhgcPfFR148lQ"}
+            ]
         }
 //        anchors.fill: routePage
         width: routePage.width
@@ -483,7 +487,7 @@ Item {
                     map.removeMapObject(lines.get(loadedLine).lineShape)
                 }
             }
-            console.log("LOADED LINE: " + loadedLine)
+
             if (loadedLine != -1 || loadedStop != -1) {
                 cleanStops()
                 loadedLine = -1
@@ -499,7 +503,7 @@ Item {
             }
             try { lines.append({ "lineIdLong": lineIdLong_, "lineShape" : Qt.createQmlObject('import Qt 4.7; import QtMobility.location 1.2;' +
                                                             'MapPolyline { id: "lineShape' + lines.count +
-                                                            '"; border { color: "'+busLineColor+'"; width: 4 }' +
+                                                            '"; border { color: "'+busLineColor+'"; width: 6 }' +
                                                             '}', map)
                              }) }
             catch (e) {

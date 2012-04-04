@@ -11,8 +11,42 @@ Page {
         anchors.fill: parent
     }
 
-//    Component.onCompleted: { }
+    Component.onCompleted: {
+        if (JS.checkIfUpdateNeeded()) {
+//            favoritesPageLoader.source = "Favorites.qml"
+            console.debug("loading query dialog")
+            console.log("opening query dialog")
+            updateQueryDialog.open()
+            loading.visible = false
+            console.log("dialog opened. page load finished.")
+        } else {
+            loading.visible = false
+            favoritesPageLoader.source = "Favorites.qml"
+        }
+//        favoritesPageLoader.source = "Favorites.qml"
+    }
 
+    QueryDialog {
+        id: updateQueryDialog
+        acceptButtonText: "Update"
+        rejectButtonText: "Later"
+        message: "Some of the routes or timetables have been changed. Database needs to be updated to prevent showing the wrong information"
+        titleText: "Database update needed"
+//        onRejected: { console.debug("rejected from dialog"); //favoritesPageLoader.source = "Favorites.qml"; }
+//        }
+//        onAccepted: { console.debug("accepted from dialog"); //pageStack.push(Qt.resolvedUrl("UpdatePage.qml"));  }
+//        }
+    }
+
+    Loading {          // busy indicator
+        id: loading
+        visible: true
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        z: 8
+    }
     SearchDialog {
         id: searchDialog
         page: recentPageContainer
@@ -96,8 +130,11 @@ Page {
         property int lastTab: -1
         Page {   // recents page
             id: recentPageContainer
-            Favorites {
-                id: favoritesPageItem
+            width: 480
+            height: 745
+            Loader {
+                id: favoritesPageLoader
+                parent: recentPageContainer
             }
         }
 
@@ -130,7 +167,7 @@ Page {
             }
         }
         Connections {  // favorites
-            target: favoritesPageItem
+            target: favoritesPageLoader.item
             onFinishedLoad: {
                 console.log("loading pages")
                 if (lineInfoLoader.status != Loader.Ready) {
@@ -139,6 +176,7 @@ Page {
                 if (stopInfoLoader.status != Loader.Ready) {
                     stopInfoLoader.source = "stopInfo.qml"
                 }
+                loading.visible = false;
             }
             onLoadStop: {
                 console.log("favorites signal: loadStop")
@@ -220,17 +258,17 @@ Page {
                 stopInfoLoader.item.searchString = stopIdLong
                 stopInfoLoader.item.buttonClicked()
             }
-            onCleanMap: {
-                console.log("lineInfo signal: cleanMapAndPushStops")
-                if(mapLoader.status == Loader.Ready) {
-                    mapLoader.item.cleanStops()
-                } else {
-                    mapLoader.source = "route.qml"
-//                    lineInfoLoader.item.sendLineToMap()
-                }
-            }
+//            onCleanMap: {
+//                console.log("lineInfo signal: cleanMapAndPushStops")
+//                if(mapLoader.status == Loader.Ready) {
+//                    mapLoader.item.cleanStops()
+//                } else {
+//                    mapLoader.source = "route.qml"
+////                    lineInfoLoader.item.sendLineToMap()
+//                }
+//            }
             onRefreshFavorites: {
-                favoritesPageItem.loadLines()
+                favoritesPageLoader.item.loadLines()
             }
         }
         Connections {  // stop info
@@ -259,7 +297,7 @@ Page {
                 lineInfoLoader.item.lineIdLongSearch()
             }
             onRefreshFavorites: {
-                favoritesPageItem.loadStops()
+                favoritesPageLoader.item.loadStops()
             }
         }
     }

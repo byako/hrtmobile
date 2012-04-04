@@ -8,6 +8,10 @@ function __db(){
     return openDatabaseSync('hrtmobile', '1.0', 'hrtmobile config database', 1000000);
 }
 
+function checkIfUpdateNeeded() {
+    return 0
+}
+
 function initDB() {
     console.log('initializing Database ')
         __db().transaction(

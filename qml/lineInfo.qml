@@ -155,14 +155,18 @@ Item {
 
         onMessage: {
             if (messageObject.lineIdLong != "FINISH") {
-                console.log("lineInfo.qml: loading " + messageObject.lineIdLong + "; short: " + messageObject.lineIdShort + ";")
                 lineInfoModel.append(messageObject)
                 if (messageObject.lineIdLong == searchString) {
                     selectedLineIndex = lineInfoModel.count-1
                     linesView.currentIndex = lineInfoModel.count-1
                 }
             } else {
-                linesView.currentIndex = selectedLineIndex
+                // if we're here -> selectedLineIndex is not fixed, most probably config.linesShowAll=false & opened line is not in favorites
+                if (searchString != linesView.model.get(selectedLineIndex).lineIdLong) {
+                    selectedLineIndex = -1
+                    linesView.currentIndex = -1
+                    dataRect.visible = false
+                }
             }
         }
     }
@@ -353,22 +357,11 @@ Item {
                     } else if (linesView.model != lineInfoModel) {  // switch back to recent lines
                         linesView.model = lineInfoModel
                         fillModel()
+                        console.log("filled model")
                         searchResultLineInfoModel.clear()
                         recentText.text = "Recent"
                         recentText.color = "white"
                         recentButtonAnimation.running = "false"
-                        for (var ii=0; ii < lineInfoModel.count; ++ii) {
-                            if (lineInfoModel.get(ii).lineIdLong == searchString) {
-                                console.log("lineInfo.qml: fixed selectedLineIndex on linesView")
-                                selectedLineIndex = ii
-                                linesView.currentIndex = ii
-                                return
-                            }
-                        }
-                        // if we're here -> selectedLineIndex is not fixed, most probably config.linesShowAll=false & opened line is not in favorites
-                        selectedLineIndex = -1
-                        linesView.currentIndex = -1
-                        dataRect.visible = false
                     } else {
                         fillModel()
                     }
@@ -679,6 +672,9 @@ Item {
             return
         }
         searchResultLineInfoModel.clear()
+        selectedLineIndex = -1
+        linesView.currentIndex = -1
+        dataRect.visible = false
         loading.visible = true
         lineSearchWorker.sendMessage({"searchString":searchString})
     }
