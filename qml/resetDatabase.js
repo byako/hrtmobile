@@ -1,3 +1,4 @@
+.pragma library
 // -------------------------------------- ** --------------------------------------------
 // this needs to be separated to notify settings page that cleanup is finished
 //
@@ -6,6 +7,7 @@
 WorkerScript.onMessage = function (message) {
         var db_ = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
         var err = 0;
+        var err2 = 0;
         db_.transaction(
             function(tx) {
                 try {
@@ -18,21 +20,22 @@ WorkerScript.onMessage = function (message) {
                     tx.executeSql('DELETE FROM StopLines;');
                     tx.executeSql('DELETE FROM StopInfo;');
                     tx.executeSql('DELETE FROM LineSchedule;');
-
+                    err=1
                     tx.executeSql('CREATE TABLE IF NOT EXISTS Config(option TEXT, value TEXT, PRIMARY KEY(option) );');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS LineTypes(lineType TEXT, lineTypeName TEXT, PRIMARY KEY(lineType) );');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS Lines(lineIdLong TEXT PRIMARY KEY, lineIdShort TEXT, lineName TEXT, lineType TEXT, lineStart TEXT, lineEnd TEXT, lineShape TEXT, lineSchedule TEXT, favorite TEXT, FOREIGN KEY(lineType) REFERENCES LineTypes(lineType));');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS LineStops(lineIdLong TEXT, stopIdLong TEXT, stopReachTime TEXT, FOREIGN KEY(lineIdLong) REFERENCES Lines(lineIdLong));');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS LineSchedule(lineIdLong TEXT, weekDay TEXT, departTime TEXT, PRIMARY KEY(lineIdLong,weekDay,departTime));');  // not used for now
-
+                    err=2
                     tx.executeSql('CREATE TABLE IF NOT EXISTS Stops(stopIdLong TEXT PRIMARY KEY, stopIdShort TEXT, stopName TEXT, stopAddress TEXT, stopCity TEXT, stopLongitude TEXT, stopLatitude TEXT, favorite TEXT);');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS StopLines(stopIdLong TEXT, lineIdLong TEXT, lineEnd TEXT, PRIMARY KEY(stopIdLong,lineIdLong), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong));');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS StopInfo(stopIdLong TEXT, option TEXT, value TEXT, PRIMARY KEY(stopIdLong,option), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong));');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS StopSchedule(stopIdLong, weekTime TEXT, departTime TEXT, lineId TEXT);');  // not used for now
-
+                    err=3
                     tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)',["lineGroup","true"]);
                     tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)', [ 'stopsShowAll', 'false']);
                     tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)', [ 'linesShowAll', 'false']);
+                    err=4
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '1', 'Helsinki Bus']);
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '2', 'Tram']);
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '3', 'Espoo Bus']);
@@ -51,15 +54,17 @@ WorkerScript.onMessage = function (message) {
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '23', 'Espoo service line']);
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '24', 'Vantaa service line']);
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '25', 'Regional night traffic']);
-                } catch (e) { console.log ( "resetDatabase.js: exception " + e); err=1;}
+                    err=0
+                } catch (e) { console.log ( "resetDatabase.js: exception " + e);}
                 if (err) {
-                    try { tx.executeSql('CREATE TABLE IF NOT EXISTS Reset(option TEXT, value TEXT, PRIMARY KEY(option) );');
-                    tx.executeSql('INSERT OR REPLACE INTO Reset VALUES(?, ?)',["reset","true"]); }
-                    catch (e) { console.log ("resetDatabase.js: exception " + e);}
-                    WorkerScript.sendMessage({"clean":"error"})
-                    return
+                    try { tx.executeSql('CREATE TABLE IF NOT EXISTS Reset(option TEXT, value TEXT, PRIMARY KEY(option) );'); }
+                    catch (e) { console.log("resetDatabase.js: startup reset table creation exception occured: " + e); err2++}
+                    try { tx.executeSql('INSERT OR REPLACE INTO Reset VALUES(?, ?)',["reset","true"]); }
+                    catch (e) { console.log ("resetDatabase.js: startup reset record creation exception occured: " + e); err2+=2}
+                    WorkerScript.sendMessage({"clean":"error", "error":err, "error2":err2})
+                } else {
+                    WorkerScript.sendMessage({"clean":"done"})
                 }
-                WorkerScript.sendMessage({"clean":"done"})
             }
         )
 }

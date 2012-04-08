@@ -1,6 +1,6 @@
 // -------------------------------------- ** --------------------------------------------
-// Search for a line : first offine, then online
-// if save option is specified, save requested line
+// send saved stops
+//
 // -------------------------------------- ** --------------------------------------------
 
 WorkerScript.onMessage = function (message) {
@@ -32,6 +32,7 @@ WorkerScript.onMessage = function (message) {
                               "stopState" : "offline"});
                 }
             }
+            WorkerScript.sendMessage({"stopIdLong" : "finish"});
         }
     )
 }

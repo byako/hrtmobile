@@ -1,3 +1,4 @@
+.pragma library
 function __db(){
     return openDatabaseSync('hrtmobile', '1.0', 'hrtmobile config database', 1000000);
 }
@@ -35,29 +36,29 @@ function check_if_update_needed(dbTimeStamp) {
     )
 }
 
-function check_if_reset_needed() {
+function reset_needed() {
     console.log("updateDatabase.js: checking if update needed")
-    var ok=1;
+    var result=0;
     __db().transaction(
         function(tx) {
             try {
                 var rs = tx.executeSql('SELECT * FROM Reset WHERE option=?', ["reset"]);
             }
             catch (e) {
-                console.log('updateDatabase.js: database doesn\'t have reset table' + e)
-                ok=0
-                return
+                // this means table was not created yet => no reset needed
+                console.log('updateDatabase.js: database doesn\'t have reset table:' + e)
+                return;
             }
-            if (rs.rows.count) { // put a timestamp
+            if (rs.rows.count) {
                 console.log("updateDatabse.js: found a reset database with data : " + rs.rows.item(0).value)
                 if (rs.rows.item(0).value == "true") {
-                    console.log("updateDatabse.js: ")
-                    ok=1
+                    console.log("updateDatabse.js: reset is needed")
+                    result = 1;
                 }
             }
         }
     )
-    if (ok) (resetDatabase())
+    return result;
 }
 
 function resetDatabase() {
@@ -75,21 +76,35 @@ function resetDatabase() {
                     tx.executeSql('DELETE FROM StopLines;');
                     tx.executeSql('DELETE FROM StopInfo;');
                     tx.executeSql('DELETE FROM LineSchedule;');
-
+                    tx.executeSql('DELETE FROM Reset;');
+                    err=1
+                    tx.executeSql('DROP TABLE IF EXISTS Config;');
+                    tx.executeSql('DROP TABLE IF EXISTS Lines;');
+                    tx.executeSql('DROP TABLE IF EXISTS Stops;');
+                    tx.executeSql('DROP TABLE IF EXISTS StopSchedule;');
+                    tx.executeSql('DROP TABLE IF EXISTS LineStops;');
+                    tx.executeSql('DROP TABLE IF EXISTS LineTypes;');
+                    tx.executeSql('DROP TABLE IF EXISTS StopLines;');
+                    tx.executeSql('DROP TABLE IF EXISTS StopInfo;');
+                    tx.executeSql('DROP TABLE IF EXISTS LineSchedule;');
+                    tx.executeSql('DROP TABLE IF EXISTS Reset;');
+                    err=2
+                    tx.executeSql('CREATE TABLE IF NOT EXISTS Reset(option TEXT, value TEXT, PRIMARY KEY(option) );');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS Config(option TEXT, value TEXT, PRIMARY KEY(option) );');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS LineTypes(lineType TEXT, lineTypeName TEXT, PRIMARY KEY(lineType) );');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS Lines(lineIdLong TEXT PRIMARY KEY, lineIdShort TEXT, lineName TEXT, lineType TEXT, lineStart TEXT, lineEnd TEXT, lineShape TEXT, lineSchedule TEXT, favorite TEXT, FOREIGN KEY(lineType) REFERENCES LineTypes(lineType));');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS LineStops(lineIdLong TEXT, stopIdLong TEXT, stopReachTime TEXT, FOREIGN KEY(lineIdLong) REFERENCES Lines(lineIdLong));');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS LineSchedule(lineIdLong TEXT, weekDay TEXT, departTime TEXT, PRIMARY KEY(lineIdLong,weekDay,departTime));');  // not used for now
-
+                    err=3
                     tx.executeSql('CREATE TABLE IF NOT EXISTS Stops(stopIdLong TEXT PRIMARY KEY, stopIdShort TEXT, stopName TEXT, stopAddress TEXT, stopCity TEXT, stopLongitude TEXT, stopLatitude TEXT, favorite TEXT);');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS StopLines(stopIdLong TEXT, lineIdLong TEXT, lineEnd TEXT, PRIMARY KEY(stopIdLong,lineIdLong), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong));');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS StopInfo(stopIdLong TEXT, option TEXT, value TEXT, PRIMARY KEY(stopIdLong,option), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong));');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS StopSchedule(stopIdLong, weekTime TEXT, departTime TEXT, lineId TEXT);');  // not used for now
-
-                    tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)',["lineGroup","true"]);
+                    err=4
+                    tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)', [ "lineGroup","true"]);
                     tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)', [ 'stopsShowAll', 'false']);
                     tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)', [ 'linesShowAll', 'false']);
+                    err=5
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '1', 'Helsinki Bus']);
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '2', 'Tram']);
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '3', 'Espoo Bus']);
@@ -108,7 +123,8 @@ function resetDatabase() {
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '23', 'Espoo service line']);
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '24', 'Vantaa service line']);
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '25', 'Regional night traffic']);
-                } catch (e) { console.log ( "updateDatabase.js: reset exception " + e); err=1;}
+                    err=0
+                } catch (e) { console.log ( "updateDatabase.js: reset exception " + e); if (err=0) err=-1;}
                 if (err) {
                     try { tx.executeSql('CREATE TABLE IF NOT EXISTS Reset(option TEXT, value TEXT, PRIMARY KEY(option) );');
                     tx.executeSql('INSERT OR REPLACE INTO Reset VALUES(?, ?)',["reset","true"]); }
@@ -117,6 +133,7 @@ function resetDatabase() {
                 }
             }
         )
+    return err;
 }
 
 // template function update_XXYYZZ_N() { }

@@ -4,7 +4,6 @@ import com.nokia.extras 1.1
 
 Page {
     id: about;
-    tools: commonTools
     objectName: "aboutPage"
     width: 480
     height: 745

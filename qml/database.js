@@ -8,10 +8,6 @@ function __db(){
     return openDatabaseSync('hrtmobile', '1.0', 'hrtmobile config database', 1000000);
 }
 
-function checkIfUpdateNeeded() {
-    return 0
-}
-
 function initDB() {
     console.log('initializing Database ')
         __db().transaction(
@@ -72,8 +68,6 @@ function createDefaultConfig() {
 }
 
 function loadConfig(config2) {
-    try { console.log('loading config within request') }
-    catch (e) { console.log("ooposie") }
     __db().transaction(
         function(tx) {
             try { var rs = tx.executeSql('SELECT * FROM Config;') }
@@ -186,6 +180,7 @@ function setConfigValue(option_,value_) {
     )
     return return_v
 }
+
 function getLineType(string) {
     var return_v='unknown'
     __db().transaction(

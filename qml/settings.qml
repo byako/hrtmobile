@@ -12,25 +12,30 @@ Item {
     width: 480
     height: 745
 
-    Component.onCompleted: { refreshConfig(); }
+    Component.onCompleted: {
+        refreshConfig();
+    }
     Config { id: config }
 
     WorkerScript {           // database clean finished
         id: resetDatabase
         source: "resetDatabase.js"
         onMessage: {
+            console.log("settings.qml: worker sent : " + messageObject.clean)
             if (messageObject.clean == "done") {
                 settingsPage.dbclean()
                 refreshConfig()
                 showError("Database cleaned")
-            } else if (messageObject.clean == "err") {
-                showError("Cleanup will be done on next startup")
+            } else if (messageObject.clean == "error") {
+                console.log("settings.qml: reset database error: " + messageObject.error + ":" + messageObject.error2)
+                showError("Error occured. Cleanup will be done on next startup. Err=" + messageObject.error + ":Err2=" + messageObject.error2)
             }
         }
     }
 
     InfoBanner {// info banner
         id: infoBanner
+        timerShowTime: 5000
         text: ""
         z: 10
         opacity: 1.0

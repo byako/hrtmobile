@@ -6,8 +6,6 @@ general:
 	* popup menu on search button press and hold: clear
 	* on stopInfo and lineInfo make selected button wider that the others
 	* pinch anction on map
-	* lazy pages load
-	* koolah
 
 lineInfo:
  - To fix
@@ -50,7 +48,6 @@ realtime:
 
 route
  - To fix
-	* highlighted stop load from lineInfo page
  - To implement
 	* use landmarks from Location API on route page
 	* when loading line from stopInfo - load also line stops from network

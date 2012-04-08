@@ -6,6 +6,7 @@ Item {                   // busy indicator
     property int linesSaved: 0
     property int stopsToSave: 0
     property int stopsSaved: 0
+    property string message: ""
     Rectangle {
         anchors.fill: parent
         color:"#333333"
@@ -17,6 +18,15 @@ Item {                   // busy indicator
         anchors.verticalCenter: parent.verticalCenter
         platformStyle: BusyIndicatorStyle { size : "large"; inverted: true }
         running: true
+    }
+    Label {
+        id: messageLabel
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top : parent.top
+        anchors.topMargin: 20
+        text: message
+        width: 300
+        color: "#A0A0FF"
     }
     Row {
         id: linesProgressLabel

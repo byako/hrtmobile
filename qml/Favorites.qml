@@ -10,7 +10,7 @@ Item {
     signal loadLine(string lineIdLong)
     width: 480
     height: 745
-    Component.onCompleted: { loadLines(); loadStops(); favoritesPage.finishedLoad() }
+//    Component.onCompleted: {  }
     // -================================ STOPS ==================================-
     ListModel {              // recent stops list
         id: recentModel
@@ -182,6 +182,12 @@ Item {
         }
     }
     //-===========================================================================-
+    function _init() {
+        console.log("Favorites.qml: starting")
+        loadLines();
+        loadStops();
+        favoritesPage.finishedLoad()
+    }
     function loadLines() {
         JS.__db().transaction(
             function(tx) {

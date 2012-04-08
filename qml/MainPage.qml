@@ -1,6 +1,8 @@
 import QtQuick 1.1
 import com.nokia.meego 1.0
+import com.nokia.extras 1.1
 import "database.js" as JS
+import "updateDatabase.js" as Updater
 
 Page {
     id: mainPage
@@ -10,37 +12,59 @@ Page {
         color: "#000000"
         anchors.fill: parent
     }
-
+    InfoBanner {// info banner
+        id: infoBanner
+        text: ""
+        z: 10
+        opacity: 1.0
+    }
     Component.onCompleted: {
-        if (JS.checkIfUpdateNeeded()) {
-//            favoritesPageLoader.source = "Favorites.qml"
-            console.debug("loading query dialog")
-            console.log("opening query dialog")
-            updateQueryDialog.open()
-            loading.visible = false
-            console.log("dialog opened. page load finished.")
+        console.log("starting databaseUpdater")
+        if (Updater.reset_needed()) {
+            var temp = Updater.resetDatabase();
+            if (temp != 0) {
+                showError("Database clean failed:" + temp);
+            } else {
+                showError("Successfully cleaned database:" + temp);
+            }
         } else {
-            loading.visible = false
-            favoritesPageLoader.source = "Favorites.qml"
+    //        Updater.check_if_update_needed(dbTimeStamp)
+    //        if (Updater.checkIfUpdateNeeded()) {
+    //            console.log("opening query dialog")
+    //            updateQueryDialog.open()
+    //            loading.visible = false
+    //        } else {
+    //            loading.visible = false
+    //            favoritesPageItem._init();
+    //        }
         }
-//        favoritesPageLoader.source = "Favorites.qml"
+        loading.visible = false
+        favoritesPageItem._init();
     }
 
     QueryDialog {
         id: updateQueryDialog
         acceptButtonText: "Update"
         rejectButtonText: "Later"
+        enabled: true
         message: "Some of the routes or timetables have been changed. Database needs to be updated to prevent showing the wrong information"
         titleText: "Database update needed"
-//        onRejected: { console.debug("rejected from dialog"); //favoritesPageLoader.source = "Favorites.qml"; }
-//        }
-//        onAccepted: { console.debug("accepted from dialog"); //pageStack.push(Qt.resolvedUrl("UpdatePage.qml"));  }
-//        }
+        onRejected: {
+            console.log("rejected from dialog");
+            close();
+            favoritesPageItem._init();
+        }
+        onAccepted: {
+            console.log("accepted from dialog");
+            close();
+            favoritesPageItem._init();
+        }
     }
 
     Loading {          // busy indicator
         id: loading
         visible: true
+        message : "Cleaning Database"
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         anchors.left: parent.left
@@ -130,11 +154,8 @@ Page {
         property int lastTab: -1
         Page {   // recents page
             id: recentPageContainer
-            width: 480
-            height: 745
-            Loader {
-                id: favoritesPageLoader
-                parent: recentPageContainer
+            Favorites {
+                id: favoritesPageItem
             }
         }
 
@@ -167,7 +188,7 @@ Page {
             }
         }
         Connections {  // favorites
-            target: favoritesPageLoader.item
+            target: favoritesPageItem
             onFinishedLoad: {
                 console.log("loading pages")
                 if (lineInfoLoader.status != Loader.Ready) {
@@ -198,7 +219,7 @@ Page {
                 mainTabBar.checkedButton = linesTabButton
                 tabGroup.currentTab = lineInfoPageContainer
                 lineInfoLoader.item.searchString = lineIdLong
-                lineInfoLoader.item.buttonClicked()
+                lineInfoLoader.item.lineIdLongSearch()
             }
         }
         Connections {  // settings
@@ -268,7 +289,7 @@ Page {
 //                }
 //            }
             onRefreshFavorites: {
-                favoritesPageLoader.item.loadLines()
+                favoritesPageItem.loadLines()
             }
         }
         Connections {  // stop info
@@ -297,7 +318,7 @@ Page {
                 lineInfoLoader.item.lineIdLongSearch()
             }
             onRefreshFavorites: {
-                favoritesPageLoader.item.loadStops()
+                favoritesPageItem.loadStops()
             }
         }
     }
@@ -315,5 +336,9 @@ Page {
         } else if (stopIdLong_ != ""){
             mapLoader.item.loadStop(stopIdLong_)
         }
+    }
+    function showError(errorText) {  // show popup splash window with error
+        infoBanner.text = errorText
+        infoBanner.show()
     }
 }

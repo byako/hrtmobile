@@ -15,7 +15,12 @@ Item {
     property int loadedStop: -1
 
     property string passiveBusStopColor: "#806060BB"
-    property string activeBusStopColor: "#5050FF"
+    property string activeBusStopColor: "#80f1ff15"
+    property string passiveTramStopColor: "#806060BB"
+    property string activeTramStopColor: "#80f1ff15"
+    property string passiveMetroStopColor: "#806060BB"
+    property string activeMetroStopColor: "#80f1ff15"
+
 
     property string busLineColor: "#BB093a81"
     property string tramLineColor: "#BB3e8a00"
@@ -26,8 +31,6 @@ Item {
     state: "hideStops"
     width: 480
     height: 745
-
-//    Component.onCompleted: { loadStop(); loadLine(); }
 
     InfoBanner {             // info banner
         id: infoBanner
@@ -65,12 +68,13 @@ Item {
         source: "lineInfoLoadStops.js"
         onMessage: {
             if (messageObject.stopIdLong == "finish") {
-                if (loadStopIdLong != "") { // if some stop needs to be highlighted
+                if (loadStopIdLong != "") { // center map on the line's last stop
                     loadStop();
                 }
                 return
             }
             if (messageObject.stopState != "offline") {
+                console.log("route.qml: RECEIVED ONLINE STOP!")
 //                stopNameLoader.sendMessage({"searchString":messageObject.stopIdLong})
             } else {
                 for (var aa=0;aa<stops.count;++aa) {
@@ -95,16 +99,17 @@ Item {
 
         onMessage: {
             if (messageObject.longitude == "finish") {
-                if (loadedStop == -1) { // center map on the line's last stop
+                if (loadStopIdLong == "") {
                     map.center.longitude = messageObject.longit
                     map.center.latitude = messageObject.latit
                 }
+                lineStopsLoader.sendMessage({"searchString":lines.get(loadedLine).lineIdLong})
                 lineLabel.text = messageObject.lineIdShort + " -> " + messageObject.lineEnd
-                console.debug("the lineType is " + messageObject.lineType)
+                lines.set(loadedLine,{"lineIdShort":messageObject.lineIdShort,"lineEnd":messageObject.lineEnd,"lineType":messageObject.lineType})
                 switch (messageObject.lineType) {
-                case "1"||"3"||"4"||"5"||"10" : lines.get(loadedLine).lineShape.border.color=busLineColor; console.debug("busLineColor"); break;
-                case "2" : lines.get(loadedLine).lineShape.border.color=tramLineColor; console.debug("tramLineColor"); break;
-                case "6"||"8" : lines.get(loadedLine).lineShape.border.color=metroLineColor; console.debug("metroLineColor"); break;
+                    case "1"||"3"||"4"||"5"||"10" : lines.get(loadedLine).lineShape.border.color=busLineColor; console.debug("busLineColor"); break;
+                    case "2" : lines.get(loadedLine).lineShape.border.color=tramLineColor; console.debug("tramLineColor"); break;
+                    case "6"||"8" : lines.get(loadedLine).lineShape.border.color=metroLineColor; console.debug("metroLineColor"); break;
                     default: lines.get(loadedLine).lineShape.border.color=busLineColor ; console.debug("busLineColor"); break;
                 }
             } else if (messageObject.longitude == "error"){
@@ -380,6 +385,10 @@ Item {
             onClicked: {
                 if (!checked) { // remove found stops from map
                     var aa=0;
+                    if (loadedStop != -1 && stops.get(loadedStop).stopObjectType == "nearby") {
+                        loadedStop = -1;
+                        stopsView.currentIndex = -1;
+                    }
                     while (aa<stops.count) {
                         if (stops.get(aa).stopObjectType=="nearby") {
                             map.removeMapObject(stops.get(aa).mapCircle)
@@ -415,10 +424,30 @@ Item {
     }
 
     function cleanStops() {
-        for (var i=0; i<stops.count; ++i) {
-            map.removeMapObject(stops.get(i).mapCircle)
+        var i=0;
+        var temp = "";
+        if (loadedStop != -1 && stops.get(loadedStop).stopObjectType != "nearby") {
+            loadedStop = -1;
+        } else {
+            temp = stops.get(loadedStop).stopIdLong
         }
-        stops.clear()
+
+        while (i<stops.count) {
+            if(stops.get(i).stopObjectType != "nearby") {
+                map.removeMapObject(stops.get(i).mapCircle);
+                stops.remove(i);
+            } else {
+                i++;
+            }
+        }
+        if (temp != "") {
+            for (i=0;i<stops.count;++i) {
+                if (temp == stops.get(i).stopIdLong) {
+                    loadedStop = i
+                    stopsView.currentIndex = i
+                }
+            }
+        }
     }
 
     function loadStop(loadStopIdLong_) {                        // this is called to load/highlight stop on map from outside of route page
@@ -471,19 +500,18 @@ Item {
 
         var lineIdLong_
 
-        if (loadLineIdLong_) {
+        if (loadLineIdLong_) { // check if argument is supplied
             lineIdLong_ = loadLineIdLong_;
-        } else {
+        } else {               // if no argument - use page property value
             lineIdLong_ = loadLineIdLong
             loadLineIdLong = ""
         }
 
         if (lineIdLong_ != "") {
             if (loadedLine != -1) {                                             // some line shape is loaded
-                if (lineIdLong_ == lines.get(loadedLine).lineIdLong) {       // requested line already loaded
+                if (lineIdLong_ == lines.get(loadedLine).lineIdLong) {          // requested line already loaded
                     return
-                }
-                else {
+                } else {
                     map.removeMapObject(lines.get(loadedLine).lineShape)
                 }
             }
@@ -498,6 +526,7 @@ Item {
                     map.addMapObject(lines.get(ii).lineShape)
                     loadedLine = ii
                     lineStopsLoader.sendMessage({"searchString":lineIdLong_})
+                    lineLabel.text = lines.get(ii).lineIdShort + " -> " + lines.get(ii).lineEnd
                     return
                 }
             }
@@ -515,10 +544,9 @@ Item {
             lineLoader.sendMessage({"lineIdLong" : lineIdLong_});
             loadedLine = lines.count - 1
             map.addMapObject(lines.get(lines.count-1).lineShape)
-            lineStopsLoader.sendMessage({"searchString":lineIdLong_})
         }
     }
-function addStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_, stopAddress_, stopObjectType_) {
+    function addStop(stopIdLong_, stopIdShort_, stopName_, stopLongitude_, stopLatitude_, stopAddress_, stopObjectType_) {
         try { stops.append({ "stopIdLong": stopIdLong_, "mapCircle" : Qt.createQmlObject('import Qt 4.7; import QtMobility.location 1.2;' +
                                                         'MapCircle{ id: "lineStop' + stopIdLong_ +
                                                         '"; center : Coordinate { longitude : ' + stopLongitude_ +
