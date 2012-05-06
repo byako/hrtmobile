@@ -79,15 +79,19 @@ Item {
 
             linesView.model = searchResultLineInfoModel
 
-            if (message.lineIdLong == "failed") {
+            if (messageObject.lineIdLong == "failed") {
                 console.log("lineInfo.qml: worker lineSaveFailed")
-                loading.linesToSave--
+                if (loading.linesToSave > 0) {
+                    loading.linesToSave--
+                }
             } else if (messageObject.lineIdLong == "preSave") {
                 loading.linesToSave++
             } else if (messageObject.lineIdLong == "stopsToSave") {
                 loading.stopsToSave += messageObject.value
             } else if (messageObject.lineIdLong == "stop") {
-                loading.stopsToSave--
+                if (loading.stopsToSave > 0) {
+                    loading.stopsToSave--
+                }
             } else if (messageObject.lineIdLong == "FINISH") {
                 console.log("lineInfo.qml: worker finished: linesToSave : " + loading.linesToSave)
                 if (searchResultLineInfoModel.count == 1 && searchResultLineInfoModel.get(0).lineState == "offline") {
@@ -104,7 +108,7 @@ Item {
                 loading.visible = false
                 showError("Server returned ERROR")
             } else {
-                console.log("lineInfo.qml: worker got else");
+                console.log("lineInfo.qml: worker got else, lineState:" + messageObject.lineState);
                 if (messageObject.lineState != "saved") {  // received line from worker
                     for (var bb=0; bb < searchResultLineInfoModel.count; ++bb) {
                         if (searchResultLineInfoModel.get(bb).lineIdLong == messageObject.lineIdLong){
@@ -113,8 +117,10 @@ Item {
                     }
                     console.log("lineInfo.qml: found " + messageObject.lineIdLong + "; short: " + messageObject.lineIdShort + ";")
                     searchResultLineInfoModel.append(messageObject);
-                } else {                                   // saved line
-                    loading.linesToSave--
+                } else {                                   // saved lineEnd
+                    if (loading.linesToSave) {
+                        loading.linesToSave--
+                    }
                     var bb;
                     for (bb=0; bb < searchResultLineInfoModel.count; ++bb) {
                         if (searchResultLineInfoModel.get(bb).lineIdLong == messageObject.lineIdLong){

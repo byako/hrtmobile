@@ -1,60 +1,55 @@
 .pragma library
 function __db(){
-    return openDatabaseSync('hrtmobile', '1.0', 'hrtmobile config database', 1000000);
+    return openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
 }
 
-function check_if_update_needed(dbTimeStamp) {
+function updateNeeded(dbTimeStamp) { // here  database is checked to contain up-to-date info
+    var result=0
     console.log("updateDatabase.js: checking if update needed")
     __db().transaction(
         function(tx) {
-            var ok=1;
             try {
                 var rs = tx.executeSql('SELECT * FROM Config WHERE option=?', ["dbTimeStamp"]);
             }
             catch (e) {
-                console.log('updateDatabase.js: database doesn\'t contain timestamp' + e)
-                ok=0
+                console.log('updateDatabase.js: timestamp check exception: ' + e)
+                result = 1
                 return
             }
-            if (!ok || !rs.rows.count) { // put a timestamp
-                console.log("updateDatabse.js: placing a timestamp")
-                if (rs.rows.count) {
-                    switch (rs.rows.item(0).value) {
-                        case "120321": return;                  // up to date
-                        default: break;
-                    }
-                }
-
-                try { tx.executeSql('INSERT INTO Config VALUES(?, ?)', ['dbTimeStamp',dbTimeStamp]) }
-                catch(e) {
-                    console.log("updateDatabase.js: exception setting dbTimeStamp: " + e)
-                    return
-                }
+            if (!rs.rows.length) { // put a timestamp
+                console.log("updateDatabase.js: no timestamp in the database. Need to get one.")
+            } else {
+                console.log("updateNeeded: dbTimeStamp:" + rs.rows.item(ii).value)
             }
             console.log("updateDatabase.js: finished")
         }
     )
+    return result;
 }
 
-function reset_needed() {
-    console.log("updateDatabase.js: checking if update needed")
+function resetNeeded() {
+    console.log("updateDatabase.js: checking if reset needed")
     var result=0;
+    var rs;
     __db().transaction(
         function(tx) {
             try {
-                var rs = tx.executeSql('SELECT * FROM Reset WHERE option=?', ["reset"]);
+                rs = tx.executeSql('SELECT * FROM Reset');
             }
             catch (e) {
                 // this means table was not created yet => no reset needed
-                console.log('updateDatabase.js: database doesn\'t have reset table:' + e)
-                return;
+                console.log('updateDatabase.js: database doesn\'t contain reset table:' + e)
+                result = -1;
+                return ;
             }
-            if (rs.rows.count) {
+            if (rs.rows.length) {
                 console.log("updateDatabse.js: found a reset database with data : " + rs.rows.item(0).value)
                 if (rs.rows.item(0).value == "true") {
                     console.log("updateDatabse.js: reset is needed")
                     result = 1;
                 }
+            } else {
+                result = -2;
             }
         }
     )

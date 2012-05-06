@@ -1,6 +1,7 @@
 import QtQuick 1.1
 import com.nokia.meego 1.0
 import com.nokia.extras 1.1
+import QtMobility.systeminfo 1.2
 import "database.js" as JS
 import "updateDatabase.js" as Updater
 
@@ -15,31 +16,11 @@ Page {
     InfoBanner {// info banner
         id: infoBanner
         text: ""
+        timerShowTime: 3000
         z: 10
         opacity: 1.0
     }
     Component.onCompleted: {
-        console.log("starting databaseUpdater")
-        if (Updater.reset_needed()) {
-            var temp = Updater.resetDatabase();
-            if (temp != 0) {
-                showError("Database clean failed:" + temp);
-            } else {
-                showError("Successfully cleaned database:" + temp);
-            }
-        } else {
-    //        Updater.check_if_update_needed(dbTimeStamp)
-    //        if (Updater.checkIfUpdateNeeded()) {
-    //            console.log("opening query dialog")
-    //            updateQueryDialog.open()
-    //            loading.visible = false
-    //        } else {
-    //            loading.visible = false
-    //            favoritesPageItem._init();
-    //        }
-        }
-        loading.visible = false
-        favoritesPageItem._init();
     }
 
     QueryDialog {
@@ -63,7 +44,7 @@ Page {
 
     Loading {          // busy indicator
         id: loading
-        visible: true
+        visible: false
         message : "Cleaning Database"
         anchors.top: parent.top
         anchors.bottom: parent.bottom
@@ -228,6 +209,8 @@ Page {
                 console.log("db cleaned: resetting stop and line info pages")
                 if (lineInfoLoader.status == Loader.Ready) lineInfoLoader.item.fillModel()
                 if (stopInfoLoader.status == Loader.Ready) stopInfoLoader.item.fillModel()
+                favoritesPageItem.loadLines()
+                favoritesPageItem.loadStops()
             }
             onUpdateConfig: {
                 if (lineInfoLoader.status == Loader.Ready) {
@@ -340,5 +323,24 @@ Page {
     function showError(errorText) {  // show popup splash window with error
         infoBanner.text = errorText
         infoBanner.show()
+    }
+    function initPages() {
+        console.log("MainPage.qml: init check for reset request")
+        if (Updater.resetNeeded()) {
+            showError("resetting database")
+            console.log("MainPage.qml: cleaning database")
+            var temp = Updater.resetDatabase();
+            if (temp != 0) {
+                console.log("MainPage.qml: DB cleaned")
+                showError("Database clean failed:" + temp);
+            } else {
+                console.log("MainPage.qml: DB clean failed")
+                showError("Successfully cleaned database:" + temp);
+            }
+        } else {
+            showError("loading pages")
+            favoritesPageItem._init();
+        }
+        loading.visible = false
     }
 }

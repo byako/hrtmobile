@@ -1,5 +1,6 @@
 import QtQuick 1.1
 import com.nokia.meego 1.0
+import "updateDatabase.js" as Updater
 
 PageStackWindow {
     id: appWindow
@@ -12,4 +13,11 @@ PageStackWindow {
     }
 
     MainPage {id: mainPage}
+    Component.onCompleted: {
+        if (Updater.updateNeeded()) {
+            pageStack.push(Qt.resolvedUrl("UpdatePage.qml"))
+        } else {
+            mainPage.initPages()
+        }
+    }
 }

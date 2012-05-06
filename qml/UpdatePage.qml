@@ -5,6 +5,7 @@ import com.nokia.meego 1.0
 Page {
     id: updatePage
     objectName: "UpdatePage"
+    tools: null
     orientationLock: PageOrientation.LockPortrait
 
     Component.onCompleted: {
@@ -27,8 +28,8 @@ Page {
         style: ButtonStyle {inverted: true}
         text: "Done"
         onClicked: {
-            console.log("clocked done button")
-//            pageStack.pop()
+            pageStack.pop()
+            pageStack.currentPage.initPages()
         }
     }
 }

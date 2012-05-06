@@ -9,7 +9,7 @@ Page {
     height: 745
     anchors.fill: parent
     lockInPortrait: true
-    property string release_: "0.8.1 (20120331)"
+    property string release_: "0.8.1 (20120506)"
 
     Rectangle {
         anchors.fill: parent
