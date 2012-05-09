@@ -3,25 +3,34 @@ function __db(){
     return openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
 }
 
-function updateNeeded(dbTimeStamp) { // here  database is checked to contain up-to-date info
+function updateNeeded() { // here  database is checked to contain up-to-date info
     var result=0
     console.log("updateDatabase.js: checking if update needed")
     __db().transaction(
         function(tx) {
             try {
-                var rs = tx.executeSql('SELECT * FROM Config WHERE option=?', ["dbTimeStamp"]);
+                var rs = tx.executeSql('SELECT * FROM Config WHERE option=?', ["dbTimeStampTo"]);
             }
             catch (e) {
                 console.log('updateDatabase.js: timestamp check exception: ' + e)
-                result = 1
-                return
+                result = -1
+                return;
             }
             if (!rs.rows.length) { // put a timestamp
                 console.log("updateDatabase.js: no timestamp in the database. Need to get one.")
+                getTimestamps();
+                console.log("updateDatebase.js: leaving not waiting for the timestamp");
+                return;
             } else {
-                console.log("updateNeeded: dbTimeStamp:" + rs.rows.item(ii).value)
+                var dateTime = Qt.formatDateTime(new Date(), "yyyyMMdd")
+                console.log("updateDatabase: found timeStamp:" + rs.rows.item(0).option + ":" + rs.rows.item(0).value +
+                            "date: " + dateTime)
+                if (dateTime > rs.rows.item(0).value) {
+                    console.log("UPDATE IS NEEDED")
+                    result++;
+                }
             }
-            console.log("updateDatabase.js: finished")
+            return result;
         }
     )
     return result;
@@ -42,10 +51,10 @@ function resetNeeded() {
                 result = -1;
                 return ;
             }
-            if (rs.rows.length) {
+            if (rs.rows.length > 0) {
                 console.log("updateDatabse.js: found a reset database with data : " + rs.rows.item(0).value)
                 if (rs.rows.item(0).value == "true") {
-                    console.log("updateDatabse.js: reset is needed")
+                    console.log("updateDatabse.js: reset is needed, value in Reset is true")
                     result = 1;
                 }
             } else {
@@ -132,6 +141,50 @@ function resetDatabase() {
 }
 
 // template function update_XXYYZZ_N() { }
+
+function getTimestamps() {
+
+    var doc = new XMLHttpRequest()
+    var resp
+    var stamps = ""
+    doc.onreadystatechange = function() {
+        if (doc.readyState == XMLHttpRequest.DONE) {
+            if (doc.responseXML == null) {
+                return;
+            } else {
+                resp=doc.responseXML.documentElement
+                try { stamps = resp.childNodes[0].firstChild.nodeValue + ":" + resp.childNodes[1].firstChild.nodeValue }
+                catch(e) { console.log("You stupid! fix parsing!"); stamps = ""; }
+                pushDBTimeStamp(stamps);
+                return;
+            }
+        }
+    }
+
+    doc.open("GET", "http://api.reittiopas.fi/hsl/prod/?request=validity&user=byako&pass=gfccdjhl&format=xml");
+    doc.send();
+}
+
+
+function pushDBTimeStamp(timeStamp) {
+    var stamps = timeStamp.split(":")
+    if (stamps[0].length != 8 || stamps[1].length!=8) {
+        return // be safe if parsing went wrong, don't put crap in DB, at least attempt
+    }
+    console.log("DBTimeStamp from:" + stamps[0] + "; to " + stamps[1])
+    __db().transaction(
+        function(tx) {
+            try {
+                tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?,?)', ["dbTimeStampFrom",stamps[0]]);
+                tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?,?)', ["dbTimeStampTo",stamps[1]]);
+            }
+            catch (e) {
+                console.log('updateDatabase.js: pushDBTimeStamp exception: ' + e)
+            }
+        }
+    )
+}
+
 
 function initialUpdate() {
     console.log('initializing Database ')

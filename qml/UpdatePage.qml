@@ -1,6 +1,6 @@
 import QtQuick 1.1
 import com.nokia.meego 1.0
-//import "database.js" as JS
+import "updateDatabase.js" as Updater
 
 Page {
     id: updatePage
@@ -16,20 +16,33 @@ Page {
         color: "#000000"
         anchors.fill: parent
     }
-    Label {
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top : parent.top
-        text: "Update database"
-        font.pixelSize: 40
-        style: LabelStyle {inverted: true}
-    }
-    Button {
-        anchors.centerIn: parent
-        style: ButtonStyle {inverted: true}
-        text: "Done"
-        onClicked: {
-            pageStack.pop()
-            pageStack.currentPage.initPages()
+    Column {
+        anchors.fill: parent
+        Label {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: "Update database"
+            font.pixelSize: 40
+            style: LabelStyle {inverted: true}
         }
+        Button {
+            style: ButtonStyle {inverted: true}
+            text: "Update"
+            onClicked: {
+                update();
+                pageStack.pop()
+            }
+        }
+        Button {
+            style: ButtonStyle {inverted: true}
+            text: "Next time"
+            onClicked: {
+                pageStack.pop()
+                appWindow.pushMainPage();
+            }
+        }
+    }
+    function update() {
+        console.log("updating DB")
+        Updater.getTimestamps();
     }
 }

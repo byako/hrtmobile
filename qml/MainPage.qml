@@ -2,8 +2,6 @@ import QtQuick 1.1
 import com.nokia.meego 1.0
 import com.nokia.extras 1.1
 import QtMobility.systeminfo 1.2
-import "database.js" as JS
-import "updateDatabase.js" as Updater
 
 Page {
     id: mainPage
@@ -20,38 +18,10 @@ Page {
         z: 10
         opacity: 1.0
     }
+
     Component.onCompleted: {
     }
 
-    QueryDialog {
-        id: updateQueryDialog
-        acceptButtonText: "Update"
-        rejectButtonText: "Later"
-        enabled: true
-        message: "Some of the routes or timetables have been changed. Database needs to be updated to prevent showing the wrong information"
-        titleText: "Database update needed"
-        onRejected: {
-            console.log("rejected from dialog");
-            close();
-            favoritesPageItem._init();
-        }
-        onAccepted: {
-            console.log("accepted from dialog");
-            close();
-            favoritesPageItem._init();
-        }
-    }
-
-    Loading {          // busy indicator
-        id: loading
-        visible: false
-        message : "Cleaning Database"
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        z: 8
-    }
     SearchDialog {
         id: searchDialog
         page: recentPageContainer
@@ -178,7 +148,6 @@ Page {
                 if (stopInfoLoader.status != Loader.Ready) {
                     stopInfoLoader.source = "stopInfo.qml"
                 }
-                loading.visible = false;
             }
             onLoadStop: {
                 console.log("favorites signal: loadStop")
@@ -325,22 +294,7 @@ Page {
         infoBanner.show()
     }
     function initPages() {
-        console.log("MainPage.qml: init check for reset request")
-        if (Updater.resetNeeded()) {
-            showError("resetting database")
-            console.log("MainPage.qml: cleaning database")
-            var temp = Updater.resetDatabase();
-            if (temp != 0) {
-                console.log("MainPage.qml: DB cleaned")
-                showError("Database clean failed:" + temp);
-            } else {
-                console.log("MainPage.qml: DB clean failed")
-                showError("Successfully cleaned database:" + temp);
-            }
-        } else {
-            showError("loading pages")
-            favoritesPageItem._init();
-        }
-        loading.visible = false
+        console.log("Loading pages")
+        favoritesPageItem._init();
     }
 }
