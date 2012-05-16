@@ -55,6 +55,10 @@ route
 	* popup lines passing list
 
 Done:
+2012 05 14
+* reset on startup
+* update on startup check/update
+* nickName support for stops: declaration, no implementation yet
 * scale map objects according to zoom level
 * stopInfo: if only one stop has been found - open it
 * add possibility to search online even when offline data found

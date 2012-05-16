@@ -11,7 +11,7 @@ WorkerScript.onMessage = function(message) {
     var __db = openDatabaseSync("hrtmobile", "1.0", "hrtmobile config database", 1000000);
 
     doc.onreadystatechange = function() {
-        console.log("stopSearch.js: got a reply")
+//        console.log("stopSearch.js: got a reply, state: " + doc.readyState)
         if (doc.readyState == XMLHttpRequest.DONE) {
             if (!doc.responseXML) {
                  WorkerScript.sendMessage({"stopState": "SERVER_ERROR"})

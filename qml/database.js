@@ -22,6 +22,7 @@ function initDB() {
 
                 tx.executeSql('CREATE TABLE IF NOT EXISTS Stops(stopIdLong TEXT UNIQUE PRIMARY KEY, stopIdShort TEXT, stopName TEXT, stopAddress TEXT, stopCity TEXT, stopLongitude TEXT, stopLatitude TEXT, favorite TEXT);')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS StopLines(stopIdLong TEXT, lineIdLong TEXT, lineEnd TEXT, PRIMARY KEY(stopIdLong,lineIdLong), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong));')
+                tx.executeSql('CREATE TABLE IF NOT EXISTS StopNickNames(stopIdLong TEXT, NickName TEXT, PRIMARY KEY(stopIdLong), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong));');
                 tx.executeSql('CREATE TABLE IF NOT EXISTS StopInfo(stopIdLong TEXT, option TEXT, value TEXT, PRIMARY KEY(stopIdLong,option), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong));')
                 tx.executeSql('CREATE TABLE IF NOT EXISTS StopSchedule(stopIdLong, weekTime TEXT, departTime TEXT, lineId TEXT);')  // not used for now
             }
@@ -42,6 +43,7 @@ function createDefaultConfig() {
                 tx.executeSql('INSERT INTO OR REPLACE Config VALUES(?, ?)',['lineGroup','true'])
                 tx.executeSql('INSERT INTO OR REPLACE Config VALUES(?, ?)', [ 'stopsShowAll', 'false']);
                 tx.executeSql('INSERT INTO OR REPLACE Config VALUES(?, ?)', [ 'linesShowAll', 'false']);
+                tx.executeSql('INSERT INTO OR REPLACE Config VALUES(?, ?)', [ 'dbTimeStampFrom', Qt.formatDateTime(new Date(), "yyyyMMdd")]);
                 tx.executeSql('INSERT INTO OR REPLACE LineTypes VALUES(?, ?)', [ '1', 'Helsinki Bus']);
                 tx.executeSql('INSERT INTO OR REPLACE LineTypes VALUES(?, ?)', [ '2', 'Tram']);
                 tx.executeSql('INSERT INTO OR REPLACE LineTypes VALUES(?, ?)', [ '3', 'Espoo Bus']);

@@ -26,7 +26,7 @@ function updateNeeded() { // here  database is checked to contain up-to-date inf
                 console.log("updateDatabase: found timeStamp:" + rs.rows.item(0).option + ":" + rs.rows.item(0).value +
                             "date: " + dateTime)
                 if (dateTime > rs.rows.item(0).value) {
-                    console.log("UPDATE IS NEEDED")
+                    console.log("database timestamp: " + dateTime + "; network timestamp is " + rs.rows.item(0).value + "; UPDATE IS NEEDED")
                     result++;
                 }
             }
@@ -78,6 +78,7 @@ function resetDatabase() {
                     tx.executeSql('DELETE FROM LineStops;');
                     tx.executeSql('DELETE FROM LineTypes;');
                     tx.executeSql('DELETE FROM StopLines;');
+                    tx.executeSql('DELETE FROM StopNickNames;');
                     tx.executeSql('DELETE FROM StopInfo;');
                     tx.executeSql('DELETE FROM LineSchedule;');
                     tx.executeSql('DELETE FROM Reset;');
@@ -89,6 +90,7 @@ function resetDatabase() {
                     tx.executeSql('DROP TABLE IF EXISTS LineStops;');
                     tx.executeSql('DROP TABLE IF EXISTS LineTypes;');
                     tx.executeSql('DROP TABLE IF EXISTS StopLines;');
+                    tx.executeSql('DROP TABLE IF EXISTS StopNickNames;');
                     tx.executeSql('DROP TABLE IF EXISTS StopInfo;');
                     tx.executeSql('DROP TABLE IF EXISTS LineSchedule;');
                     tx.executeSql('DROP TABLE IF EXISTS Reset;');
@@ -102,12 +104,14 @@ function resetDatabase() {
                     err=3
                     tx.executeSql('CREATE TABLE IF NOT EXISTS Stops(stopIdLong TEXT PRIMARY KEY, stopIdShort TEXT, stopName TEXT, stopAddress TEXT, stopCity TEXT, stopLongitude TEXT, stopLatitude TEXT, favorite TEXT);');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS StopLines(stopIdLong TEXT, lineIdLong TEXT, lineEnd TEXT, PRIMARY KEY(stopIdLong,lineIdLong), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong));');
+                    tx.executeSql('CREATE TABLE IF NOT EXISTS StopNickNames(stopIdLong TEXT, NickName TEXT, PRIMARY KEY(stopIdLong), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong));');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS StopInfo(stopIdLong TEXT, option TEXT, value TEXT, PRIMARY KEY(stopIdLong,option), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong));');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS StopSchedule(stopIdLong, weekTime TEXT, departTime TEXT, lineId TEXT);');  // not used for now
                     err=4
                     tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)', [ "lineGroup","true"]);
                     tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)', [ 'stopsShowAll', 'false']);
                     tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)', [ 'linesShowAll', 'false']);
+                    tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)', [ 'dbTimeStampFrom', Qt.formatDateTime(new Date(), "yyyyMMdd")]);
                     err=5
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '1', 'Helsinki Bus']);
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '2', 'Tram']);

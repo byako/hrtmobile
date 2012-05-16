@@ -62,7 +62,8 @@ OTHER_FILES += \
     qml/stopInfoLoadLines.js \
     qml/updateDatabase.js \
     qml/UpdatePage.qml \
-    qml/UpdateQueryDialog.qml
+    qml/UpdateQueryDialog.qml \
+    qml/updateWorker.js
 
 RESOURCES += \
     res.qrc

@@ -1,6 +1,6 @@
 .pragma library
 // -------------------------------------- ** --------------------------------------------
-// this needs to be separated to notify settings page that cleanup is finished
+// resetDatabase needs to be separated to notify settings page that cleanup is finished
 //
 // -------------------------------------- ** --------------------------------------------
 
@@ -11,6 +11,7 @@ WorkerScript.onMessage = function (message) {
         db_.transaction(
             function(tx) {
                 try {
+                    err = 256
                     tx.executeSql('DELETE FROM Config;');
                     tx.executeSql('DELETE FROM Lines;');
                     tx.executeSql('DELETE FROM Stops;');
@@ -18,6 +19,7 @@ WorkerScript.onMessage = function (message) {
                     tx.executeSql('DELETE FROM LineStops;');
                     tx.executeSql('DELETE FROM LineTypes;');
                     tx.executeSql('DELETE FROM StopLines;');
+                    tx.executeSql('DELETE FROM StopNickNames;');
                     tx.executeSql('DELETE FROM StopInfo;');
                     tx.executeSql('DELETE FROM LineSchedule;');
                     err=1
@@ -28,6 +30,7 @@ WorkerScript.onMessage = function (message) {
                     tx.executeSql('DROP TABLE IF EXISTS LineStops;');
                     tx.executeSql('DROP TABLE IF EXISTS LineTypes;');
                     tx.executeSql('DROP TABLE IF EXISTS StopLines;');
+                    tx.executeSql('DROP TABLE IF EXISTS StopNickNames;');
                     tx.executeSql('DROP TABLE IF EXISTS StopInfo;');
                     tx.executeSql('DROP TABLE IF EXISTS LineSchedule;');
                     tx.executeSql('DROP TABLE IF EXISTS Reset;');
@@ -41,12 +44,14 @@ WorkerScript.onMessage = function (message) {
                     err=3
                     tx.executeSql('CREATE TABLE IF NOT EXISTS Stops(stopIdLong TEXT PRIMARY KEY, stopIdShort TEXT, stopName TEXT, stopAddress TEXT, stopCity TEXT, stopLongitude TEXT, stopLatitude TEXT, favorite TEXT);');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS StopLines(stopIdLong TEXT, lineIdLong TEXT, lineEnd TEXT, PRIMARY KEY(stopIdLong,lineIdLong), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong));');
+                    tx.executeSql('CREATE TABLE IF NOT EXISTS StopNickNames(stopIdLong TEXT, NickName TEXT, PRIMARY KEY(stopIdLong), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong));');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS StopInfo(stopIdLong TEXT, option TEXT, value TEXT, PRIMARY KEY(stopIdLong,option), FOREIGN KEY(stopIdLong) REFERENCES Stops(stopIdLong));');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS StopSchedule(stopIdLong, weekTime TEXT, departTime TEXT, lineId TEXT);');  // not used for now
                     err=4
                     tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)',["lineGroup","true"]);
                     tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)', [ 'stopsShowAll', 'false']);
                     tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)', [ 'linesShowAll', 'false']);
+                    tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)', [ 'dbTimeStampFrom', Qt.formatDateTime(new Date(), "yyyyMMdd")]);
                     err=5
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '1', 'Helsinki Bus']);
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '2', 'Tram']);
@@ -69,6 +74,7 @@ WorkerScript.onMessage = function (message) {
                     err=0
                 } catch (e) { console.log ( "resetDatabase.js: exception " + e);}
                 if (err) {
+                    console.log("RESET DATABASE: ERR = " + err);
                     try { tx.executeSql('CREATE TABLE IF NOT EXISTS Reset(option TEXT, value TEXT, PRIMARY KEY(option) );'); }
                     catch (e) { console.log("resetDatabase.js: startup reset table creation exception occured: " + e); err2++}
                     try { tx.executeSql('INSERT OR REPLACE INTO Reset VALUES(?, ?)',['reset','true']); }

@@ -75,8 +75,8 @@ WorkerScript.onMessage = function (message) {
                                          resp.childNodes[ii].childNodes[8].childNodes[cc].childNodes[6].firstChild.nodeValue,
                                         lonlat[0], lonlat[1], "false" ]);
                                     }
-                                    catch(e) { console.log("STOP SAVE EXCEPTION: " + e); err++;}
-                                    WorkerScript.sendMessage({"lineIdLong":"stop"})
+                                    catch(e) { console.log("lineSearch.js STOP SAVE EXCEPTION: " + e); err++;}
+                                    WorkerScript.sendMessage({"lineIdLong":"stop","stopIdLong":resp.childNodes[ii].childNodes[8].childNodes[cc].childNodes[0].firstChild.nodeValue})
                                 }
                                 console.log("lineSearch: saved all stops")
                                 if (preSave) {
