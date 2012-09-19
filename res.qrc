@@ -30,5 +30,7 @@
         <file>qml/updateDatabase.js</file>
         <file>qml/UpdatePage.qml</file>
         <file>qml/updateWorker.js</file>
+        <file>qml/NickNameDialog.qml</file>
+        <file>qml/stopInfoMyDeparturesLoad.js</file>
     </qresource>
 </RCC>

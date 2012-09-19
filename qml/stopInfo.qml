@@ -16,8 +16,29 @@ Item {
     width: 480
     height: 745
 
+    Timer {
+        id:flickTimer
+        interval: 500
+        onTriggered: {
+            if (scheduleView.moving && trafficModel.count > 0) {
+                if (scheduleView.atXBeginning && scheduleView.dragDirection == -1 && scheduleView.contentX < -25) {
+//                    console.log("updating earlier:" );
+                    earlierTime.visible = true;
+                    earlierTime.text = scheduleView.contentX;
+                } else if (scheduleView.atXEnd &&
+                           scheduleView.contentX > scheduleView.contentWidth - 480 + 25) {
+                    console.log("updating later");
+                    laterTime.visible = true;
+                    laterTime.text = trafficModel.get(trafficModel.count-1).departTime + "+";
+                } else {
+                    console.log("false alarm, not moving");
+                }
+            }
+        }
+    }
 
     Config { id: config }
+    NickNameDialog { id:nickNameDialog }
     Component.onCompleted: { refreshConfig(); fillModel(); }
     Rectangle {              // dark background
         color: "#000000";
@@ -69,6 +90,17 @@ Item {
             }
         }
     }
+    WorkerScript {           // Omatlahdot (My Departures)
+        id: myDeparturesWorker
+        source: "stopInfoMyDeparturesLoad.js"
+        onMessage: {
+            if (messageObject.depName == "ERROR") {
+                showError("Server returned ERROR")
+            } else {
+                trafficModel.append(messageObject)
+            }
+        }
+    }
     WorkerScript {           // fast schedule loader: API 1.0
         id: loadStopSchedule
         source: "stopInfoScheduleLoad.js"
@@ -107,6 +139,20 @@ Item {
         id: recentStopsContextMenu
         MenuLayout {
             MenuItem {
+                text: "Alias / Nickname"
+                onClicked: {
+                    nickNameDialog.stopCodeAndName = recentModel.get(stopsView.currentIndex).stopIdShort +
+                            " : " + recentModel.get(stopsView.currentIndex).stopName + "\n" +
+                            recentModel.get(stopsView.currentIndex).stopAddress
+                    if (recentModel.get(stopsView.currentIndex).NickName) {
+                        nickNameDialog.oldNick = "" + recentModel.get(stopsView.currentIndex).NickName
+                    }
+                    nickNameDialog.open();
+                }
+                visible: (stopsView.model == recentModel ? true : false)
+            }
+
+            MenuItem { // delete stop
                 text: "Delete stop"
                 onClicked: {
                     JS.deleteStop(stopsView.model.get(stopsView.currentIndex).stopIdLong) // remove from database
@@ -135,7 +181,7 @@ Item {
                     }
                 }
             }
-            MenuItem {
+            MenuItem { // delete all stops
                 text: "Delete all"
                 onClicked: {
                     if (stopsView.model == recentModel) { // recent stops are shown: delete all except the favourites
@@ -363,7 +409,7 @@ Item {
                     anchors.rightMargin: 10
                     spacing: 20
                     Text{
-                        text: stopName
+                        text: (NickName == "" ? stopName : NickName )
                         font.pixelSize: 35
                         color: "#cdd9ff"
                         width: 340
@@ -521,6 +567,25 @@ Item {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         state: "stopsSelected"
+        Label { // earlierUpdateTime
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            style: LabelStyle { inverted: true }
+            id: earlierTime
+            text: "time"
+            color: "#cdd9ff"
+            visible: false
+            z: 10
+        }
+        Label { // laterUpdateTime
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            style: LabelStyle { inverted: true }
+            id: laterTime
+            color:"#cdd9ff"
+            text: "time"
+            visible: false
+        }
         ListView {  // stopsView
             id: stopsView
             visible: true
@@ -534,6 +599,7 @@ Item {
             clip: true
         }
         GridView {  // stopSchedule grid
+            property int dragDirection: 0
             id: scheduleView
             anchors.fill:  parent
             delegate: trafficDelegate
@@ -545,6 +611,42 @@ Item {
             clip: true
             visible: false
             flow: GridView.TopToBottom
+
+            onMovementStarted: {
+                dragDirection = (atXBeginning ? -1 : (atXEnd ? 0 : 0 ) )// save start movement state
+                                                                        // beginning: -1; end: 1; middle: 0
+                // ^ no need to update laterTime label from onContentXChanged, left just in case
+                flickTimer.start();
+/*                console.log("Moving:" + (moving ? "true":"false") +
+                            "\n atXBeginning:" + atXBeginning +
+                            "\n atXEnd:" + atXEnd +
+                            "\n visibleArea.xPosition:" + visibleArea.xPosition +
+                            "\n contentWidth:" + contentWidth +
+                            "\n contentX:" + contentX);*/
+            }
+            onMovementEnded: {
+                dragDirection = 0; // reset direction
+                if (flickTimer.running) flickTimer.stop();
+                earlierTime.visible = false;
+                laterTime.visible = false;
+                // TODO: check for time label value and pass it to loadStopSchedule
+                console.log("Movement ended");
+            }
+            onContentXChanged: {
+                if (dragDirection == -1) {
+                    if (contentX <= 0) {
+                        earlierTime.text = contentX
+                    } else {
+                        earlierTime.text = "-0";
+                    }
+                } else if (dragDirection == 1) {
+                    if (scheduleView.contentX >= scheduleView.contentWidth - 480) {
+                        laterTime.text = scheduleView.contentX - 480
+                    } else {
+                        laterTime.text = "-0";
+                    }
+                }
+            }
         }
         ListView {  // lines passing
             id: linesView
@@ -598,13 +700,17 @@ Item {
             selectedStopIndex = index
             stopsView.currentIndex = index
             searchString = "" + stopsView.model.get(index).stopIdLong
-            stopNameValue.text = stopsView.model.get(index).stopName
+            if (stopsView.model.get(index).nickName && stopsView.model.get(index).nickName != "") {
+                stopNameValue.text = stopsView.model.get(index).nickName
+            } else {
+                stopNameValue.text = stopsView.model.get(index).stopName
+            }
             stopAddressValue.text = stopsView.model.get(index).stopAddress
             stopCityValue.text = stopsView.model.get(index).stopCity
             dataRect.visible = true
             showMapButton.visible = true
             fillLinesModel()
-            fillSchedule()
+            fillSchedule("")
         } else if (stopsView.currentIndex != selectedStopIndex){
             stopsView.currentIndex = index
         }
@@ -616,8 +722,8 @@ Item {
         recentModel.clear();
         JS.__db().transaction(
             function(tx) {
-                        try { var rs = tx.executeSql("SELECT * FROM Stops " + (config.stopsShowAll == "false" ? "WHERE favorite=\"true\" " : "") + "ORDER BY stopName ASC" ); }
-                    catch(e) {console.log("stopInfo.qml fill model exception" + e) }
+                    try { var rs = tx.executeSql("SELECT Stops.stopIdLong, stopIdShort, stopName, stopAddress, stopCity, favorite, NickName FROM Stops LEFT OUTER JOIN StopNickNames ON Stops.stopIdLong=StopNickNames.stopIdLong " + (config.stopsShowAll == "false" ? "WHERE favorite=\"true\" " : "") + "ORDER BY stopName ASC" ); }
+                    catch(e) {console.log("stopInfo.qml fill model EXCEPTION:" + e) }
                     for (var i=0; i<rs.rows.length; ++i) {
                         recentModel.append(rs.rows.item(i))
                         if (rs.rows.item(i).stopIdLong == searchString) {
@@ -641,11 +747,16 @@ Item {
         linesModel.clear()
         linesLoader.sendMessage({"searchString":searchString})
     }
-    function fillSchedule() {
+    function fillSchedule(startTime) {
         trafficModel.clear()
         tabRect.checkedButton = stopSchedule
         loading.visible = true
-        loadStopSchedule.sendMessage({"searchString" : searchString})
+        if (startTime == "") {
+            loadStopSchedule.sendMessage({"searchString" : searchString})
+        } else {
+            loadStopSchedule.sendMessage({"searchString" : searchString, "startTime" : startTime})
+        }
+
         scheduleView.currentIndex = 0
 //        infoRect.state = "scheduleSelected"
         dataRect.visible = true
@@ -671,6 +782,11 @@ Item {
             stopsView.currentIndex = -1
             dataRect.visible = false
             stopsLookup.sendMessage({"searchString" : searchString})
+        } else {
+            searchDialog.page = stopInfoPage;
+            searchDialog.open();
+            showError("Enter search criteria\nline number/line code/Key place\ni.e. 156A or Tapiola")
+            return
         }
     }
     function setFavorite(stopIdLong_,value) {  // checkout stop info from database
@@ -684,5 +800,18 @@ Item {
     function refreshConfig() {        // reload config from database - same function on every page
         JS.loadConfig(config)
     }
+    function setNickName(newNick) {
+        JS.__db().transaction(
+            function(tx) {
+                try { var rs = tx.executeSql("INSERT OR REPLACE INTO StopNickNames VALUES(?,?)",[recentModel.get(stopsView.currentIndex).stopIdLong, newNick]); }
+                catch(e) { console.log("stopInfo: setNickName EXCEPTION: " + e) }
+            }
+        )
+        recentModel.set(stopsView.currentIndex,{"NickName":newNick})
+        if (recentModel.get(stopsView.currentIndex).favorite == "true") {
+            stopInfoPage.refreshFavorites()
+        }
+    }
+
 /*<----------------------------------------------------------------------->*/
 }

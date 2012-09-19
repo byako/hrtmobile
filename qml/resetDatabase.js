@@ -12,7 +12,7 @@ WorkerScript.onMessage = function (message) {
             function(tx) {
                 try {
                     err = 256
-                    tx.executeSql('DELETE FROM Config;');
+/*                    tx.executeSql('DELETE FROM Config;');
                     tx.executeSql('DELETE FROM Lines;');
                     tx.executeSql('DELETE FROM Stops;');
                     tx.executeSql('DELETE FROM StopSchedule;');
@@ -21,19 +21,19 @@ WorkerScript.onMessage = function (message) {
                     tx.executeSql('DELETE FROM StopLines;');
                     tx.executeSql('DELETE FROM StopNickNames;');
                     tx.executeSql('DELETE FROM StopInfo;');
-                    tx.executeSql('DELETE FROM LineSchedule;');
+                    tx.executeSql('DELETE FROM LineSchedule;');*/
                     err=1
-                    tx.executeSql('DROP TABLE IF EXISTS Config;');
-                    tx.executeSql('DROP TABLE IF EXISTS Lines;');
-                    tx.executeSql('DROP TABLE IF EXISTS Stops;');
-                    tx.executeSql('DROP TABLE IF EXISTS StopSchedule;');
-                    tx.executeSql('DROP TABLE IF EXISTS LineStops;');
-                    tx.executeSql('DROP TABLE IF EXISTS LineTypes;');
-                    tx.executeSql('DROP TABLE IF EXISTS StopLines;');
-                    tx.executeSql('DROP TABLE IF EXISTS StopNickNames;');
-                    tx.executeSql('DROP TABLE IF EXISTS StopInfo;');
-                    tx.executeSql('DROP TABLE IF EXISTS LineSchedule;');
-                    tx.executeSql('DROP TABLE IF EXISTS Reset;');
+                    tx.executeSql('TRUNCATE TABLE Config;');
+                    tx.executeSql('TRUNCATE TABLE Lines;');
+                    tx.executeSql('TRUNCATE TABLE Stops;');
+                    tx.executeSql('TRUNCATE TABLE StopSchedule;');
+                    tx.executeSql('TRUNCATE TABLE LineStops;');
+                    tx.executeSql('TRUNCATE TABLE LineTypes;');
+                    tx.executeSql('TRUNCATE TABLE StopLines;');
+                    tx.executeSql('TRUNCATE TABLE StopNickNames;');
+                    tx.executeSql('TRUNCATE TABLE StopInfo;');
+                    tx.executeSql('TRUNCATE TABLE LineSchedule;');
+                    tx.executeSql('TRUNCATE TABLE Reset;');
                     err=2
                     tx.executeSql('CREATE TABLE IF NOT EXISTS Reset(option TEXT, value TEXT, PRIMARY KEY(option) );');
                     tx.executeSql('CREATE TABLE IF NOT EXISTS Config(option TEXT, value TEXT, PRIMARY KEY(option) );');

@@ -90,10 +90,12 @@ function deleteStop(string) {
                     tx.executeSql('DELETE from StopSchedule;');
                     tx.executeSql('DELETE from StopLines;');
                     tx.executeSql('DELETE from Stops;');
+                    tx.executeSql('DELETE from StopNickNames;');
                 } else {
                     tx.executeSql('DELETE from StopSchedule WHERE stopIdLong=?;',[string]);
                     tx.executeSql('DELETE from StopLines WHERE stopIdLong=?;',[string]);
                     tx.executeSql('DELETE from Stops WHERE stopIdLong=?;', [string]);
+                    tx.executeSql('DELETE from StopNickNames WHERE stopIdLong=?;', [string]);
                 }
             }
             catch(e) {
@@ -115,6 +117,7 @@ function deleteAllStops() { // except the favorites
                 for (var ii=0; ii < rs.rows.length; ++ii) {
                     tx.executeSql('DELETE from StopSchedule WHERE stopIdLong=?;',[rs.rows.item(ii).stopIdLong]);
                     tx.executeSql('DELETE from StopLines WHERE stopIdLong=?;',[rs.rows.item(ii).stopIdLong]);
+                    tx.executeSql('DELETE from StopNickNames WHERE stopIdLong=?;',[rs.rows.item(ii).stopIdLong]);
                 }
                 tx.executeSql('DELETE from Stops WHERE favorite=\"false\";');
             }
@@ -177,25 +180,6 @@ function setConfigValue(option_,value_) {
             } catch(e) {
                 console.log('setConfigValue EXCEPTION: ' + e)
                 return_v = 1
-            }
-        }
-    )
-    return return_v
-}
-
-function getLineType(string) {
-    var return_v='unknown'
-    __db().transaction(
-        function(tx) {
-            try {
-                var rs = tx.executeSql('SELECT * FROM LineTypes WHERE lineType=?;',[string])
-            } catch(e) {
-                console.log('getLineType EXCEPTION: ' + e)
-            }
-            if (rs.rows.length > 0) {
-                return_v = rs.rows.item(0).lineTypeName
-            } else {
-                console.log('Oops, didn\'t find line type: ' + string)
             }
         }
     )

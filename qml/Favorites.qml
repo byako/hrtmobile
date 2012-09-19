@@ -14,13 +14,6 @@ Item {
     // -================================ STOPS ==================================-
     ListModel {              // recent stops list
         id: recentModel
-        ListElement{
-            stopIdLong: ""
-            stopName: "No favorite stops yet"
-            stopIdShort: ""
-            stopAddress: "Try Stop page -> search tool button"
-            stopCity: ""
-        }
     }
     Component {              // recent stops delegate
         id: recentDelegate
@@ -36,7 +29,7 @@ Item {
                     anchors.rightMargin: 10
                     spacing: 20
                     Text{
-                        text: stopName
+                        text: (NickName == "" ? stopName : NickName)
                         font.pixelSize: 35
                         color: "#cdd9ff"
                         width: 340
@@ -80,12 +73,6 @@ Item {
 
     ListModel {     // lineInfo list model
         id:lineInfoModel
-        ListElement {
-            lineIdLong: ""
-            lineTypeName: "No favorite lines yet"
-            lineStart: "Try Line page"
-            lineEnd: "Search tool button"
-        }
     }
     Component {     // lineInfo delegate
         id:lineInfoDelegate
@@ -101,7 +88,7 @@ Item {
                 Text{
                     anchors.left: parent.left
                     anchors.leftMargin: 10
-                    text: lineTypeName
+                    text: lineTypeName + " " + lineIdShort
                     font.pixelSize: 35
                     color: "#cdd9ff"
                 }
@@ -183,7 +170,6 @@ Item {
     }
     //-===========================================================================-
     function _init() {
-        console.log("Favorites.qml: starting")
         loadLines();
         loadStops();
         favoritesPage.finishedLoad()
@@ -191,16 +177,24 @@ Item {
     function loadLines() {
         JS.__db().transaction(
             function(tx) {
-                try { var rs = tx.executeSql('SELECT lineIdLong, lineIdShort, lineName, lineStart, lineEnd, lineType, favorite FROM Lines WHERE favorite=?', ["true"]); }
+                        try { var rs = tx.executeSql("SELECT lineIdLong, lineIdShort, lineStart, lineEnd," +
+                                                     " Lines.lineType, LineTypes.lineTypeName FROM Lines OUTER LEFT JOIN LineTypes" +
+                                                     " on Lines.lineType=LineTypes.lineType WHERE favorite=\"true\"" +
+                                                     "ORDER BY lineIdShort ASC"); }
                 catch (e) { console.log ("favorites: loadLines exception: " + e) }
-                if (rs.rows.length > 0) lineInfoModel.clear()
+                if (rs.rows.length > 0) {
+                    lineInfoModel.clear()
+                } else {
+                    lineInfoModel.clear()
+                    lineInfoModel.append({"lineTypeName": "No favorite lines yet",
+                                             "lineIdLong":"",
+                                             "lineStart": "Try Line page",
+                                             "lineEnd": "Search tool button",
+                                             "lineIdShort":""});
+                }
+
                 for (var ii=0; ii<rs.rows.length; ++ii) {
-                    lineInfoModel.append({"lineIdLong" : rs.rows.item(ii).lineIdLong, "lineIdShort" : rs.rows.item(ii).lineIdShort,
-                                             "lineStart" : rs.rows.item(ii).lineStart, "lineEnd" : rs.rows.item(ii).lineEnd,
-                                             "lineName" : rs.rows.item(ii).lineName, "lineType" : rs.rows.item(ii).lineType,
-                                        "lineTypeName" : JS.getLineType(rs.rows.item(ii).lineType) + " " + rs.rows.item(ii).lineIdShort,
-                                             "favorite" : rs.rows.item(ii).favorite
-                                         })
+                    lineInfoModel.append(rs.rows.item(ii))
                 }
             }
         )
@@ -208,9 +202,20 @@ Item {
     function loadStops() {
         JS.__db().transaction(
             function(tx) {
-                try { var rs = tx.executeSql('SELECT * FROM Stops WHERE favorite=?', ["true"]); }
+                try { var rs = tx.executeSql("SELECT Stops.stopIdLong, stopIdShort, stopName, stopAddress, stopCity, NickName FROM Stops LEFT OUTER JOIN StopNickNames ON Stops.stopIdLong=StopNickNames.stopIdLong WHERE favorite=\"true\" ORDER BY stopName ASC"); }
                 catch (e) { console.log ("favorites: loadStops exception: " + e) }
-                if (rs.rows.length > 0) recentModel.clear()
+                if (rs.rows.length > 0) {
+                    recentModel.clear();
+                } else {
+                    recentModel.clear();
+                    recentModel.append({"stopName":"No favorite stops yet",
+                                           "stopIdLong":"",
+                                           "NickName":"",
+                                           "stopCity":"",
+                                           "stopIdShort":"",
+                                          "stopAddress": "Try Stop page -> search tool button"});
+                }
+
                 for (var ii=0; ii<rs.rows.length; ++ii) {
                     recentModel.append(rs.rows.item(ii))
                 }

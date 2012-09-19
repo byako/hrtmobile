@@ -43,7 +43,7 @@ Page {
             TabButton {
                 id: linesTabButton
                 tab: lineInfoPageContainer;
-                text: (checked) ? "" : "line";
+                text: (checked) ? "" : "Line";
                 iconSource: (checked) ? "image://theme/icon-m-toolbar-search-white" : ""
                 onClicked: {
                      if (tabGroup.lastTab == 0 && lineInfoLoader.status == Loader.Ready) {
@@ -58,7 +58,7 @@ Page {
             TabButton {
                 id: stopsTabButton
                 tab: stopInfoPageContainer;
-                text: (checked) ? "" : "stop";
+                text: (checked) ? "" : "Stop";
                 iconSource: (checked) ? "image://theme/icon-m-toolbar-search-white" : ""
                 onClicked: {
                     if (tabGroup.lastTab == 1 && stopInfoLoader.status == Loader.Ready) {
@@ -73,13 +73,14 @@ Page {
             TabButton {
                 id: mapTabButton
                 tab: routePageContainer
-                text: (checked) ? "" : "map";
-                iconSource: (checked) ? "image://theme/icon-m-toolbar-search-white" : ""
+                text: "Map"
+//                iconSource: (checked) ? "image://theme/icon-m-toolbar-search-white" : ""
                 onClicked: {
-                    if (tabGroup.lastTab == 2 && mapLoader.status == Loader.Ready) {
+/*                    if (tabGroup.lastTab == 2 && mapLoader.status == Loader.Ready) {
                         searchDialog.page = mapLoader.item
                         searchDialog.open()
-                    } else if (mapLoader.status != Loader.Ready){
+                    } else*/
+                    if (mapLoader.status != Loader.Ready){
                         mapLoader.source = "route.qml"
                     }
                     tabGroup.lastTab = 2
@@ -105,12 +106,14 @@ Page {
         property int lastTab: -1
         Page {   // recents page
             id: recentPageContainer
+            orientationLock: PageOrientation.LockPortrait
             Favorites {
                 id: favoritesPageItem
             }
         }
 
         Page {
+            orientationLock: PageOrientation.LockPortrait
             id: lineInfoPageContainer
             Loader {
                 id: lineInfoLoader
@@ -118,6 +121,7 @@ Page {
             }
         }
         Page {
+            orientationLock: PageOrientation.LockPortrait
             id: stopInfoPageContainer
             Loader {
                 id: stopInfoLoader
@@ -125,6 +129,7 @@ Page {
             }
         }
         Page {
+            orientationLock: PageOrientation.LockPortrait
             id: routePageContainer
             Loader {
                 id: mapLoader
@@ -132,6 +137,7 @@ Page {
             }
         }
         Page {
+            orientationLock: PageOrientation.LockPortrait
             id: settingsPageContainer
             Loader {
                 id: settingsLoader
@@ -294,7 +300,6 @@ Page {
         infoBanner.show()
     }
     function initPages() {
-        console.log("Loading pages")
         favoritesPageItem._init();
     }
 }

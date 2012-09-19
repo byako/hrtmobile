@@ -3,7 +3,7 @@ import com.nokia.meego 1.0
 
 Dialog {
     id: searchDialog
-    z: 8
+
     property Item page: null
 
     title: Text {
@@ -12,7 +12,7 @@ Dialog {
         anchors.top: parent.top
         font.pixelSize: 35
         color: "#cdd9ff"
-        text: (page.objectName == "stopInfoPage") ? "Stop Search" : (page.objectName == "lineInfoPage") ? "Line Search" : "Search"
+        text: (page.objectName == "stopInfoPage") ? "Stop Search" : (page.objectName == "lineInfoPage") ? "Line Search" : "Map object search"
     }
 
     content: Item {
@@ -54,7 +54,8 @@ Dialog {
         onClicked: { searchDialog.accept(); }
     }
     onStatusChanged: {
-        if (status == DialogStatus.Open) {
+        if (status == DialogStatus.Opened) {
+            console.log("changing focus")
             searchInput.focus = true
         }
     }

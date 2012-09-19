@@ -8,8 +8,8 @@ Page {
     width: 480
     height: 745
     anchors.fill: parent
-    lockInPortrait: true
-    property string release_: "0.8.1 (20120506)"
+    orientationLock: PageOrientation.LockPortrait
+    property string release_: "0.8.2 (20120520)"
 
     Rectangle {
         anchors.fill: parent
@@ -40,7 +40,7 @@ Column {
     }
     Label {
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "Sources: https://projects.developer.nokia.com/\nbgit/hrtmobile.git"
+        text: "Sources:\nhttps://projects.developer.nokia.com/\ngit/hrtmobile.git"
         color: "#cdd9ff"
     }
     Button {

@@ -57,13 +57,14 @@ WorkerScript.onMessage = function(message) {
                                           "stopName" : a.firstChild.childNodes[2].firstChild.nodeValue,
                                           "stopLongitude" : lonlat[0],
                                           "stopLatitude" : lonlat[1],
-                                          "stopState" : state_
-                                         })
+                                          "stopState" : state_,
+                                          "NickName" : ""
+                                         }) //TODO: check NickName emptyness here^
             } else {
                 for (var ii = 0; ii < a.childNodes.length; ++ii) {
                     state_ = "online"
                     __db.transaction( // check if we have this stop in DB already
-                        function(tx) {
+                        function(tx) { // TODO: select NickNames here instead of putting empty one
                             try { var rs = tx.executeSql('SELECT * FROM Stops WHERE stopIdLong=?', [a.childNodes[ii].childNodes[7].childNodes[1].firstChild.nodeValue]); }
                             catch (e) { console.log("StopSearch worker exception: " + e); return; }
 
@@ -79,7 +80,8 @@ WorkerScript.onMessage = function(message) {
                                               "stopName" : a.childNodes[ii].childNodes[2].firstChild.nodeValue,
                                               "stopLongitude" : lonlat[0],
                                               "stopLatitude" : lonlat[1],
-                                              "stopState" : state_
+                                              "stopState" : state_,
+                                              "NickName" : ""
                                              })
                 }
             }

@@ -78,7 +78,7 @@ function resetDatabase() {
                     tx.executeSql('DELETE FROM LineStops;');
                     tx.executeSql('DELETE FROM LineTypes;');
                     tx.executeSql('DELETE FROM StopLines;');
-                    tx.executeSql('DELETE FROM StopNickNames;');
+//                    tx.executeSql('DELETE FROM StopNickNames;');
                     tx.executeSql('DELETE FROM StopInfo;');
                     tx.executeSql('DELETE FROM LineSchedule;');
                     tx.executeSql('DELETE FROM Reset;');

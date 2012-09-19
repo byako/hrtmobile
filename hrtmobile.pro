@@ -63,7 +63,9 @@ OTHER_FILES += \
     qml/updateDatabase.js \
     qml/UpdatePage.qml \
     qml/UpdateQueryDialog.qml \
-    qml/updateWorker.js
+    qml/updateWorker.js \
+    qml/NickNameDialog.qml \
+    qml/stopInfoMyDeparturesLoad.js
 
 RESOURCES += \
     res.qrc

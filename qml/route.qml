@@ -234,8 +234,8 @@ Item {
         plugin : Plugin {
             name : "nokia"
             parameters: [
-                PluginParameter { name: "mapping.app_id";  value: "WrBja0-QSlb_Ei59BA6s"},
-                PluginParameter { name: "mapping.token"; value: "kAwbj6b1hMhgcPfFR148lQ"}
+                PluginParameter { name: "mapping.app_id";  value: "WrBja0-QSlb_Ei59BA6s"; },
+                PluginParameter { name: "mapping.token"; value: "kAwbj6b1hMhgcPfFR148lQ"; }
             ]
         }
 //        anchors.fill: routePage
@@ -424,12 +424,14 @@ Item {
     }
 
     function cleanStops() {
-        var i=0;
+        var i = 0;
         var temp = "";
-        if (loadedStop != -1 && stops.get(loadedStop).stopObjectType != "nearby") {
-            loadedStop = -1;
-        } else {
-            temp = stops.get(loadedStop).stopIdLong
+        if (loadedStop != -1) {
+            if (stops.get(loadedStop).stopObjectType != "nearby") {
+                loadedStop = -1;
+            } else {
+               temp = stops.get(loadedStop).stopIdLong
+            }
         }
 
         while (i<stops.count) {

@@ -2,17 +2,18 @@ import QtQuick 1.0
 import com.nokia.meego 1.0
 
 Dialog {
-    id: searchDialog
-    z: 8
-    property Item page: null
+    id: nickNameDialog
 
+//    property Item page: null
+    property string stopCodeAndName: ""
+    property string oldNick: ""
     title: Text {
-        id: titleText
+        id: stopCodeAndNameText
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         font.pixelSize: 35
         color: "#cdd9ff"
-        text: (page.objectName == "stopInfoPage") ? "Stop Search" : (page.objectName == "lineInfoPage") ? "Line Search" : "Search"
+        text: stopCodeAndName
     }
 
     content: Item {
@@ -20,7 +21,7 @@ Dialog {
         width: parent.width
         anchors.fill: parent
 
-        Rectangle {  // search field
+        Rectangle {  // nick name edit field
                 width: 260
                 height: 40
                 color: "#333333"
@@ -28,18 +29,17 @@ Dialog {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.verticalCenter: parent.verticalCenter
                 TextInput{
-                    id: searchInput
+                    id: nickNameInput
                     anchors.fill: parent
                     anchors.leftMargin: 10
                     anchors.rightMargin: 10
                     maximumLength: 64
                     onFocusChanged: {
                         focus == true ? openSoftwareInputPanel() : closeSoftwareInputPanel()
-                        focus == true ? text = qsTr("") : null
                     }
-                    onAccepted:  { searchDialog.accept() }
+                    onAccepted:  { nickNameDialog.accept() }
                     font.pixelSize: 30
-                    text: "Search"
+                    text: oldNick
                     color: "#FFFFFF"
                 }
         }
@@ -50,22 +50,31 @@ Dialog {
             inverted: true
         }
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "Search"
-        onClicked: { searchDialog.accept(); }
+        text: "Save"
+        onClicked: {
+            accept()
+        }
     }
     onStatusChanged: {
-        if (status == DialogStatus.Open) {
-            searchInput.focus = true
+        if (status == DialogStatus.Open ) {
+            nickNameInput.text = "" + oldNick
+            nickNameInput.focus = true
         }
     }
 
     onAccepted: {
-        searchInput.focus = false
-        page.searchString = searchInput.text
-        page.buttonClicked()
+        nickNameInput.focus = false
+        console.log("trying to save nick:" + nickNameInput.text + ";");
+        if (nickNameInput.text != oldNick) {
+            stopInfoPage.setNickName(nickNameInput.text)
+        }
+        oldNick = ""
+        nickNameInput.text = ""
     }
 
     onRejected: {
-        searchInput.focus = false
+        nickNameInput.focus = false
+        nickNameInput.text = ""
+        oldNick = ""
     }
 }

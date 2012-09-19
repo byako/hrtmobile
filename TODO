@@ -3,7 +3,6 @@ general:
  - To fix
 	* use WorkerScript to provide threading in lineInfo, settings, realtimeSchedule,  mainPage (route - loading done, stopInfo - done)
  - To implement
-	* popup menu on search button press and hold: clear
 	* on stopInfo and lineInfo make selected button wider that the others
 	* pinch anction on map
 
@@ -14,7 +13,6 @@ lineInfo:
 	* save schedule to database
 	* check for schedule in DB. show saved schedule
 	* add confirmation on delete all lines action
-	* add checkboxes to multiselectiong dialog lines
 	* show midpoint passes when possible for schedule
 
 stopInfo:
@@ -22,14 +20,15 @@ stopInfo:
 	* make stopSearch use Stops API instead of geochace - more stops are found: search is done in address field also, but no transport type info
 	* when stop is selected from list: error shown on console about Schedule buttong icon
  - To implement
+	* fetch prev and future schedule on drag left and drag right actions
 	* realtime schedule button can be implemented via pop-up menu on schedule button
 	* if moved from line info - highlight retrieved line number
 	* add confirmation on delete all stops action
 	* save schedule in DB
 	* merge same stops, show all line types in drop down or so
+	* show stop's passing traffic type
 	* save full schedule for a stop if stop is favorite
 	* split depart schedule to hours
-	* a lot of stops (mostly VR) has same names: consider to add "nickname" for stop to be used, available for editing by user
 
 settings:
  - To fix
@@ -48,6 +47,7 @@ realtime:
 
 route
  - To fix
+	* selected stop that is not on the route gets moved to the line beginning after line is loaded
  - To implement
 	* use landmarks from Location API on route page
 	* when loading line from stopInfo - load also line stops from network
@@ -55,6 +55,9 @@ route
 	* popup lines passing list
 
 Done:
+2012 07 24
+* let people assign nicknames for stops
+
 2012 05 14
 * reset on startup
 * update on startup check/update

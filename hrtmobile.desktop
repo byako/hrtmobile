@@ -3,7 +3,7 @@ Encoding=UTF-8
 Version=1.0
 Type=Application
 Terminal=false
-Name=HRT Mobile
+Name=HRT R&S
 Exec=invoker --single-instance --type=e --splash=/usr/share/hrtmobile/hrtmobile_splash.jpg --splash=/usr/share/hrtmobile/hrtmobile_l_splash.jpg /opt/hrtmobile/bin/hrtmobile
 Icon=/usr/share/icons/hicolor/80x80/apps/hrtmobile.png
 X-Window-Icon=

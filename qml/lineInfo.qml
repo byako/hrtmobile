@@ -228,7 +228,7 @@ Item {
                 }
             }
         }
-        onStatusChanged: { console.log("lineInfo.qml: stopContext menu status: ") }
+        onStatusChanged: { console.log("lineInfo.qml: stopContext menu status: " + status) }
     }
     Rectangle{      // dark background
         color: "#000000"
@@ -687,6 +687,8 @@ Item {
     function lineIdLongSearch() {
         console.log("Button clicked: " + searchString)
         if (searchString == "Enter LineID" || searchString == "") {
+            searchDialog.page = lineInfoPageItem;
+            searchDialog.open();
             showError("Enter search criteria\nline number/line code/Key place\ni.e. 156A or Tapiola")
             return
         }
