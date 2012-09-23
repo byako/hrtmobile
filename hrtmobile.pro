@@ -65,7 +65,13 @@ OTHER_FILES += \
     qml/UpdateQueryDialog.qml \
     qml/updateWorker.js \
     qml/NickNameDialog.qml \
-    qml/stopInfoMyDeparturesLoad.js
+    qml/stopInfoMyDeparturesLoad.js \
+    qtc_packaging/debian_fremantle/rules \
+    qtc_packaging/debian_fremantle/README \
+    qtc_packaging/debian_fremantle/copyright \
+    qtc_packaging/debian_fremantle/control \
+    qtc_packaging/debian_fremantle/compat \
+    qtc_packaging/debian_fremantle/changelog
 
 RESOURCES += \
     res.qrc

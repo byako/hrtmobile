@@ -9,4 +9,5 @@ Item {      // config object
     property string lineGroup: "false"
     property string stopsShowAll: "false"
     property string linesShowAll: "false"
+    property string stopSchedule: "static"
 }

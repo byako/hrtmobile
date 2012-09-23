@@ -97,7 +97,8 @@ Item {
             if (messageObject.depName == "ERROR") {
                 showError("Server returned ERROR")
             } else {
-                trafficModel.append(messageObject)
+                  console.log("stopInfo.qml: myDeparturesWorker: " + messageObject);
+//                trafficModel.append(messageObject);
             }
         }
     }
@@ -751,10 +752,15 @@ Item {
         trafficModel.clear()
         tabRect.checkedButton = stopSchedule
         loading.visible = true
-        if (startTime == "") {
+/*        if (startTime == "") {
             loadStopSchedule.sendMessage({"searchString" : searchString})
         } else {
             loadStopSchedule.sendMessage({"searchString" : searchString, "startTime" : startTime})
+        }*/
+        if (config.stopSchedule == "static") {
+            loadStopSchedule.sendMessage({"searchString" : searchString})
+        } else {
+            myDeparrturesWorker.sendMessage({"searchString" : searchString});
         }
 
         scheduleView.currentIndex = 0

@@ -118,6 +118,31 @@ Item {
                 }
             }
         }
+        Row {
+            Label {
+                text: "Use Omatlahdot schedule"
+                color: "#cdd9ff"
+                width: 380
+            }
+            Switch {
+                style: SwitchStyle {
+                    inverted: true
+                }
+                id: stopsScheduleMyDepart
+                anchors.verticalCenter: parent.verticalCenter
+                checked: config.stopSchedule == "static" ? false : true
+                onCheckedChanged: {
+                    if (checked == true) {
+                        JS.setConfigValue("stopSchedule", "dynamic");
+                        // omatlahdot ^
+                    } else {
+                        JS.setConfigValue("stopSchedule", "static");
+                    }
+                    settingsPage.updateConfig();
+                }
+            }
+        }
+
 
         Button {
             style: ButtonStyle {inverted: true }

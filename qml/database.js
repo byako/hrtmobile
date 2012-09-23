@@ -72,13 +72,20 @@ function createDefaultConfig() {
 function loadConfig(config2) {
     __db().transaction(
         function(tx) {
-            try { var rs = tx.executeSql('SELECT * FROM Config;') }
+            try { var rs = tx.executeSql('SELECT * FROM Config LIMIT 2;') }
             catch(e) { console.log('DB is not initialized. Creating all data from scratch.'); initDB(); }
         }
     )
     config2.lineGroup = getConfigValue('lineGroup')
-    config2.linesShowAll = getConfigValue('linesShowAll')
-    config2.stopsShowAll = getConfigValue('stopsShowAll')
+    config2.linesShowAll = getConfigValue('linesShowAll');
+    config2.stopsShowAll = getConfigValue('stopsShowAll');
+    config2.stopSchedule = getConfigValue('stopSchedule');
+    console.log("CONFIG_VALUE=" + config2.stopSchedule);
+    if (config2.stopSchedule == "") {
+        console.log("Initializing stopSchedule CONFIG_VALUE");
+        setConfigValue("stopSchedule", "static");
+        config2.stopSchedule = "static";
+    }
 }
 
 function deleteStop(string) {
