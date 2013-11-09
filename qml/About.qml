@@ -9,7 +9,7 @@ Page {
     height: 745
     anchors.fill: parent
     orientationLock: PageOrientation.LockPortrait
-    property string release_: "0.8.2 (20120520)"
+    property string release_: "0.8.3 (2013-11-10)"
 
     Rectangle {
         anchors.fill: parent

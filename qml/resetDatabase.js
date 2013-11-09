@@ -51,6 +51,8 @@ WorkerScript.onMessage = function (message) {
                     tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)',["lineGroup","true"]);
                     tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)', [ 'stopsShowAll', 'false']);
                     tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)', [ 'linesShowAll', 'false']);
+                    tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)', [ 'stopSchedule', 'dynamic']);
+                    tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)', [ 'stopScheduleDynamicLines', '10']);
                     tx.executeSql('INSERT OR REPLACE INTO Config VALUES(?, ?)', [ 'dbTimeStampFrom', Qt.formatDateTime(new Date(), "yyyyMMdd")]);
                     err=5
                     tx.executeSql('INSERT OR REPLACE INTO LineTypes VALUES(?, ?)', [ '1', 'Helsinki Bus']);

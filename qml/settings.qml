@@ -7,6 +7,7 @@ Item {
     id: settingsPage
     objectName: "SettingsPageItem"
     property string currentTheme: ""
+    property string omatlahdotLines: "10"
     signal updateConfig
     signal dbclean()
     width: 480
@@ -16,6 +17,32 @@ Item {
         refreshConfig();
     }
     Config { id: config }
+
+    ListModel {     // picklist values for amount of lines shown in omatlahdot mode
+        id: omatlahdotModel
+        ListElement { name: "10" }
+        ListElement { name: "20" }
+        ListElement { name: "30" }
+        ListElement { name: "40" }
+        ListElement { name: "50" }
+        ListElement { name: "60" }
+        ListElement { name: "70" }
+        ListElement { name: "80" }
+        ListElement { name: "90" }
+        ListElement { name: "100" }
+    }
+
+    SelectionDialog {  // dialog to select amount of lines shown in omatlahdot mode
+         id: omatlahdotLinesDialog
+         titleText: "Amount of lines to show"
+         selectedIndex: 0
+         model: omatlahdotModel
+         onSelectedIndexChanged: {
+             JS.setConfigValue("stopScheduleDynamicLines", omatlahdotModel.get(selectedIndex).name);
+             omatlahdotLines = omatlahdotModel.get(selectedIndex).name
+             settingsPage.updateConfig();
+         }
+    }
 
     WorkerScript {           // database clean finished
         id: resetDatabase
@@ -74,7 +101,7 @@ Item {
 
         Row {
             Label {
-                text: "Show all saved lines"
+                text: "Show ALL saved lines"
                 color: "#cdd9ff"
                 width: 380
             }
@@ -95,9 +122,10 @@ Item {
                 }
             }
         }
+
         Row {
             Label {
-                text: "Show all saved stops"
+                text: "Show ALL saved stops"
                 color: "#cdd9ff"
                 width: 380
             }
@@ -118,6 +146,7 @@ Item {
                 }
             }
         }
+
         Row {
             Label {
                 text: "Use Omatlahdot schedule"
@@ -134,15 +163,36 @@ Item {
                 onCheckedChanged: {
                     if (checked == true) {
                         JS.setConfigValue("stopSchedule", "dynamic");
+                        omatlahdotLinesRow.visible = true;
                         // omatlahdot ^
                     } else {
                         JS.setConfigValue("stopSchedule", "static");
+                        omatlahdotLinesRow.visible = false;
                     }
                     settingsPage.updateConfig();
                 }
             }
         }
 
+        Row {
+            id: omatlahdotLinesRow
+            visible: config.stopSchedule == 'dynamic' ? 'true' : 'false'
+            Label {
+                text: "Lines to show"
+                color: "#cdd9ff"
+                width: 345
+            }
+            TumblerButton {
+                id: stopScheduleDynamicLinesTumbler
+                width:125
+                anchors.verticalCenter: parent.verticalCenter
+                text: omatlahdotLines
+                onClicked: {
+                    omatlahdotLinesDialog.open()
+                }
+            }
+
+        }
 
         Button {
             style: ButtonStyle {inverted: true }
@@ -159,5 +209,6 @@ Item {
     }
     function refreshConfig() {
         JS.loadConfig(config)
+        omatlahdotLines = config.stopScheduleDynamicLines;
     }
 }

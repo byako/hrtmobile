@@ -9,8 +9,9 @@ WorkerScript.onMessage = function (message) {
     scheduleHtmlReply.onreadystatechange = function() {
         if (scheduleHtmlReply.readyState == XMLHttpRequest.DONE) {
             parseHttp(scheduleHtmlReply.responseText)
+            WorkerScript.sendMessage({"departName":"FINISH"});
         } else if (scheduleHtmlReply.readyState == XMLHttpRequest.ERROR) {
-            WorkerScript.sendMessage({"depTime":"ERROR"});
+            WorkerScript.sendMessage({"departName":"ERROR"});
         }
     }
     scheduleHtmlReply.open("GET","http://www.omatlahdot.fi/omatlahdot/web?command=embedded&action=view&o=1&s=" + message.searchString +
@@ -20,7 +21,7 @@ WorkerScript.onMessage = function (message) {
 
 function parseHttp(text_) {
     var text = new String;
-    var lines = new Array;r
+    var lines = new Array;
     var times = new Array;
     var td = new Array;
     text = text_;    // TODO : remove redundant text var
@@ -32,10 +33,10 @@ function parseHttp(text_) {
     }
     for (var ii=1; ii<times.length; ++ii) {
         td = times[ii].split("<td class='");
-        WorkerScript.sendMessage({"depTime":td[1].slice(td[1].search(">")+1,td[1].search("</td>")),
-                              "depLine":td[2].slice(td[2].search(">")+1,td[2].search("</td>")),
-                              "depDest":td[3].slice(td[3].search(">")+1,td[3].search("</td>")),
-                                     "depCode":""
+        WorkerScript.sendMessage({"departTime":td[1].slice(td[1].search(">")+1,td[1].search("</td>")),
+                              "departLine":td[2].slice(td[2].search(">")+1,td[2].search("</td>")),
+                              "departDest":td[3].slice(td[3].search(">")+1,td[3].search("</td>")),
+                                     "departCode":""
                                  })
     }
 }

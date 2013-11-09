@@ -43,6 +43,8 @@ function createDefaultConfig() {
                 tx.executeSql('INSERT INTO OR REPLACE Config VALUES(?, ?)',['lineGroup','true'])
                 tx.executeSql('INSERT INTO OR REPLACE Config VALUES(?, ?)', [ 'stopsShowAll', 'false']);
                 tx.executeSql('INSERT INTO OR REPLACE Config VALUES(?, ?)', [ 'linesShowAll', 'false']);
+                tx.executeSql('INSERT INTO OR REPLACE Config VALUES(?, ?)', [ 'stopSchedule', 'dynamic']);
+                tx.executeSql('INSERT INTO OR REPLACE Config VALUES(?, ?)', [ 'stopScheduleDynamicLines', '10']);
                 tx.executeSql('INSERT INTO OR REPLACE Config VALUES(?, ?)', [ 'dbTimeStampFrom', Qt.formatDateTime(new Date(), "yyyyMMdd")]);
                 tx.executeSql('INSERT INTO OR REPLACE LineTypes VALUES(?, ?)', [ '1', 'Helsinki Bus']);
                 tx.executeSql('INSERT INTO OR REPLACE LineTypes VALUES(?, ?)', [ '2', 'Tram']);
@@ -80,6 +82,7 @@ function loadConfig(config2) {
     config2.linesShowAll = getConfigValue('linesShowAll');
     config2.stopsShowAll = getConfigValue('stopsShowAll');
     config2.stopSchedule = getConfigValue('stopSchedule');
+    config2.stopScheduleDynamicLines = getConfigValue('stopScheduleDynamicLines');
     console.log("CONFIG_VALUE=" + config2.stopSchedule);
     if (config2.stopSchedule == "") {
         console.log("Initializing stopSchedule CONFIG_VALUE");

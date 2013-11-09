@@ -94,11 +94,13 @@ Item {
         id: myDeparturesWorker
         source: "stopInfoMyDeparturesLoad.js"
         onMessage: {
-            if (messageObject.depName == "ERROR") {
+            if (messageObject.departName == "ERROR") {
                 showError("Server returned ERROR")
+            } else if (messageObject.departName == "FINISH") {
+                loading.visible = false;
             } else {
-                  console.log("stopInfo.qml: myDeparturesWorker: " + messageObject);
-//                trafficModel.append(messageObject);
+                console.log("stopInfo.qml: myDeparturesWorker: " + messageObject);
+                trafficModel.append(messageObject);
             }
         }
     }
@@ -492,10 +494,14 @@ Item {
                 }
                 onPressAndHold: {
                     scheduleView.currentIndex = index
-		    lineContext.open()
-		}
+                    lineContext.open()
+                }
                 onDoubleClicked: {
-                    stopInfoPage.showLineInfo(departCode)
+                    if (departCode != "") {
+                        stopInfoPage.showLineInfo(departCode)
+                    } else {
+                        showError('No automatic line search in Omatlahdot mode');
+                    }
                 }
             }
         }
@@ -532,7 +538,11 @@ Item {
                 anchors.fill: parent
                 onPressAndHold: { linesView.currentIndex = index; linesPassingContext.open() }
                 onClicked: { linesView.currentIndex = index }
-                onDoubleClicked: { stopInfoPage.showLineInfo(lineIdLong) }
+                onDoubleClicked: {
+                    if (lineIdLong != '') {
+                        stopInfoPage.showLineInfo(lineIdLong);
+                    }
+                }
             }
         }
     }
@@ -760,7 +770,7 @@ Item {
         if (config.stopSchedule == "static") {
             loadStopSchedule.sendMessage({"searchString" : searchString})
         } else {
-            myDeparrturesWorker.sendMessage({"searchString" : searchString});
+            myDeparturesWorker.sendMessage({"searchString" : searchString, "linesCount" : config.stopScheduleDynamicLines});
         }
 
         scheduleView.currentIndex = 0
